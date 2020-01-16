@@ -6,9 +6,15 @@ import json
 class ConfluenceSpace(ConfluenceParentNode):
     def __init__(self, data):
         self.data = data
-        self.data["name"] = data["title"]
-        self.url = data["url"]
         self.data["children"] = []
+
+    def load_pages(self):
+        response = make_request(
+            "rest/refinedtheme/latest/space/CON/pagetree",
+            params={"expandDepth": "9999"},
+        )
+        page_tree = json.loads(response.text)
+        self.data["children"] = page_tree["pages"]
 
     def __dict__(self):
         return self.data

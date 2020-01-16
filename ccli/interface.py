@@ -1,12 +1,14 @@
 from requests import Session
 import time
 
+from bs4 import BeautifulSoup
 
 session = Session()
 session.verify = False
 
 HOST = "confluence.syss.intern"
 BASE_URL = f"https://{HOST}"
+XSRF = ""
 
 
 def get_timestamp():
@@ -14,21 +16,18 @@ def get_timestamp():
     return timestamp
 
 
-def make_request(url, params={}, method="GET"):
+def make_request(url, params={}, data=None, method="GET", headers={}):
     url = f"{BASE_URL}/{url}"
-    if method == "GET":
-        response = session.get(url, params=params)
-    elif method == "POST":
-        response = session.post(url, params=params)
+    if data or method == "POST":
+        headers["X-Atlassian-Token"] = XSRF
+        response = session.post(url, params=params, data=data, headers=headers)
     else:
-        # TODO exception
-        print("Invalid method: ", method)
-        return response
+        response = session.get(url, params=params, headers=headers)
     return response
 
 
 def authenticate_session(user, password):
-    make_request(
+    response = make_request(
         "dologin.action",
         params={
             "os_username": user,
@@ -38,3 +37,6 @@ def authenticate_session(user, password):
         },
         method="POST",
     )
+    soup = BeautifulSoup(response.text, features="lxml")
+    global XSRF
+    XSRF = soup.find("meta", {"id": "atlassian-token"})["content"]
