@@ -1,19 +1,15 @@
-from ccli.args import config
 from ccli.treeview import ConfluenceTree
-from ccli.interface import authenticate_session, HOST
+from ccli.interface import HOST
+from ccli.confluence.changes import get_changes
 from ccli.confluence.spaces import get_spaces
 from ccli.confluence.microblog import get_microblog
-from subprocess import check_output
-from shlex import split
 
 
 def main():
-    user = config["Username"]
-    pw = check_output(split(config["Password_Command"]))[:-1].decode()
-    authenticate_session(user, pw)
-    microblog = get_microblog()
-    #  print(microblog)
+    changes = get_changes()
+    #  print(changes)
     #  exit(0)
+    microblog = get_microblog()
     spaces = get_spaces()
 
     content = {
@@ -21,7 +17,7 @@ def main():
         "children": [
             {
                 "name": "Latest changes",
-                "children": [],
+                "children": changes,
             },
             {
                 "name": "Microblog",

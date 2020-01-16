@@ -12,11 +12,23 @@ parser.add_argument(
     '-v', '--version', action='version', version='ccli 0.1'
 )
 
+parser.add_argument(
+    '-d', '--debug',
+    default=False,
+    action='store_true',
+    help="enable debug mode"
+)
+
 args = parser.parse_args()
 
-config_file = os.path.join(xdg.XDG_CONFIG_HOME, "ccli", "config.yaml")
+config_home = os.path.join(xdg.XDG_CONFIG_HOME, "ccli")
+config_file = os.path.join(config_home, "config.yaml")
 cache_home = os.path.join(xdg.XDG_CACHE_HOME, "ccli")
+cookie_jar = os.path.join(cache_home, "cookiejar.dat")
 
+for d in [cache_home, config_home]:
+    if not os.path.exists(d):
+        os.makedirs(d)
 
 with open(config_file, 'r') as stream:
     try:
