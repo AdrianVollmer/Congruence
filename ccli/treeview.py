@@ -62,7 +62,13 @@ class ConfluenceParentNode(urwid.ParentNode):
 
 
 class ConfluenceTreeListBox(urwid.TreeListBox):
-    pass
+    def keypress(self, size, key):
+        # TODO allow custom key bindings
+        if key == 'k':
+            key = 'up'
+        if key == 'j':
+            key = 'down'
+        super().keypress(size, key)
 
 
 class ConfluenceTree:
