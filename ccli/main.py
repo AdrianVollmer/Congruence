@@ -7,8 +7,6 @@ from ccli.confluence.microblog import get_microblog
 
 def main():
     changes = get_changes()
-    #  print(changes)
-    #  exit(0)
     microblog = get_microblog()
     spaces = get_spaces()
 

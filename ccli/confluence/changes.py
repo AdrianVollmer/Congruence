@@ -2,7 +2,6 @@ from ccli.treeview import ConfluenceParentNode
 from ccli.interface import make_request
 
 from bs4 import BeautifulSoup
-#  import json
 
 
 class ConfluenceChange(ConfluenceParentNode):
