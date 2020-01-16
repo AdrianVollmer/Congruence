@@ -1,12 +1,14 @@
+from ccli.args import config
 from requests import Session
 import time
 
 from bs4 import BeautifulSoup
 
 session = Session()
-session.verify = False
+if "CA" in config:
+    session.verify = config["CA"]
 
-HOST = "confluence.syss.intern"
+HOST = config["Host"]
 BASE_URL = f"https://{HOST}"
 XSRF = ""
 
