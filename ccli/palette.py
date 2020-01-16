@@ -1,5 +1,5 @@
 PALETTE = [
-    ('body', 'black', 'light gray'),
+    ('body', 'default', 'dark gray'),
     ('focus', 'light gray', 'dark blue', 'standout'),
     ('head', 'yellow', 'black', 'standout'),
     ('foot', 'light gray', 'black'),

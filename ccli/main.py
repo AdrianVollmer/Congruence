@@ -1,4 +1,8 @@
 from ccli.treeview import ConfluenceTree
+from ccli.interface import authenticate_session
+from ccli.confluence.spaces import get_spaces
+from subprocess import check_output
+from shlex import split
 
 
 def get_example_tree():
@@ -15,6 +19,9 @@ def get_example_tree():
 
 def main():
     #  sample = get_example_tree()
+    pw = check_output(split("pass show ad"))[:-1].decode()
+    authenticate_session("avollmer", pw)
+    spaces = get_spaces()
     content = {
         "name": "root",
         "children": [
@@ -28,7 +35,7 @@ def main():
             },
             {
                 "name": "Spaces",
-                "children": [],
+                "children": spaces,
             },
         ]
     }
