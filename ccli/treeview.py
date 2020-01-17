@@ -62,50 +62,66 @@ class ConfluenceParentNode(urwid.ParentNode):
 
 
 class ConfluenceTreeListBox(urwid.TreeListBox):
+    def __init__(self, topnode, app):
+        super().__init__(topnode)
+        self.app = app
+
     def keypress(self, size, key):
         # TODO allow custom key bindings
         if key == 'k':
             key = 'up'
+            super().keypress(size, key)
+            return
         if key == 'j':
             key = 'down'
-        super().keypress(size, key)
+            super().keypress(size, key)
+            return
+        if key == 'enter':
+            selected_item = self.app.listbox.get_focus()[1].get_value()
+            #  self.app.loop.widget = selected_item.view()
+            self.app.push_view(selected_item.view(self.app))
+        if key == "?":
+            pass
+        self.app.unhandled_input(key)
 
 
-class ConfluenceTree:
+class ConfluenceApp(object):
     footer_text = [
-        ('title', "Confluence Data Browser"), "    ",
-        ('key', "UP"), ",",
-        ('key', "DOWN"), ",",
-        ('key', "PAGE UP"), ",",
-        ('key', "PAGE DOWN"), "  ",
-        ('key', "+"), ",",
-        ('key', "-"), "  ",
-        ('key', "LEFT"), "  ",
-        ('key', "HOME"), "  ",
-        ('key', "END"), "  ",
-        ('key', "Q"),
-        ]
+        ('title', "Confluence CLI"), "    press ? for help",
+    ]
+
+    def unhandled_input(self, key):
+        if key in ('q', 'Q'):
+            raise urwid.ExitMainLoop()
 
     def __init__(self, data=None):
         self.topnode = ConfluenceParentNode(data)
-        self.listbox = ConfluenceTreeListBox(urwid.TreeWalker(self.topnode))
+        self.listbox = ConfluenceTreeListBox(urwid.TreeWalker(self.topnode),
+                                             self)
         self.listbox.offset_rows = 1
-        self.header = urwid.Text("")
         self.footer = urwid.AttrWrap(urwid.Text(self.footer_text), 'foot')
         self.view = urwid.Frame(
             urwid.AttrWrap(self.listbox, 'body'),
-            header=urwid.AttrWrap(self.header, 'head'),
             footer=self.footer
         )
+        self._view_stack = []
+
+    def push_view(self, view):
+        self._view_stack.append(self.loop.widget)
+        self.loop.widget = view
+
+    def pop_view(self):
+        try:
+            view = self._view_stack.pop()
+            self.loop.widget = view
+        except IndexError:
+            self.loop.widget = self.view
 
     def main(self):
         """Run the program."""
 
-        self.loop = urwid.MainLoop(self.view,
-                                   PALETTE,
-                                   unhandled_input=self.unhandled_input)
+        self.loop = urwid.MainLoop(
+            self.view,
+            PALETTE,
+            unhandled_input=self.unhandled_input)
         self.loop.run()
-
-    def unhandled_input(self, k):
-        if k in ('q', 'Q'):
-            raise urwid.ExitMainLoop()
