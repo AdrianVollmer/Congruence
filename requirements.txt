@@ -1,3 +1,5 @@
-pyyaml
-xdg
 html2text
+pyyaml
+sqlalchemy
+sqlite
+xdg
