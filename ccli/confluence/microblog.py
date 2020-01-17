@@ -17,12 +17,6 @@ class ConfluenceMicroblogNode(ConfluenceParentNode):
             f" [{topic}]"
         ) % self.data
 
-    def __iter__(self):
-        yield from self.data
-
-    def __getitem__(self, item):
-        return self.data[item]
-
     def view(self, app):
         entry_list = []
         for r in [self.data] + self.data["replies"]:
@@ -99,8 +93,6 @@ class MicroblogEntry(urwid.Pile):
     def render_content(self, entry):
         text = entry["renderedContent"]
         text = html_to_text(text)
-        # TODO improve html conversion
-        # not converted: a, span, img, entities
         return urwid.AttrMap(urwid.Text(text), 'body')
 
 

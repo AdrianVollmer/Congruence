@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 import urwid
 
 
-class ConfluenceChangeNode(ConfluenceParentNode):
+class ConfluenceFeedNode(ConfluenceParentNode):
     def __init__(self, data):
         self._data = data
         type = data.find("id").text
@@ -33,12 +33,6 @@ class ConfluenceChangeNode(ConfluenceParentNode):
             % self.data
         self.data["children"] = []
 
-    def __iter__(self):
-        yield from self.data
-
-    def __getitem__(self, item):
-        return self.data[item]
-
     def view(self, app):
         return PageView(self["content"], app)
 
@@ -60,31 +54,10 @@ class PageView(urwid.Frame):
         return self.body.keypress(size, key)
 
 
-def get_changes():
-    from urllib3._collections import HTTPHeaderDict
-    data = HTTPHeaderDict({
-        "types": "page",
-        "pageSubTypes": "comment",
-        "blogpostSubTypes": "comment",
-        "spaces": "conf_all",
-        "title": "Confluence+RSS+Feed",
-        "labelString": "",
-        "excludedSpaceKeys": "",
-        "sort": "modified",
-        "maxResults": "20",
-        "timeSpan": "5",
-        "showContent": "true",
-        "confirm": "Create+RSS+Feed",
-        "os_authType": "basic",
-    })
-    # This is done so we can have a parameter twice
-    data.add('types', 'blogpost')
-    response = make_request(
-        "createrssfeed.action",
-        data=data,
-    )
+def get_feed_entries(**kwargs):
+    response = make_request(kwargs["URL"])
     soup = BeautifulSoup(response.text, features="lxml")
-    changes = soup.findAll("entry")
-    result = [ConfluenceChangeNode(s) for s in changes]
+    feed_entries = soup.findAll("entry")
+    result = [ConfluenceFeedNode(s) for s in feed_entries]
     #  result = change_filter(result)
     return result

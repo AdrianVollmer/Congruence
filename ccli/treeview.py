@@ -60,6 +60,12 @@ class ConfluenceParentNode(urwid.ParentNode):
             childclass = ConfluenceNode
         return childclass(childdata, parent=self, key=key, depth=childdepth)
 
+    def __iter__(self):
+        yield from self.data
+
+    def __getitem__(self, item):
+        return self.data[item]
+
 
 class ConfluenceTreeListBox(urwid.TreeListBox):
     def __init__(self, topnode, app):

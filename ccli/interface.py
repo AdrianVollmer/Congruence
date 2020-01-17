@@ -50,6 +50,7 @@ def make_request(url, params={}, data=None, method="GET", headers={}):
 
 
 def save_session():
+    """Save session cookies to cookie jar"""
     cookies = utils.dict_from_cookiejar(session.cookies)
     cookies["XSRF"] = XSRF
     with open(cookie_jar, 'w') as f:
@@ -57,6 +58,7 @@ def save_session():
 
 
 def load_session():
+    """Load session cookies from cookie jar"""
     try:
         with open(cookie_jar, 'r') as f:
             cookies = utils.cookiejar_from_dict(json.load(f))
@@ -69,6 +71,7 @@ def load_session():
 
 
 def authenticate_session():
+    """Retrieve a valid session cookie and XSRF token"""
     user = config["Username"]
     password = check_output(split(config["Password_Command"]))[:-1].decode()
 
@@ -93,6 +96,3 @@ def html_to_text(html):
 
 
 load_session()
-
-
-
