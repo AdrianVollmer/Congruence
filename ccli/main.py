@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ccli.args import config
-from ccli.treeview import ConfluenceApp
+from ccli.views import ConfluenceApp
 from ccli.interface import HOST
 from ccli.confluence.feed import get_feed_entries
 from ccli.confluence.spaces import get_spaces
