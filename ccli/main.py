@@ -4,12 +4,14 @@ from ccli.interface import HOST
 from ccli.confluence.feed import get_feed_entries
 from ccli.confluence.spaces import get_spaces
 from ccli.confluence.microblog import get_microblog
+from ccli.confluence.notifications import get_notifications
 
 
 GET_ITEMS = {
     "Feed": get_feed_entries,
     "Microblog": get_microblog,
     "SpaceTree": get_spaces,
+    "Notifications": get_notifications,
     #  "Space": None,
 }
 
