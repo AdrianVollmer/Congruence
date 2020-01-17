@@ -6,21 +6,21 @@ from ccli.confluence.microblog import get_microblog
 
 
 def main():
-    #  changes = get_changes()
-    microblog = get_microblog()
+    changes = get_changes()
+    #  microblog = get_microblog()
     #  spaces = get_spaces()
 
     content = {
         "name": "Confluence (%s)" % HOST,
         "children": [
-            #  {
-            #      "name": "Latest changes",
-            #      "children": changes,
-            #  },
             {
-                "name": "Microblog",
-                "children": microblog,
+                "name": "Latest changes",
+                "children": changes,
             },
+            #  {
+            #      "name": "Microblog",
+            #      "children": microblog,
+            #  },
             #  {
             #      "name": "Spaces",
             #      "children": spaces,

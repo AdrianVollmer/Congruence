@@ -1,2 +1,3 @@
 pyyaml
 xdg
+html2text

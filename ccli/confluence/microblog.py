@@ -1,10 +1,9 @@
 from ccli.treeview import ConfluenceParentNode
-from ccli.interface import make_request
+from ccli.interface import make_request, html_to_text
 
 import json
 
 import urwid
-import html2markdown
 
 
 class ConfluenceMicroblogNode(ConfluenceParentNode):
@@ -99,7 +98,7 @@ class MicroblogEntry(urwid.Pile):
 
     def render_content(self, entry):
         text = entry["renderedContent"]
-        text = html2markdown.convert(text)
+        text = html_to_text(text)
         # TODO improve html conversion
         # not converted: a, span, img, entities
         return urwid.AttrMap(urwid.Text(text), 'body')

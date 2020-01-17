@@ -7,13 +7,13 @@ from subprocess import check_output
 import time
 
 from bs4 import BeautifulSoup
+import html2text
 
 session = Session()
 if "CA" in config:
     session.verify = config["CA"]
 if "Proxy" in config:
-    proto, host = config["Proxy"].split("://")
-    session.proxies = {"proto": host}
+    session.proxies = {config["Protocol"]: config["Proxy"]}
 
 
 HOST = config["Host"]
@@ -88,4 +88,11 @@ def authenticate_session():
     save_session()
 
 
+def html_to_text(html):
+    return html2text.html2text(html)
+
+
 load_session()
+
+
+
