@@ -22,7 +22,11 @@
 #      Copyright (C) 2004-2007  Ian Ward
 # Urwid web site: http://excess.org/urwid/
 
+from ccli.args import config
 from ccli.palette import PALETTE
+
+from importlib import import_module
+
 import urwid
 
 
@@ -84,14 +88,94 @@ class ConfluenceTreeListBox(urwid.TreeListBox):
             return
         if key == 'enter':
             selected_item = self.app.listbox.get_focus()[1].get_value()
-            #  self.app.loop.widget = selected_item.view()
             self.app.push_view(selected_item.view(self.app))
+            return
         if key == "?":
             pass
-        self.app.unhandled_input(key)
+        return key
+        #  self.app.unhandled_input(key)
+
+
+class ConfluenceSimpleListEntry(urwid.WidgetWrap):
+    def __init__(self, text, view=None):
+        self.text = text
+        self.view = view
+        widget = urwid.AttrMap(
+            urwid.Text(self.text),
+            attr_map="body",
+            focus_map="focus",
+        )
+        super().__init__(widget)
+
+    def selectable(self):
+        return True
+
+    def keypress(self, size, key):
+        if key == "x":
+            raise Exception("x" + self.text)
+            return None
+        return key
+
+
+class ConfluenceListBox(urwid.ListBox):
+    """Displays a list of ConfluenceSimpleListEntry objects"""
+    def __init__(self, entries):
+        self.entries = entries
+        super().__init__(urwid.SimpleFocusListWalker(self.entries))
+
+    def keypress(self, size, key):
+        if key == 'j':
+            key = 'down'
+            super().keypress(size, key)
+            return
+        if key == 'k':
+            key = 'up'
+            super().keypress(size, key)
+            return
+        if key == "z":
+            raise Exception("z" + self.get_focus()[0].text)
+            return None
+        return key
+
+
+class ConfluenceMainView(urwid.Frame):
+    """Represents the main view of the app
+
+    app: The main app object
+    body: An urwid.Widget which implemented get_focus()
+    title_text: an optional text for the header
+    footer_text: an optional text for the footer
+
+    Every plugin should subclass this view.
+    """
+    def __init__(self, body, title_text="", footer_text=""):
+        self.body = body
+        self.title_text = title_text
+        self.footer_text = footer_text
+        self.footer = urwid.AttrWrap(urwid.Text(self.footer_text), 'foot')
+        self.header = urwid.AttrWrap(urwid.Text(self.title_text), 'head')
+        super().__init__(
+            body,
+            footer=self.footer,
+            header=self.header,
+        )
+
+    def keypress(self, size, key):
+        if key == 'enter':
+            node = self.body.get_focus()[0]
+            if hasattr(node, "view"):
+                next_view = node.view
+                self.app.push_view(next_view)
+                return None
+        if key == 'q':
+            self.app.pop_view()
+            return None
+        return self.body.keypress(size, key)
 
 
 class ConfluenceApp(object):
+    """This class represents the app"""
+
     footer_text = [
         ('title', "Confluence CLI"), "    press ? for help",
     ]
@@ -100,27 +184,38 @@ class ConfluenceApp(object):
         if key in ('q', 'Q'):
             raise urwid.ExitMainLoop()
 
-    def __init__(self, data=None):
-        self.topnode = ConfluenceParentNode(data)
-        self.listbox = ConfluenceTreeListBox(urwid.TreeWalker(self.topnode),
-                                             self)
-        self.listbox.offset_rows = 1
-        self.footer = urwid.AttrWrap(urwid.Text(self.footer_text), 'foot')
-        self.view = urwid.Frame(
-            urwid.AttrWrap(self.listbox, 'body'),
-            footer=self.footer
-        )
+    def __init__(self):
         self._view_stack = []
 
+        # Create a view of all plugins defined in the config
+        self.entries = []
+        for name, p in config["Plugins"].items():
+            view = self.get_plugin_view(name)
+            if p and "DisplayName" in p:
+                name = p["DisplayName"]
+            self.entries.append(
+                ConfluenceSimpleListEntry(name, view=view),
+            )
+        # Set this class variable so each instance can refer to the app
+        # object
+        ConfluenceMainView.app = self
+        self.view = ConfluenceMainView(
+            ConfluenceListBox(self.entries),
+            "ccli main menu",
+            "foo",
+        )
+
     def push_view(self, view):
+        """Open a new view and keep track of the old one"""
         self._view_stack.append(self.loop.widget)
         self.loop.widget = view
 
     def pop_view(self):
-        try:
+        """Restore the last view down the list"""
+        if self._view_stack:
             view = self._view_stack.pop()
             self.loop.widget = view
-        except IndexError:
+        else:
             self.loop.widget = self.view
 
     def main(self):
@@ -131,3 +226,10 @@ class ConfluenceApp(object):
             PALETTE,
             unhandled_input=self.unhandled_input)
         self.loop.run()
+
+    def get_plugin_view(self, name):
+        view = getattr(
+            import_module('ccli.confluence.' + name.lower()),
+            "PluginView"
+        )
+        return view()

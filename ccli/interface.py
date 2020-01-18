@@ -15,6 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ccli.args import config, cookie_jar
+from ccli.logging import log
 
 import json
 from requests import Session, utils
@@ -47,6 +48,7 @@ def make_request(url, params={}, data=None, method="GET", headers={}):
     url = f"{BASE_URL}/{url}"
     attempts = 0
     while attempts < 2:
+        log.info(f"Requesting {url}")
         if data or method == "POST":
             headers["X-Atlassian-Token"] = XSRF
             response = session.post(
@@ -59,6 +61,7 @@ def make_request(url, params={}, data=None, method="GET", headers={}):
             response = session.get(url, params=params, headers=headers)
         attempts += 1
         if response.status_code == 401:
+            log.error("Received 'not authorized'")
             authenticate_session()
         else:
             break
@@ -88,9 +91,11 @@ def load_session():
 
 def authenticate_session():
     """Retrieve a valid session cookie and XSRF token"""
+
     user = config["Username"]
     password = check_output(split(config["Password_Command"]))[:-1].decode()
 
+    log.info(f"Authenticating user: {user}")
     response = make_request(
         "dologin.action",
         params={

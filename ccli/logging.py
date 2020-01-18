@@ -15,7 +15,6 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import sys
 
 
 FORMAT = (
@@ -25,8 +24,9 @@ FORMAT = (
 
 
 logging.basicConfig(
-    stream=sys.stdout,
-    #  level=logging.DEBUG if args.DEBUG else logging.INFO,
+    filename="ccli.log",
+    filemode='w',
+    level=logging.INFO,
     format=FORMAT,
     datefmt="%Y-%m-%d %H:%M:%S",
 )

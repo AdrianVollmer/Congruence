@@ -16,7 +16,7 @@
 
 PALETTE = [
     ('body', 'default', 'dark gray'),
-    ('focus', 'light gray', 'dark blue', 'standout'),
+    ('focus', 'black', 'brown'),
     ('head', 'yellow', 'black', 'standout'),
     ('selected', 'light cyan', 'black', 'standout'),
     ('foot', 'light gray', 'black'),

@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ccli.views import ConfluenceParentNode
+from ccli.views import ConfluenceMainView, ConfluenceListBox
 from ccli.interface import make_request, html_to_text
 
 import json
@@ -22,7 +22,38 @@ import json
 import urwid
 
 
-class ConfluenceMicroblogNode(ConfluenceParentNode):
+def get_microblog():
+    """Load Microblog entries via HTTP"""
+
+    response = make_request(
+        "rest/microblog/1.0/microposts/search",
+        params={
+            "offset": "0",
+            "limit": "9999",
+            "replyLimit": "9999"
+        },
+        data='thread.topicId:(12 OR 13 OR 14 OR 15 OR 16)',
+        headers={
+            "Content-Type": "application/json",
+        },
+    )
+    entries = json.loads(response.text)
+    result = [MicroblogEntry(s) for s in entries["microposts"]]
+    return result
+
+
+class PluginView(ConfluenceMainView):
+    def __init__(self, entries=None):
+        if entries is None:
+            entries = get_microblog()
+        view = ConfluenceListBox(entries)
+        super().__init__(view, "Microblog")
+
+
+class MicroblogEntry(urwid.Pile):
+    """Represents microblog entries or replies to one entry as a list of
+    widgets"""
+
     def __init__(self, data):
         self.data = data
         self.data["children"] = []
@@ -33,40 +64,12 @@ class ConfluenceMicroblogNode(ConfluenceParentNode):
             f" [{topic}]"
         ) % self.data
 
-    def view(self, app):
-        entry_list = []
-        for r in [self.data] + self.data["replies"]:
-            entry_list.append(MicroblogEntry(r))
-        return MicroblogList(entry_list, app)
+        replies = [MicroblogEntry(s) for s in self.data["replies"]]
+        self.view = PluginView(entries=replies)
 
-
-class MicroblogList(urwid.Frame):
-    def __init__(self, entry_list, app):
-        self.app = app
-        self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker(entry_list))
-        self.footer = urwid.AttrWrap(urwid.Text("Microblog"), 'foot')
-        view = urwid.Frame(
-            urwid.AttrWrap(self.listbox, 'body'),
-            footer=self.footer
-        )
-        super().__init__(view)
-
-    def keypress(self, size, key):
-        if key == "b":
-            self.app.pop_view()
-            return None
-        return self.listbox.keypress(size, key)
-
-
-class MicroblogEntry(urwid.Pile):
-    """Represents a microblog entry in a list of widgets"""
-
-    def __init__(self, data):
-        self.selected = False
-        self.data = data
         widgets = [
-            self.render_head(data),
-            self.render_content(data),
+            self.render_head(self.data),
+            self.render_content(self.data),
         ]
 
         super().__init__(widgets)
@@ -75,9 +78,6 @@ class MicroblogEntry(urwid.Pile):
         return True
 
     def keypress(self, size, key):
-        if key == "x":
-            raise Exception("x")
-            return None
         return key
 
     def render_head(self, entry):
@@ -108,25 +108,5 @@ class MicroblogEntry(urwid.Pile):
 
     def render_content(self, entry):
         text = entry["renderedContent"]
-        text = html_to_text(text)
+        text = html_to_text(text).strip()
         return urwid.AttrMap(urwid.Text(text), 'body')
-
-
-def get_microblog():
-    """Load Microblog entries via HTTP"""
-
-    response = make_request(
-        "rest/microblog/1.0/microposts/search",
-        params={
-            "offset": "0",
-            "limit": "9999",
-            "replyLimit": "9999"
-        },
-        data='thread.topicId:(12 OR 13 OR 14 OR 15 OR 16)',
-        headers={
-            "Content-Type": "application/json",
-        },
-    )
-    entries = json.loads(response.text)
-    result = [ConfluenceMicroblogNode(s) for s in entries["microposts"]]
-    return result
