@@ -26,7 +26,7 @@ FORMAT = (
 logging.basicConfig(
     filename="ccli.log",
     filemode='w',
-    level=logging.INFO,
+    level=logging.DEBUG,
     format=FORMAT,
     datefmt="%Y-%m-%d %H:%M:%S",
 )

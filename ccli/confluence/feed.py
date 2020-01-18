@@ -16,10 +16,12 @@
 
 from ccli.views import ConfluenceMainView, ConfluenceListBox,\
     ConfluenceSimpleListEntry
-from ccli.interface import make_request, html_to_text
+from ccli.interface import make_request
+from ccli.logging import log
 
 from datetime import datetime as dt
 import re
+from subprocess import Popen, PIPE
 
 from bs4 import BeautifulSoup
 import urwid
@@ -29,7 +31,7 @@ def get_feed_entries(**kwargs):
     response = make_request(kwargs["URL"])
     soup = BeautifulSoup(response.text, features="lxml")
     feed_entries = soup.findAll("entry")
-    result = [ConfluenceFeedNode(s) for s in feed_entries]
+    result = [ConfluenceFeedEntry(s) for s in feed_entries]
     #  result = change_filter(result)
     return result
 
@@ -39,10 +41,10 @@ class PluginView(ConfluenceMainView):
         def body_builder():
             entries = get_feed_entries(**props)
             return ConfluenceListBox(entries)
-        super().__init__(body_builder, "Feed")
+        super().__init__(body_builder, "Feed: %(DisplayName)s" % props)
 
 
-class ConfluenceFeedNode(ConfluenceSimpleListEntry):
+class ConfluenceFeedEntry(ConfluenceSimpleListEntry):
     def __init__(self, data):
         type = data.find("id").text
         type = re.search(r",[0-9]+:([a-z]*)-", type).groups()[0]
@@ -58,30 +60,28 @@ class ConfluenceFeedNode(ConfluenceSimpleListEntry):
             "published": data.find("published").text,
             "id": data.find("id").text,
             "title": data.find("title").text,
-            "url": data.find("summary").text,
+            "url": data.find("link")["href"],
             "type": type,
         }
 
+        view = PageView(data["url"])
         name = "[%(type)s] %(title)s (%(author)s), %(date)s" % data
 
-        super().__init__(name)
-
-    def view(self, app):
-        return PageView(self["content"], app)
+        super().__init__(name, view)
 
 
-class PageView(urwid.Frame):
-    def __init__(self, content, app):
-        self.app = app
-        text = html_to_text(content)
-        self.body = urwid.Filler(urwid.Text(text))
-        view = urwid.Frame(
-            urwid.AttrWrap(self.body, 'body'),
-        )
-        super().__init__(view)
-
-    def keypress(self, size, key):
-        if key == "b":
-            self.app.pop_view()
+class PageView(ConfluenceMainView):
+    def __init__(self, url):
+        def body_builder():
+            log.debug("Build HTML view for %s" % self.url)
+            content = make_request(self.url).text
+            if 'id="content"' in content:
+                soup = BeautifulSoup(content, features="lxml")
+                content = soup.find("article")
+            content = f"<html><head></head><body>{content}</body></html>"
+            process = Popen("elinks", stdin=PIPE, stderr=PIPE)
+            process.stdin.write(content.encode())
+            process.communicate()
             return None
-        return self.body.keypress(size, key)
+        self.url = url
+        super().__init__(body_builder)

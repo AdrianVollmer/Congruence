@@ -45,7 +45,8 @@ def get_timestamp():
 
 
 def make_request(url, params={}, data=None, method="GET", headers={}):
-    url = f"{BASE_URL}/{url}"
+    if not url.startswith(BASE_URL):
+        url = f"{BASE_URL}/{url}"
     attempts = 0
     while attempts < 2:
         log.info(f"Requesting {url}")

@@ -24,6 +24,7 @@
 
 from ccli.args import config
 from ccli.palette import PALETTE
+from ccli.logging import log
 
 from importlib import import_module
 
@@ -111,6 +112,7 @@ class ConfluenceSimpleListEntry(urwid.WidgetWrap):
         return True
 
     def keypress(self, size, key):
+        log.debug("Keypress in ListEntry %s: %s" % (self.text, key))
         return key
 
 
@@ -121,6 +123,7 @@ class ConfluenceListBox(urwid.ListBox):
         super().__init__(urwid.SimpleFocusListWalker(self.entries))
 
     def keypress(self, size, key):
+        log.debug("Keypress in %s: %s" % ("ConfluenceListBox", key))
         if key == 'j':
             key = 'down'
             super().keypress(size, key)
@@ -129,9 +132,6 @@ class ConfluenceListBox(urwid.ListBox):
             key = 'up'
             super().keypress(size, key)
             return
-        if key == "z":
-            raise Exception("z" + self.get_focus()[0].text)
-            return None
         return key
 
 
@@ -154,20 +154,29 @@ class ConfluenceMainView(urwid.Frame):
         self.header = urwid.AttrWrap(urwid.Text(self.title_text), 'head')
 
     def build(self):
-        super().__init__(
-            self.body_builder(),
-            footer=self.footer,
-            header=self.header,
-        )
-        return self
+        view = self.body_builder()
+        if view:
+            super().__init__(
+                view,
+                footer=self.footer,
+                header=self.header,
+            )
+            return self
+        return None
 
     def keypress(self, size, key):
+        log.debug("Keypress in %s: %s" % (self.title_text, key))
         if key == 'enter':
             node = self.body.get_focus()[0]
             if hasattr(node, "view") and node.view:
+                log.debug("Push View")
                 next_view = node.view.build()
-                self.app.push_view(next_view)
-                return None
+                if next_view:
+                    self.app.push_view(next_view)
+                    return None
+                # Redraw screen, because we're probably coming back from
+                # another app (cli browser or editor)
+                self.app.loop.screen.clear()
         if key == 'q':
             self.app.pop_view()
             return None
