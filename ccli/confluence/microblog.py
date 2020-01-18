@@ -43,11 +43,16 @@ def get_microblog():
 
 
 class PluginView(ConfluenceMainView):
-    def __init__(self, entries=None):
-        if entries is None:
-            entries = get_microblog()
-        view = ConfluenceListBox(entries)
-        super().__init__(view, "Microblog")
+    def __init__(self, props={}, entries=None, title="Microblog"):
+        def body_builder():
+            if self.entries is None:
+                self.entries = get_microblog()
+            return ConfluenceListBox(self.entries)
+
+        self.props = props
+        self.entries = entries
+        self.title = title
+        super().__init__(body_builder, self.title)
 
 
 class MicroblogEntry(urwid.Pile):
@@ -65,7 +70,10 @@ class MicroblogEntry(urwid.Pile):
         ) % self.data
 
         replies = [MicroblogEntry(s) for s in self.data["replies"]]
-        self.view = PluginView(entries=replies)
+        self.view = PluginView(
+            entries=replies,
+            title="Re: " + self.data["name"],
+        )
 
         widgets = [
             self.render_head(self.data),

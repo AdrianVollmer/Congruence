@@ -88,7 +88,7 @@ class ConfluenceTreeListBox(urwid.TreeListBox):
             return
         if key == 'enter':
             selected_item = self.app.listbox.get_focus()[1].get_value()
-            self.app.push_view(selected_item.view(self.app))
+            self.app.push_view(selected_item.view().build())
             return
         if key == "?":
             pass
@@ -111,9 +111,6 @@ class ConfluenceSimpleListEntry(urwid.WidgetWrap):
         return True
 
     def keypress(self, size, key):
-        if key == "x":
-            raise Exception("x" + self.text)
-            return None
         return key
 
 
@@ -141,30 +138,34 @@ class ConfluenceListBox(urwid.ListBox):
 class ConfluenceMainView(urwid.Frame):
     """Represents the main view of the app
 
-    app: The main app object
-    body: An urwid.Widget which implemented get_focus()
+    body_builder: A function, which takes no arguments and returns a
+        urwid.Widget which implemented get_focus()
     title_text: an optional text for the header
     footer_text: an optional text for the footer
 
     Every plugin should subclass this view.
     """
-    def __init__(self, body, title_text="", footer_text=""):
-        self.body = body
+
+    def __init__(self, body_builder, title_text="", footer_text=""):
+        self.body_builder = body_builder
         self.title_text = title_text
         self.footer_text = footer_text
         self.footer = urwid.AttrWrap(urwid.Text(self.footer_text), 'foot')
         self.header = urwid.AttrWrap(urwid.Text(self.title_text), 'head')
+
+    def build(self):
         super().__init__(
-            body,
+            self.body_builder(),
             footer=self.footer,
             header=self.header,
         )
+        return self
 
     def keypress(self, size, key):
         if key == 'enter':
             node = self.body.get_focus()[0]
-            if hasattr(node, "view"):
-                next_view = node.view
+            if hasattr(node, "view") and node.view:
+                next_view = node.view.build()
                 self.app.push_view(next_view)
                 return None
         if key == 'q':
@@ -176,34 +177,32 @@ class ConfluenceMainView(urwid.Frame):
 class ConfluenceApp(object):
     """This class represents the app"""
 
-    footer_text = [
-        ('title', "Confluence CLI"), "    press ? for help",
-    ]
-
     def unhandled_input(self, key):
         if key in ('q', 'Q'):
             raise urwid.ExitMainLoop()
 
     def __init__(self):
+        # Set this class variable so each instance can refer to the app
+        # object
+        ConfluenceMainView.app = self
+
+        # Initialize view stack
         self._view_stack = []
 
         # Create a view of all plugins defined in the config
         self.entries = []
         for name, p in config["Plugins"].items():
-            view = self.get_plugin_view(name)
+            view = self.get_plugin_view(name, p)
             if p and "DisplayName" in p:
                 name = p["DisplayName"]
             self.entries.append(
                 ConfluenceSimpleListEntry(name, view=view),
             )
-        # Set this class variable so each instance can refer to the app
-        # object
-        ConfluenceMainView.app = self
         self.view = ConfluenceMainView(
-            ConfluenceListBox(self.entries),
+            lambda: ConfluenceListBox(self.entries),
             "ccli main menu",
             "foo",
-        )
+        ).build()
 
     def push_view(self, view):
         """Open a new view and keep track of the old one"""
@@ -227,9 +226,9 @@ class ConfluenceApp(object):
             unhandled_input=self.unhandled_input)
         self.loop.run()
 
-    def get_plugin_view(self, name):
+    def get_plugin_view(self, name, props={}):
         view = getattr(
             import_module('ccli.confluence.' + name.lower()),
             "PluginView"
         )
-        return view()
+        return view(props=props)

@@ -14,7 +14,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ccli.views import ConfluenceParentNode
+from ccli.views import ConfluenceMainView, ConfluenceListBox,\
+    ConfluenceSimpleListEntry
 from ccli.interface import make_request, html_to_text
 
 from datetime import datetime as dt
@@ -24,16 +25,32 @@ from bs4 import BeautifulSoup
 import urwid
 
 
-class ConfluenceFeedNode(ConfluenceParentNode):
+def get_feed_entries(**kwargs):
+    response = make_request(kwargs["URL"])
+    soup = BeautifulSoup(response.text, features="lxml")
+    feed_entries = soup.findAll("entry")
+    result = [ConfluenceFeedNode(s) for s in feed_entries]
+    #  result = change_filter(result)
+    return result
+
+
+class PluginView(ConfluenceMainView):
+    def __init__(self, props={}):
+        def body_builder():
+            entries = get_feed_entries(**props)
+            return ConfluenceListBox(entries)
+        super().__init__(body_builder, "Feed")
+
+
+class ConfluenceFeedNode(ConfluenceSimpleListEntry):
     def __init__(self, data):
-        self._data = data
         type = data.find("id").text
         type = re.search(r",[0-9]+:([a-z]*)-", type).groups()[0]
         date = data.find("dc:date").text
         date = dt.strptime(date, "%Y-%m-%dT%H:%M:%S%z")\
             .strftime("%Y-%m-%d %H:%M")
 
-        self.data = {
+        data = {
             "author": data.find("dc:creator").text,
             "content": data.find("summary").text,
             "date": date,
@@ -45,9 +62,9 @@ class ConfluenceFeedNode(ConfluenceParentNode):
             "type": type,
         }
 
-        self.data["name"] = "[%(type)s] %(title)s (%(author)s), %(date)s" \
-            % self.data
-        self.data["children"] = []
+        name = "[%(type)s] %(title)s (%(author)s), %(date)s" % data
+
+        super().__init__(name)
 
     def view(self, app):
         return PageView(self["content"], app)
@@ -68,12 +85,3 @@ class PageView(urwid.Frame):
             self.app.pop_view()
             return None
         return self.body.keypress(size, key)
-
-
-def get_feed_entries(**kwargs):
-    response = make_request(kwargs["URL"])
-    soup = BeautifulSoup(response.text, features="lxml")
-    feed_entries = soup.findAll("entry")
-    result = [ConfluenceFeedNode(s) for s in feed_entries]
-    #  result = change_filter(result)
-    return result
