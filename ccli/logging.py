@@ -32,3 +32,7 @@ logging.basicConfig(
 )
 
 log = logging.getLogger(__name__)
+
+# Disable annoying debug messages about charsets (probably from requests)
+logger = logging.getLogger('chardet.charsetprober')
+logger.setLevel(logging.INFO)

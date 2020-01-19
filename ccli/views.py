@@ -42,14 +42,23 @@ class ConfluenceTreeWidget(urwid.TreeWidget):
 
 class ConfluenceNode(urwid.TreeNode):
     """ Data storage object for leaf nodes """
+    def __init__(self, WidgetClass, data, **kwargs):
+        self.WidgetClass = WidgetClass
+        super().__init__(data, **kwargs)
+
     def load_widget(self):
-        return ConfluenceTreeWidget(self)
+        return self.WidgetClass(self)
 
 
 class ConfluenceParentNode(urwid.ParentNode):
     """ Data storage object for interior/parent nodes """
+    def __init__(self, WidgetClass, data, **kwargs):
+        assert isinstance(data, dict)
+        self.WidgetClass = WidgetClass
+        super().__init__(data, **kwargs)
+
     def load_widget(self):
-        return ConfluenceTreeWidget(self)
+        return self.WidgetClass(self)
 
     def load_child_keys(self):
         data = self.get_value()
@@ -63,22 +72,28 @@ class ConfluenceParentNode(urwid.ParentNode):
             childclass = ConfluenceParentNode
         else:
             childclass = ConfluenceNode
-        return childclass(childdata, parent=self, key=key, depth=childdepth)
-
-    def __iter__(self):
-        yield from self.data
-
-    def __getitem__(self, item):
-        return self.data[item]
+        return childclass(self.WidgetClass,
+                          childdata, parent=self, key=key, depth=childdepth)
 
 
 class ConfluenceTreeListBox(urwid.TreeListBox):
-    def __init__(self, topnode, app):
-        super().__init__(topnode)
-        self.app = app
+    """Displays a tree view of 'WidgetClass' objects
+
+    data: a tree-like dict-structure. Each dictionary needs to have the keys
+        'name' and 'children'. The latter is a list of dictionaries and the
+        former is an arbitrary dictionary which is passed to the constructor
+        of WidgetClass.
+    WidgetClass: some subclass of ConfluenceTreeWidget whose constructor
+        takes a dictionary.
+
+    """
+
+    def __init__(self, data, WidgetClass):
+        self.WidgetClass = WidgetClass
+        topnode = ConfluenceParentNode(self.WidgetClass, data)
+        super().__init__(urwid.TreeWalker(topnode))
 
     def keypress(self, size, key):
-        # TODO allow custom key bindings
         if key == 'k':
             key = 'up'
             super().keypress(size, key)
@@ -87,12 +102,12 @@ class ConfluenceTreeListBox(urwid.TreeListBox):
             key = 'down'
             super().keypress(size, key)
             return
-        if key == 'enter':
-            selected_item = self.app.listbox.get_focus()[1].get_value()
-            self.app.push_view(selected_item.view().build())
-            return
-        if key == "?":
-            pass
+        #  if key == 'enter':
+        #      selected_item = self.app.listbox.get_focus()[1].get_value()
+        #      self.app.push_view(selected_item.view().build())
+        #      return
+        #  if key == "?":
+        #      pass
         return key
         #  self.app.unhandled_input(key)
 
@@ -139,7 +154,9 @@ class ConfluenceMainView(urwid.Frame):
     """Represents the main view of the app
 
     body_builder: A function, which takes no arguments and returns a
-        urwid.Widget which implemented get_focus()
+        urwid.Widget which implemented get_focus(). This widget can have a
+        'view' attribute of type ConfluenceMainView, which will be shown
+        when 'enter' is pressed.
     title_text: an optional text for the header
     footer_text: an optional text for the footer
 
