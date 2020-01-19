@@ -4,9 +4,13 @@ ccli
 A command line interface to Atlassian Confluence.
 
 Because Confluence at my company loads a whopping 9.13MB of JavaScript just
-to see the home page. This program is inspired by mutt and newsboat and
-takes a minimalist approach to accessing this bloated but quite useful piece
-of software.
+to see the home page. This program is inspired by applications like mutt,
+newsboat or tig and takes a minimalist approach to accessing this bloated
+but quite useful piece of software.
+
+Fortunately, on the flipside, Confluence behaves nicely when interfacing
+with other things. There is an API! And there are lots of JSON objects or
+XML documents.
 
 Getting started
 ---------------
