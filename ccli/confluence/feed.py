@@ -82,10 +82,11 @@ class PageView(ConfluenceMainView):
     def __init__(self, url, external=True):
         def body_builder():
             log.debug("Build HTML view for %s" % self.url)
-            # TODO use REST API
-            content = make_request(self.url).text
-            soup = BeautifulSoup(content, features="lxml")
-            content = soup.find("article")
+            id = get_id_from_url(self.url)
+            rest_url = f"rest/api/content/{id}?expand=body.storage"
+            content = make_request(rest_url).text
+            content = json.loads(content)
+            content = content["body"]["storage"]["value"]
 
             if external:
                 content = f"<html><head></head><body>{content}</body></html>"
