@@ -126,13 +126,45 @@ class CommentView(ConfluenceMainView):
 
 
 class CommentWidget(ConfluenceTreeWidget):
-    def get_display_text(self):
+    indent_cols = 2
+
+    def get_value(self):
         node = self.get_node().get_value()
-        node = list(node.values())[0]
+        return list(node.values())[0]
+
+    def get_display_text(self):
+        node = self.get_value()
         if node["title"] == 'root':
             return "Comments"
         else:
-            return "%(displayName)s, %(date)s\n%(content)s" % node
+            return "%(displayName)s, %(date)s" % node
+
+    def get_display_body(self):
+        node = self.get_node().get_value()
+        node = list(node.values())[0]
+        if node["title"] == 'root':
+            return ""
+        else:
+            return "%(content)s" % node
+
+    def load_inner_widget(self):
+        """Build a multi-line widget with a header and a body"""
+
+        icon = [self.unexpanded_icon, self.expanded_icon][self.expanded]
+        header = urwid.Text(self.get_display_text())
+        header = urwid.Columns([('fixed', 1, icon), header], dividechars=1)
+        header = urwid.AttrWrap(header, 'head')
+        if self.get_display_body():
+            body = urwid.AttrWrap(urwid.Text(self.get_display_body()), 'body')
+            widget = urwid.Pile([header, body])
+        else:
+            widget = header
+        return widget
+
+    def get_indented_widget(self):
+        widget = self.get_inner_widget()
+        indent_cols = self.get_indent_cols()
+        return urwid.Padding(widget, width=('relative', 100), left=indent_cols)
 
 
 class CommentTree(ConfluenceTreeListBox):
@@ -186,12 +218,15 @@ def get_id_from_url(url):
     m = re.search(r'pageId=([0-9]*)', url)
     if m:
         return m.groups()[0]
-    m = re.search(r'display/([^/]+)/(.*)', url.split("?")[0])
+    m = re.search(r'display/([^/]+)(.*)/([^/]*)', url.split("?")[0])
     if not m:
         return None
-    space, title = m.groups()[:2]
-    log.debug(f"Getting id of '{space}/{title}'")
-    r = make_request(f"rest/api/content?title={title}&spaceKey={space}")
+    space, date, title = m.groups()[:3]
+    type = "blogpost" if date else "page"
+    log.debug(f"Getting id of '{space}/{title}', type '{type}'")
+    # Better leave it all URL encoded
+    r = make_request("rest/api/content?"
+                     + f"type={type}&title={title}&spaceKey={space}")
     j = json.loads(r.text)
     if j["results"]:
         return j["results"][0]["id"]
