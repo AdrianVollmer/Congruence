@@ -181,17 +181,17 @@ def get_comments_of_page(id):
 
 
 def get_id_from_url(url):
-    m = re.search(r'display/([^/]*)/([^/]*)\?', url)
+    log.debug("Get pageId of %s" % url)
+    m = re.search(r'pageId=([0-9]*)', url)
     if m:
-        space, title = m.groups()
-        log.debug(f"Getting id of '{space}/{title}'")
-        r = make_request(f"rest/api/content?title={title}&spaceKey={space}")
-        j = json.loads(r.text)
-        if j["results"]:
-            return j["results"][0]["id"]
+        return m.groups()[0]
+    m = re.search(r'display/([^/]+)/(.*)', url.split("?")[0])
+    if not m:
         return None
-    else:
-        m = re.search(r'pageId=([0-9]*)', url)
-        if m:
-            return m.groups()[0]
-        return None
+    space, title = m.groups()[:2]
+    log.debug(f"Getting id of '{space}/{title}'")
+    r = make_request(f"rest/api/content?title={title}&spaceKey={space}")
+    j = json.loads(r.text)
+    if j["results"]:
+        return j["results"][0]["id"]
+    return None
