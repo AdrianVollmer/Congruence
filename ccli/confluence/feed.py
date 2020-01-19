@@ -75,9 +75,12 @@ class ConfluenceFeedEntry(ConfluenceSimpleListEntry):
 
 
 class PageView(ConfluenceMainView):
+    """Open a confluence page/blogpost in the external CLI browser"""
+
     def __init__(self, url, external=True):
         def body_builder():
             log.debug("Build HTML view for %s" % self.url)
+            # TODO use REST API
             content = make_request(self.url).text
             soup = BeautifulSoup(content, features="lxml")
             content = soup.find("article")
