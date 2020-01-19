@@ -74,6 +74,7 @@ def not_authenticated(response):
         return True
     if (
         response.status_code == 404
+        and "content-type" in response.headers
         and response.headers["content-type"] == "application/json"
     ):
         j = json.loads(response.text)
