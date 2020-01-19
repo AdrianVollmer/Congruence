@@ -61,12 +61,25 @@ def make_request(url, params={}, data=None, method="GET", headers={}):
         else:
             response = session.get(url, params=params, headers=headers)
         attempts += 1
-        if response.status_code == 401:
-            log.error("Received 'not authorized'")
+        if not_authenticated(response):
+            log.error("Not logged in, authenticating...")
             authenticate_session()
         else:
             break
     return response
+
+
+def not_authenticated(response):
+    if response.status_code == 401:
+        return True
+    if (
+        response.status_code == 404
+        and response.headers["content-type"] == "application/json"
+    ):
+        j = json.loads(response.text)
+        if not j['data']['authorized']:
+            return True
+    return False
 
 
 def save_session():
