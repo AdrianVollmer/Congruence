@@ -29,10 +29,10 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '-d', '--debug',
-    default=False,
-    action='store_true',
-    help="enable debug mode"
+    '-l', '--log-level',
+    type=int,
+    default=None,
+    help="enable logging to a file with the given log level (0-4)"
 )
 
 args = parser.parse_args()

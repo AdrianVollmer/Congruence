@@ -14,6 +14,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from ccli.args import args
+
 import logging
 
 
@@ -23,13 +25,28 @@ FORMAT = (
 )
 
 
-logging.basicConfig(
-    filename="ccli.log",
-    filemode='w',
-    level=logging.DEBUG,
-    format=FORMAT,
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+if args.log_level:
+    log_level = [
+        logging.CRITICAL,
+        logging.ERROR,
+        logging.WARN,
+        logging.INFO,
+        logging.DEBUG,
+    ][args.log_level]
+
+    logging.basicConfig(
+        filename="ccli.log",
+        filemode='w',
+        level=log_level,
+        format=FORMAT,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+else:
+    logging.basicConfig(
+        level=logging.CRITICAL,
+        format=FORMAT,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
 
 log = logging.getLogger(__name__)
 
