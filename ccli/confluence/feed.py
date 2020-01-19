@@ -116,6 +116,7 @@ class CommentView(ConfluenceMainView):
                 "0": {"title": "root"},
                 "children": get_comments_of_page(id),
             }
+            #  TODO use focused_comment_id
             return CommentTree(comments)
 
         self.url = url
@@ -180,11 +181,17 @@ def get_comments_of_page(id):
 
 
 def get_id_from_url(url):
-    space, title = re.search(r'display/([^/]*)/([^/]*)\?', url).groups()
-    log.debug(f"Getting id of '{space}/{title}'")
-    r = make_request(f"rest/api/content?title={title}&spaceKey={space}")
-    j = json.loads(r.text)
-    if j["results"]:
-        return j["results"][0]["id"]
+    m = re.search(r'display/([^/]*)/([^/]*)\?', url)
+    if m:
+        space, title = m.groups()
+        log.debug(f"Getting id of '{space}/{title}'")
+        r = make_request(f"rest/api/content?title={title}&spaceKey={space}")
+        j = json.loads(r.text)
+        if j["results"]:
+            return j["results"][0]["id"]
+        return None
     else:
+        m = re.search(r'pageId=([0-9]*)', url)
+        if m:
+            return m.groups()[0]
         return None
