@@ -1,6 +1,6 @@
 data/
 TODO
-ccli/conftest.py
+congruence/conftest.py
 pytest.ini
 test-data/
 tests/

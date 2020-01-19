@@ -1,5 +1,5 @@
-ccli
-====
+Congruence
+==========
 
 A command line interface to Atlassian Confluence.
 

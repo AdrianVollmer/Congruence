@@ -1,4 +1,4 @@
-#  ccli: A command line interface to Confluence
+#  congruence: A command line interface to Confluence
 #  Copyright (C) 2020  Adrian Vollmer
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -14,9 +14,10 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#  from ccli.args import config
-from ccli.views import ConfluenceApp
+import os
 
+from sqlalchemy import create_engine
+import xdg
 
-def main():
-    ConfluenceApp().main()
+DB_FILE = os.path.join(xdg.XDG_DATA_HOME, "congruence", "db.sqlite")
+engine = create_engine('sqlite:///' + DB_FILE)

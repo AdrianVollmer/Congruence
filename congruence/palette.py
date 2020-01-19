@@ -1,4 +1,4 @@
-#  ccli: A command line interface to Confluence
+#  congruence: A command line interface to Confluence
 #  Copyright (C) 2020  Adrian Vollmer
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -14,5 +14,14 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-KEY_DOWN = "j"
-KEY_UP = "k"
+PALETTE = [
+    ('body', 'default', 'dark gray'),
+    ('focus', 'black', 'brown'),
+    ('head', 'yellow', 'black', 'standout'),
+    ('selected', 'light cyan', 'black', 'standout'),
+    ('foot', 'light gray', 'black'),
+    ('key', 'light cyan', 'black', 'underline'),
+    ('title', 'white', 'black', 'bold'),
+    ('flag', 'dark gray', 'light gray'),
+    ('error', 'dark red', 'light gray'),
+]

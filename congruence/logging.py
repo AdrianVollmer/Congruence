@@ -1,4 +1,4 @@
-#  ccli: A command line interface to Confluence
+#  congruence: A command line interface to Confluence
 #  Copyright (C) 2020  Adrian Vollmer
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ccli.args import args
+from congruence.args import args
 
 import logging
 
@@ -35,7 +35,7 @@ if args.log_level:
     ][args.log_level]
 
     logging.basicConfig(
-        filename="ccli.log",
+        filename="congruence.log",
         filemode='w',
         level=log_level,
         format=FORMAT,

@@ -1,4 +1,4 @@
-#  ccli: A command line interface to Confluence
+#  congruence: A command line interface to Confluence
 #  Copyright (C) 2020  Adrian Vollmer
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -22,9 +22,9 @@
 #      Copyright (C) 2004-2007  Ian Ward
 # Urwid web site: http://excess.org/urwid/
 
-from ccli.args import config
-from ccli.palette import PALETTE
-from ccli.logging import log
+from congruence.args import config
+from congruence.palette import PALETTE
+from congruence.logging import log
 
 from importlib import import_module
 
@@ -229,7 +229,7 @@ class ConfluenceApp(object):
             )
         self.view = ConfluenceMainView(
             lambda: ConfluenceListBox(self.entries),
-            "ccli main menu",
+            "congruence main menu",
             "foo",
         ).build()
 
@@ -258,7 +258,7 @@ class ConfluenceApp(object):
     def get_plugin_view(self, name, props={}):
         """This function builds the first view of the app"""
         view = getattr(
-            import_module('ccli.confluence.' + name.lower()),
+            import_module('congruence.confluence.' + name.lower()),
             "PluginView"
         )
         return view(props=props)

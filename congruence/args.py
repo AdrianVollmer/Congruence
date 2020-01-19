@@ -1,4 +1,4 @@
-#  ccli: A command line interface to Confluence
+#  congruence: A command line interface to Confluence
 #  Copyright (C) 2020  Adrian Vollmer
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
-    '-v', '--version', action='version', version='ccli 0.1'
+    '-v', '--version', action='version', version='congruence 0.1'
 )
 
 parser.add_argument(
@@ -37,9 +37,9 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-config_home = os.path.join(xdg.XDG_CONFIG_HOME, "ccli")
+config_home = os.path.join(xdg.XDG_CONFIG_HOME, "congruence")
 config_file = os.path.join(config_home, "config.yaml")
-cache_home = os.path.join(xdg.XDG_CACHE_HOME, "ccli")
+cache_home = os.path.join(xdg.XDG_CACHE_HOME, "congruence")
 cookie_jar = os.path.join(cache_home, "cookiejar.dat")
 
 for d in [cache_home, config_home]:

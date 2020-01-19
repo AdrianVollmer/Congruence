@@ -1,4 +1,4 @@
-#  ccli: A command line interface to Confluence
+#  congruence: A command line interface to Confluence
 #  Copyright (C) 2020  Adrian Vollmer
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -14,8 +14,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ccli.views import ConfluenceMainView, ConfluenceListBox
-from ccli.interface import make_request, html_to_text
+from congruence.views import ConfluenceMainView, ConfluenceListBox
+from congruence.interface import make_request, html_to_text
 
 import json
 
