@@ -25,6 +25,7 @@ import re
 from subprocess import Popen, PIPE
 
 from bs4 import BeautifulSoup
+from dateutil.parser import parse as dtparse
 import urwid
 
 
@@ -161,12 +162,15 @@ def get_comments_of_page(id):
         if c["ancestors"]:
             for a in reversed(c["ancestors"]):
                 parent = get_by_id(parent, a["id"])["children"]
+        date = c["version"]["when"]
+        date = dtparse(date).strftime("%Y-%m-%d %H:%M")
+
         parent.append({
             c["id"]: {
                 "title": c["title"],
                 "username": c["version"]["by"]["username"],
                 "displayName": c["version"]["by"]["displayName"],
-                "date": c["version"]["when"],
+                "date": date,
                 "content": html_to_text(c["body"]["view"]["value"]),
             },
             "children": [],

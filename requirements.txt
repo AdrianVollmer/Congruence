@@ -3,3 +3,4 @@ pyyaml
 sqlalchemy
 sqlite
 xdg
+python-dateutil

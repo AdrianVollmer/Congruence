@@ -53,7 +53,6 @@ class ConfluenceNode(urwid.TreeNode):
 class ConfluenceParentNode(urwid.ParentNode):
     """ Data storage object for interior/parent nodes """
     def __init__(self, WidgetClass, data, **kwargs):
-        assert isinstance(data, dict)
         self.WidgetClass = WidgetClass
         super().__init__(data, **kwargs)
 
