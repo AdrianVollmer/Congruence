@@ -15,11 +15,12 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ccli.views import ConfluenceMainView, ConfluenceListBox,\
-    ConfluenceSimpleListEntry
+    ConfluenceSimpleListEntry, ConfluenceTreeListBox, ConfluenceTreeWidget
 from ccli.interface import make_request, html_to_text
 from ccli.logging import log
 
 from datetime import datetime as dt
+import json
 import re
 from subprocess import Popen, PIPE
 
@@ -100,41 +101,86 @@ class PageView(ConfluenceMainView):
 
 
 class CommentView(ConfluenceMainView):
-    def __init__(self, url, comment_id=None):
-        def body_builder():
-            log.debug("Build CommentView for %s" % self.url)
-            content = make_request(self.url).text
-            soup = BeautifulSoup(content, features="lxml")
-            all_comments = soup.find(id="page-comments")
-            all_comments = soup_to_dict(all_comments)
-            log.debug(all_comments)
+    """Display a comment tree
 
-            # TODO build tree view of comments and focus on the current
-            # comment
-            return urwid.Frame(urwid.Filler(urwid.Text(text)))
+    url: URL to the Confluence page
+    focused_comment_id: ID of the comment which gets the initial focus
+    """
+
+    def __init__(self, url, focused_comment_id=None):
+        def body_builder():
+            id = get_id_from_url(self.url)
+            log.debug("Build CommentView for page with id '%s'" % id)
+            comments = {
+                "0": {"title": "root"},
+                "children": get_comments_of_page(id),
+            }
+            return CommentTree(comments)
 
         self.url = url
-        comment_id = re.search(r'#(.*)$', url).groups()[0]
+        self.focused_comment_id = re.search(r'#(.*)$', url).groups()[0]
         super().__init__(body_builder)
 
 
-def soup_to_dict(soup):
-    result = []
-    if not soup:
-        return result
-    comments = soup.find_all("li", class_="comment-thread")
-    for c in comments:
-        # TODO: Get likes
-        comment = {
-            "date": c.find("li", class_="comment-date").find("a")["title"],
-            "author": c.find("h4", class_="author").find("a").text.strip(),
-            #  "likedBy": likedBy,
-            "body": str(c.find("div", class_="comment-content").contents[1]),
-            "id": c.find("div", class_="comment")["id"],
-            "children": soup_to_dict(c.find("ol", class_="comment-threads")),
-        }
-        comment["reply-url"] = c.find(id="reply-" + comment["id"])["href"]
+class CommentWidget(ConfluenceTreeWidget):
+    def get_display_text(self):
+        node = self.get_node().get_value()
+        node = list(node.values())[0]
+        if node["title"] == 'root':
+            return "Comments"
+        else:
+            return "%(displayName)s, %(date)s\n%(content)s" % node
 
-        result.append(comment)
+
+class CommentTree(ConfluenceTreeListBox):
+    def __init__(self, comments):
+        self.comments = comments
+        super().__init__(self.comments, CommentWidget)
+
+
+def get_comments_of_page(id):
+    def get_by_id(children, cid):
+        for c in children:
+            if cid in list(c.keys()):
+                return c
+
+    url = f"rest/api/content/{id}/child/comment?"\
+          + "expand=body.view,content,version,ancestors"\
+          + "&depth=all&limit=9999"
+    r = make_request(url)
+    comments = json.loads(r.text)["results"]
+    result = []
+
+    # Build the structure returned by Confluence into something more useful.
+    # Most importantly, it's a flat list of all comments with each comment
+    # possessing a list of its ancestors. We want a nested list.
+    # Also, we only keep track of certain properties.
+    for c in comments:
+        parent = result
+        # Step down the ancestor list
+        if c["ancestors"]:
+            for a in reversed(c["ancestors"]):
+                parent = get_by_id(parent, a["id"])["children"]
+        parent.append({
+            c["id"]: {
+                "title": c["title"],
+                "username": c["version"]["by"]["username"],
+                "displayName": c["version"]["by"]["displayName"],
+                "date": c["version"]["when"],
+                "content": html_to_text(c["body"]["view"]["value"]),
+            },
+            "children": [],
+        })
 
     return result
+
+
+def get_id_from_url(url):
+    space, title = re.search(r'display/([^/]*)/([^/]*)\?', url).groups()
+    log.debug(f"Getting id of '{space}/{title}'")
+    r = make_request(f"rest/api/content?title={title}&spaceKey={space}")
+    j = json.loads(r.text)
+    if j["results"]:
+        return j["results"][0]["id"]
+    else:
+        return None
