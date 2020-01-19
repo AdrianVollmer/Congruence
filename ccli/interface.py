@@ -128,7 +128,7 @@ def authenticate_session():
 
 def html_to_text(html):
     try:
-        return html2text.html2text(html)
+        return html2text.html2text(html).strip()
     except Exception as e:
         log.exception(e)
         return html
