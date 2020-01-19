@@ -67,8 +67,7 @@ class ConfluenceFeedEntry(ConfluenceSimpleListEntry):
         if type in ["page", "blogpost"]:
             view = PageView(data["url"])
         elif type == "comment":
-            comment_id = re.search(r'#(.*)$', data["url"]).groups()[0]
-            view = PageView(data["url"], external=False, div_id=comment_id)
+            view = CommentView(data["url"])
 
         name = "[%(type)s] %(title)s (%(author)s), %(date)s" % data
 
@@ -76,19 +75,12 @@ class ConfluenceFeedEntry(ConfluenceSimpleListEntry):
 
 
 class PageView(ConfluenceMainView):
-    def __init__(self, url, external=True, div_id=None):
+    def __init__(self, url, external=True):
         def body_builder():
             log.debug("Build HTML view for %s" % self.url)
             content = make_request(self.url).text
-            if not div_id:
-                soup = BeautifulSoup(content, features="lxml")
-                content = soup.find("article")
-            else:
-                log.debug("Finding div by id '%s'" % div_id)
-                soup = BeautifulSoup(content, features="lxml")
-                soup = soup.find(id=div_id)
-                content = soup.find("div",
-                                    class_="comment-content").contents[1]
+            soup = BeautifulSoup(content, features="lxml")
+            content = soup.find("article")
 
             if external:
                 content = f"<html><head></head><body>{content}</body></html>"
@@ -102,3 +94,44 @@ class PageView(ConfluenceMainView):
                 return urwid.Frame(urwid.Filler(urwid.Text(text)))
         self.url = url
         super().__init__(body_builder)
+
+
+class CommentView(ConfluenceMainView):
+    def __init__(self, url, comment_id=None):
+        def body_builder():
+            log.debug("Build CommentView for %s" % self.url)
+            content = make_request(self.url).text
+            soup = BeautifulSoup(content, features="lxml")
+            all_comments = soup.find(id="page-comments")
+            all_comments = soup_to_dict(all_comments)
+            log.debug(all_comments)
+
+            # TODO build tree view of comments and focus on the current
+            # comment
+            return urwid.Frame(urwid.Filler(urwid.Text(text)))
+
+        self.url = url
+        comment_id = re.search(r'#(.*)$', url).groups()[0]
+        super().__init__(body_builder)
+
+
+def soup_to_dict(soup):
+    result = []
+    if not soup:
+        return result
+    comments = soup.find_all("li", class_="comment-thread")
+    for c in comments:
+        # TODO: Get likes
+        comment = {
+            "date": c.find("li", class_="comment-date").find("a")["title"],
+            "author": c.find("h4", class_="author").find("a").text.strip(),
+            #  "likedBy": likedBy,
+            "body": str(c.find("div", class_="comment-content").contents[1]),
+            "id": c.find("div", class_="comment")["id"],
+            "children": soup_to_dict(c.find("ol", class_="comment-threads")),
+        }
+        comment["reply-url"] = c.find(id="reply-" + comment["id"])["href"]
+
+        result.append(comment)
+
+    return result
