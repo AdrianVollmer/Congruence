@@ -69,7 +69,7 @@ class ConfluenceFeedEntry(ConfluenceSimpleListEntry):
         if type in ["page", "blogpost"]:
             view = PageView(data["url"])
         elif type == "comment":
-            view = CommentView(data["url"])
+            view = CommentView(data["url"], title_text=data["title"])
 
         name = "[%(type)s] %(title)s (%(author)s), %(date)s" % data
 
@@ -109,7 +109,7 @@ class CommentView(ConfluenceMainView):
     focused_comment_id: ID of the comment which gets the initial focus
     """
 
-    def __init__(self, url, focused_comment_id=None):
+    def __init__(self, url, focused_comment_id=None, **kwargs):
         def body_builder():
             id = get_id_from_url(self.url)
             log.debug("Build CommentView for page with id '%s'" % id)
@@ -122,7 +122,7 @@ class CommentView(ConfluenceMainView):
 
         self.url = url
         self.focused_comment_id = re.search(r'#(.*)$', url).groups()[0]
-        super().__init__(body_builder)
+        super().__init__(body_builder, **kwargs)
 
 
 class CommentWidget(ConfluenceTreeWidget):
@@ -206,6 +206,7 @@ def get_comments_of_page(id):
                 "displayName": c["version"]["by"]["displayName"],
                 "date": date,
                 "content": html_to_text(c["body"]["view"]["value"]),
+                # TODO insert selection of inline comments
             },
             "children": [],
         })

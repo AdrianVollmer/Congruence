@@ -33,6 +33,7 @@ import urwid
 
 class ConfluenceTreeWidget(urwid.TreeWidget):
     """ Display widget for leaf nodes """
+
     def get_display_text(self):
         if 'name' in self.get_node().get_value():
             return self.get_node().get_value()['name']
@@ -42,6 +43,7 @@ class ConfluenceTreeWidget(urwid.TreeWidget):
 
 class ConfluenceNode(urwid.TreeNode):
     """ Data storage object for leaf nodes """
+
     def __init__(self, WidgetClass, data, **kwargs):
         self.WidgetClass = WidgetClass
         super().__init__(data, **kwargs)
@@ -52,6 +54,7 @@ class ConfluenceNode(urwid.TreeNode):
 
 class ConfluenceParentNode(urwid.ParentNode):
     """ Data storage object for interior/parent nodes """
+
     def __init__(self, WidgetClass, data, **kwargs):
         self.WidgetClass = WidgetClass
         super().__init__(data, **kwargs)
@@ -132,6 +135,7 @@ class ConfluenceSimpleListEntry(urwid.WidgetWrap):
 
 class ConfluenceListBox(urwid.ListBox):
     """Displays a list of ConfluenceSimpleListEntry objects"""
+
     def __init__(self, entries):
         self.entries = entries
         super().__init__(urwid.SimpleFocusListWalker(self.entries))
@@ -252,6 +256,7 @@ class ConfluenceApp(object):
         self.loop.run()
 
     def get_plugin_view(self, name, props={}):
+        """This function builds the first view of the app"""
         view = getattr(
             import_module('ccli.confluence.' + name.lower()),
             "PluginView"
