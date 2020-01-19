@@ -258,7 +258,7 @@ class ConfluenceApp(object):
     def get_plugin_view(self, name, props={}):
         """This function builds the first view of the app"""
         view = getattr(
-            import_module('congruence.confluence.' + name.lower()),
+            import_module('congruence.plugins.' + name.lower()),
             "PluginView"
         )
         return view(props=props)
