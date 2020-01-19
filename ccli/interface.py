@@ -99,7 +99,7 @@ def authenticate_session():
     log.info(f"Authenticating user: {user}")
     response = make_request(
         "dologin.action",
-        params={
+        data={
             "os_username": user,
             "os_password": password,
             "login": "Log in",
