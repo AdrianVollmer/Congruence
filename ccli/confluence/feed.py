@@ -16,7 +16,7 @@
 
 from ccli.views import ConfluenceMainView, ConfluenceListBox,\
     ConfluenceSimpleListEntry
-from ccli.interface import make_request
+from ccli.interface import make_request, html_to_text
 from ccli.logging import log
 
 from datetime import datetime as dt
@@ -64,24 +64,41 @@ class ConfluenceFeedEntry(ConfluenceSimpleListEntry):
             "type": type,
         }
 
-        view = PageView(data["url"])
+        if type in ["page", "blogpost"]:
+            view = PageView(data["url"])
+        elif type == "comment":
+            comment_id = re.search(r'#(.*)$', data["url"]).groups()[0]
+            view = PageView(data["url"], external=False, div_id=comment_id)
+
         name = "[%(type)s] %(title)s (%(author)s), %(date)s" % data
 
         super().__init__(name, view)
 
 
 class PageView(ConfluenceMainView):
-    def __init__(self, url):
+    def __init__(self, url, external=True, div_id=None):
         def body_builder():
             log.debug("Build HTML view for %s" % self.url)
             content = make_request(self.url).text
-            if 'id="content"' in content:
+            if not div_id:
                 soup = BeautifulSoup(content, features="lxml")
                 content = soup.find("article")
-            content = f"<html><head></head><body>{content}</body></html>"
-            process = Popen("elinks", stdin=PIPE, stderr=PIPE)
-            process.stdin.write(content.encode())
-            process.communicate()
-            return None
+            else:
+                log.debug("Finding div by id '%s'" % div_id)
+                soup = BeautifulSoup(content, features="lxml")
+                soup = soup.find(id=div_id)
+                content = soup.find("div",
+                                    class_="comment-content").contents[1]
+
+            if external:
+                content = f"<html><head></head><body>{content}</body></html>"
+                process = Popen("elinks", stdin=PIPE, stderr=PIPE)
+                process.stdin.write(content.encode())
+                process.communicate()
+                return None
+            else:
+                content = f"<html><head></head><body>{content}</body></html>"
+                text = html_to_text(content)
+                return urwid.Frame(urwid.Filler(urwid.Text(text)))
         self.url = url
         super().__init__(body_builder)

@@ -114,7 +114,11 @@ def authenticate_session():
 
 
 def html_to_text(html):
-    return html2text.html2text(html)
+    try:
+        return html2text.html2text(html)
+    except Exception as e:
+        log.exception(e)
+        return html
 
 
 load_session()
