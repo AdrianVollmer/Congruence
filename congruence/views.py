@@ -41,10 +41,7 @@ class ConfluenceTreeWidget(urwid.TreeWidget):
     """ Display widget for leaf nodes """
 
     def get_display_text(self):
-        if 'name' in self.get_node().get_value():
-            return self.get_node().get_value()['name']
-        else:
-            return self.get_node().get_value()['title']
+        return "TODO"
 
 
 class ConfluenceNode(urwid.TreeNode):
