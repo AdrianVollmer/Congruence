@@ -62,4 +62,16 @@ for m in MANDATORY_ARGUMENTS:
     if m not in config:
         raise IndexError("Mandatory argument not set in config: %s" % m)
 
-# TODO set default values
+DEFAULTS = {
+    "CA": True,  # will use the system's cert store
+    "DateFormat": "%Y-%m-%d %H:%M",
+    "Editor": "vim",
+    "CliBrowser": "elinks",
+    "GuiBrowser": "firefox",
+    "ImageViewer": "feh",
+}
+
+
+for key, value in DEFAULTS.items():
+    if key not in config:
+        config[key] = value
