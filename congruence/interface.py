@@ -17,6 +17,7 @@
 from congruence.args import config, cookie_jar
 from congruence.logging import log
 
+from datetime import datetime as dt
 import json
 from requests import Session, utils
 from shlex import split
@@ -25,6 +26,8 @@ import time
 
 from bs4 import BeautifulSoup
 import html2text
+from dateutil.parser import parse as dtparse
+
 
 session = Session()
 if "CA" in config:
@@ -133,6 +136,18 @@ def html_to_text(html):
     except Exception as e:
         log.exception(e)
         return html
+
+
+def convert_date(date):
+    """Convert the multitude of date formats to a common one"""
+    try:
+        date = dtparse(date)
+    except (ValueError, TypeError):
+        if isinstance(date, int):
+            date = dt.fromtimestamp(date/1000.)
+        else:
+            date = dt.strptime(date, "%Y-%m-%dT%H:%M:%S%z")
+    return date.strftime(config["DateFormat"])
 
 
 load_session()
