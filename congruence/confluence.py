@@ -134,10 +134,10 @@ class CommentView(ConfluenceMainView):
                 "children": get_comments_of_page(id),
             }
             #  TODO use focused_comment_id
-            return CommentTree(comments)
+            return CommentTree(comments, focus_id=self.focused_comment_id)
 
         self.url = url
-        self.focused_comment_id = re.search(r'#(.*)$', url).groups()[0]
+        self.focused_comment_id = re.search(r'#comment-(.*)$', url).groups()[0]
         super().__init__(body_builder, **kwargs)
 
 
@@ -172,9 +172,19 @@ class CommentWidget(ConfluenceCardTreeWidget):
 
 
 class CommentTree(ConfluenceTreeListBox):
-    def __init__(self, comments):
+    def __init__(self, comments, focus_id=None):
         self.comments = comments
         super().__init__(self.comments, CommentWidget)
+        if focus_id:
+            node = self._body.focus
+            while True:
+                node = self._body.get_next(node)[1]
+                if not node:
+                    break
+                if list(node.get_value().keys())[0] == focus_id:
+                    break
+            if node:
+                self.set_focus(node)
 
 
 def get_comments_of_page(id):
