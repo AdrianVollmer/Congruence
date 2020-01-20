@@ -14,5 +14,40 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-def get_notifications():
-    return []
+from congruence.interface import make_request
+from congruence.views import ConfluenceMainView, ConfluenceListBox,\
+        ConfluenceSimpleListEntry
+
+import json
+
+
+def get_notifications(props={"limit": 30}):
+    r = make_request("rest/mywork/latest/notification/nested",
+                     params=props,
+                     )
+    return json.loads(r.text)
+
+
+class PluginView(ConfluenceMainView):
+    def __init__(self, props={}):
+        def body_builder():
+            entries = get_notifications()
+
+            notifications = []
+            for e in entries:
+                for n in e["notifications"]:
+                    n["reference"] = e["item"]
+                    notifications.append(n)
+
+            notifications = [ConfluenceNotificationEntry(n)
+                             for n in notifications]
+
+            return ConfluenceListBox(notifications)
+        super().__init__(body_builder, "Notifications")
+
+
+class ConfluenceNotificationEntry(ConfluenceSimpleListEntry):
+    def __init__(self, data):
+        name = f"{data['reference']['title']}: {data['title']}"
+        view = None
+        super().__init__(name, view)

@@ -134,7 +134,11 @@ class ConfluenceSimpleListEntry(urwid.WidgetWrap):
 
 
 class ConfluenceListBox(urwid.ListBox):
-    """Displays a list of ConfluenceSimpleListEntry objects"""
+    """Displays a list of ConfluenceSimpleListEntry objects
+
+    list: a list of ConfluenceSimpleListEntry objects
+
+    """
 
     def __init__(self, entries):
         self.entries = entries
