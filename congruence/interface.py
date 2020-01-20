@@ -47,7 +47,26 @@ def get_timestamp():
     return timestamp
 
 
+def make_api_call(endpoint, parameters, base="rest/api", headers={},
+                  update_chache=False):
+    """This accesses the REST API"""
+    url = f"{base}/{endpoint}"
+    r = make_request(url, params=parameters, headers=headers)
+    return json.loads(r.text)
+
+
+def make_feedbuilder_call(update_cache=False, **kwargs):
+    """This requests to build a feed
+
+    This is needed because the API is not always able to sort after
+    'lastUpdated'
+    """
+    pass
+
+
 def make_request(url, params={}, data=None, method="GET", headers={}):
+    """This function performs the actual HTTP request"""
+
     if not url.startswith(BASE_URL):
         if url.startswith('/'):
             url = f"{BASE_URL}{url}"
@@ -86,6 +105,12 @@ def not_authenticated(response):
         j = json.loads(response.text)
         if not j['data']['authorized']:
             return True
+    if (
+        response.history
+        and response.history[0].status_code == 302
+        and "logon" in response.history[0].headers["location"]
+    ):
+        return True
     return False
 
 
