@@ -26,7 +26,8 @@ each item is indicated by a single letter:
 """
 
 from congruence.views import ConfluenceMainView, ConfluenceListBox,\
-    ConfluenceSimpleListEntry, ConfluenceTreeListBox, ConfluenceTreeWidget
+    ConfluenceSimpleListEntry, ConfluenceTreeListBox,\
+    ConfluenceCardTreeWidget
 from congruence.interface import make_request, html_to_text
 from congruence.logging import log
 from congruence.confluence import get_nested_content, get_id_from_url
@@ -151,46 +152,13 @@ class CommentView(ConfluenceMainView):
         super().__init__(body_builder, **kwargs)
 
 
-class CommentWidget(ConfluenceTreeWidget):
-    indent_cols = 2
-
-    def get_value(self):
-        node = self.get_node().get_value()
-        return list(node.values())[0]
-
-    def get_display_text(self):
+class CommentWidget(ConfluenceCardTreeWidget):
+    def get_display_header(self):
         node = self.get_value()
         if node["title"] == 'root':
             return "Comments"
         else:
             return "%(displayName)s, %(date)s" % node
-
-    def get_display_body(self):
-        node = self.get_node().get_value()
-        node = list(node.values())[0]
-        if node["title"] == 'root':
-            return ""
-        else:
-            return "%(content)s" % node
-
-    def load_inner_widget(self):
-        """Build a multi-line widget with a header and a body"""
-
-        icon = [self.unexpanded_icon, self.expanded_icon][self.expanded]
-        header = urwid.Text(self.get_display_text())
-        header = urwid.Columns([('fixed', 1, icon), header], dividechars=1)
-        header = urwid.AttrWrap(header, 'head')
-        if self.get_display_body():
-            body = urwid.AttrWrap(urwid.Text(self.get_display_body()), 'body')
-            widget = urwid.Pile([header, body])
-        else:
-            widget = header
-        return widget
-
-    def get_indented_widget(self):
-        widget = self.get_inner_widget()
-        indent_cols = self.get_indent_cols()
-        return urwid.Padding(widget, width=('relative', 100), left=indent_cols)
 
 
 class CommentTree(ConfluenceTreeListBox):

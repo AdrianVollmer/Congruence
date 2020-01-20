@@ -44,6 +44,49 @@ class ConfluenceTreeWidget(urwid.TreeWidget):
         return "TODO"
 
 
+class ConfluenceCardTreeWidget(ConfluenceTreeWidget):
+    """This class can be used to display a carded TreeWidget"""
+
+    indent_cols = 2
+
+    def get_value(self):
+        node = self.get_node().get_value()
+        return list(node.values())[0]
+
+    def get_display_header(self):
+        node = self.get_value()
+        if node["title"] == 'root':
+            return "Root"
+        else:
+            return node["header"]
+
+    def get_display_body(self):
+        node = self.get_value()
+        if node["title"] == 'root':
+            return ""
+        else:
+            return node["content"]
+
+    def load_inner_widget(self):
+        """Build a multi-line widget with a header and a body"""
+
+        icon = [self.unexpanded_icon, self.expanded_icon][self.expanded]
+        header = urwid.Text(self.get_display_header())
+        header = urwid.Columns([('fixed', 1, icon), header], dividechars=1)
+        header = urwid.AttrWrap(header, 'head')
+        if self.get_display_body():
+            body = urwid.AttrWrap(urwid.Text(self.get_display_body()), 'body')
+            widget = urwid.Pile([header, body])
+        else:
+            widget = header
+        return widget
+
+    def get_indented_widget(self):
+        widget = self.get_inner_widget()
+        indent_cols = self.get_indent_cols()
+        return urwid.Padding(widget, width=('relative', 100), left=indent_cols)
+
+
 class ConfluenceNode(urwid.TreeNode):
     """ Data storage object for leaf nodes """
 
