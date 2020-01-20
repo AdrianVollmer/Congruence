@@ -29,6 +29,7 @@ from congruence.views import ConfluenceMainView, ConfluenceListBox,\
     ConfluenceSimpleListEntry, ConfluenceTreeListBox, ConfluenceTreeWidget
 from congruence.interface import make_request, html_to_text
 from congruence.logging import log
+from congruence.confluence import get_nested_content, get_id_from_url
 
 from datetime import datetime as dt
 import json
@@ -199,61 +200,18 @@ class CommentTree(ConfluenceTreeListBox):
 
 
 def get_comments_of_page(id):
-    def get_by_id(children, cid):
-        for c in children:
-            if cid in list(c.keys()):
-                return c
-
+    def attr_picker(c):
+        date = c["version"]["when"]
+        date = dtparse(date).strftime("%Y-%m-%d %H:%M")
+        return {
+            "title": c["title"],
+            "username": c["version"]["by"]["username"],
+            "displayName": c["version"]["by"]["displayName"],
+            "date": date,
+            "content": html_to_text(c["body"]["view"]["value"]),
+            # TODO insert selection of inline comments
+        }
     url = f"rest/api/content/{id}/child/comment?"\
           + "expand=body.view,content,version,ancestors"\
           + "&depth=all&limit=9999"
-    r = make_request(url)
-    comments = json.loads(r.text)["results"]
-    result = []
-
-    # Build the structure returned by Confluence into something more useful.
-    # Most importantly, it's a flat list of all comments with each comment
-    # possessing a list of its ancestors. We want a nested list.
-    # Also, we only keep track of certain properties.
-    for c in comments:
-        parent = result
-        # Step down the ancestor list
-        if c["ancestors"]:
-            for a in reversed(c["ancestors"]):
-                parent = get_by_id(parent, a["id"])["children"]
-        date = c["version"]["when"]
-        date = dtparse(date).strftime("%Y-%m-%d %H:%M")
-
-        parent.append({
-            c["id"]: {
-                "title": c["title"],
-                "username": c["version"]["by"]["username"],
-                "displayName": c["version"]["by"]["displayName"],
-                "date": date,
-                "content": html_to_text(c["body"]["view"]["value"]),
-                # TODO insert selection of inline comments
-            },
-            "children": [],
-        })
-
-    return result
-
-
-def get_id_from_url(url):
-    log.debug("Get pageId of %s" % url)
-    m = re.search(r'pageId=([0-9]*)', url)
-    if m:
-        return m.groups()[0]
-    m = re.search(r'display/([^/]+)(.*)/([^/]*)', url.split("?")[0])
-    if not m:
-        return None
-    space, date, title = m.groups()[:3]
-    type = "blogpost" if date else "page"
-    log.debug(f"Getting id of '{space}/{title}', type '{type}'")
-    # Better leave it all URL encoded
-    r = make_request("rest/api/content?"
-                     + f"type={type}&title={title}&spaceKey={space}")
-    j = json.loads(r.text)
-    if j["results"]:
-        return j["results"][0]["id"]
-    return None
+    return get_nested_content(url, attr_picker)
