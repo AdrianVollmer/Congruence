@@ -14,46 +14,45 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.views import ConfluenceParentNode
-from congruence.interface import make_request
+__help__ = """Space View
 
-import json
+This is a tree view of all pages in a space.
+
+"""
+
+from congruence.views import ConfluenceMainView, ConfluenceTreeListBox,\
+        ConfluenceTreeWidget
+from congruence.logging import log
+from congruence.confluence import get_nested_content
 
 
-class ConfluenceSpace(ConfluenceParentNode):
-    def __init__(self, data):
-        self.data = data
-        self.data["children"] = []
+# Can't get the full tree due to the way the Confluence API works. Must be
+# loaded on expansion
+def get_page_tree(name):
+    def attr_picker(c):
+        return {
+            "title": c["title"],
+        }
+    log.info("Load page tree of space '%s'" % name)
+    url = f"rest/api/space/{name}/content?depth=root"
+    page_tree = get_nested_content(url, attr_picker)
+    return page_tree
 
-    def load_pages(self):
-        response = make_request(
-            "rest/refinedtheme/latest/space/CON/pagetree",
-            params={"expandDepth": "9999"},
+
+class PluginView(ConfluenceMainView):
+    def __init__(self, props={}):
+        def body_builder():
+            entries = get_page_tree(props["Name"])
+            return PageTree(entries)
+        title = "Space: " + props["Name"]
+        super().__init__(
+            body_builder,
+            title,
+            help_string=__help__,
         )
-        page_tree = json.loads(response.text)
-        self.data["children"] = page_tree["pages"]
-
-    def __dict__(self):
-        return self.data
-
-    def __iter__(self):
-        yield from self.data
-
-    def __getitem__(self, item):
-        return self.data[item]
 
 
-def get_spaces():
-    response = make_request(
-        "rest/refinedtheme/latest/category/ab/",
-        params={
-            "include-children": "true",
-            "recursive": "true",
-            "exclude-links": "false",
-            "simple-version": "false",
-            "exclude-archived-spaces": "false",
-        },
-    )
-    spaces = json.loads(response.text)
-    result = [ConfluenceSpace(s) for s in spaces["children"]]
-    return result
+class PageTree(ConfluenceTreeListBox):
+    def __init__(self, comments):
+        self.comments = comments
+        super().__init__(self.comments, ConfluenceTreeWidget)
