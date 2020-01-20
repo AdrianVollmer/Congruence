@@ -31,24 +31,84 @@ from congruence.views import ConfluenceMainView, ConfluenceListBox,\
 from congruence.interface import make_request, html_to_text
 from congruence.logging import log
 from congruence.confluence import get_nested_content, get_id_from_url
+from congruence.sql import connection, engine
 
 from datetime import datetime as dt
 import json
 import re
 from subprocess import Popen, PIPE
 
+import sqlalchemy as db
 from bs4 import BeautifulSoup
 from dateutil.parser import parse as dtparse
 import urwid
 
 
+metadata = db.MetaData()
+feed = db.Table(
+    "feed", metadata,
+    db.Column("URL", db.String(1024)),
+    db.Column("id", db.String(256)),
+    db.Column("data", db.String(256**2)),
+    #  autoload=True,
+    #  autload_with=engine,
+)
+metadata.create_all(engine)
+
+
 def get_feed_entries(**kwargs):
+    parsed_entries = get_from_db(kwargs["URL"])
+    result = [ConfluenceFeedEntry(e) for e in parsed_entries]
+    #  result = change_filter(result)
+    return result
+
+
+def update_feed_entries(**kwargs):
     response = make_request(kwargs["URL"])
     soup = BeautifulSoup(response.text, features="lxml")
     feed_entries = soup.findAll("entry")
-    result = [ConfluenceFeedEntry(s) for s in feed_entries]
-    #  result = change_filter(result)
-    return result
+    parsed_entries = [xml_to_dict(e) for e in feed_entries]
+
+    store_in_db(kwargs["URL"], parsed_entries)
+
+
+def store_in_db(url, entries):
+    query = db.insert(feed)
+    values_list = [{
+        "URL": url,
+        "id": e["id"],
+        "data": json.dumps(e)
+    } for e in entries]
+    connection.execute(query, values_list)
+
+
+def get_from_db(url):
+    log.info("Accessing DB to get cached feed...")
+    query = db.select([feed])
+    ResultProxy = connection.execute(query)
+    result = ResultProxy.fetchall()
+    return [json.loads(e[2]) for e in result]
+
+
+def xml_to_dict(soup):
+    type = soup.find("id").text
+    type = re.search(r",[0-9]+:([a-z]*)-", type).groups()[0]
+    date = soup.find("dc:date").text
+    date = dt.strptime(date, "%Y-%m-%dT%H:%M:%S%z")\
+        .strftime("%Y-%m-%d %H:%M")
+
+    data = {
+        "author": soup.find("dc:creator").text,
+        "content": soup.find("summary").text,
+        "date": date,
+        "updated": soup.find("updated").text,
+        "published": soup.find("published").text,
+        "id": soup.find("id").text,
+        "title": soup.find("title").text,
+        "url": soup.find("link")["href"],
+        "type": type,
+    }
+    return data
 
 
 class PluginView(ConfluenceMainView):
@@ -56,6 +116,7 @@ class PluginView(ConfluenceMainView):
         def body_builder():
             entries = get_feed_entries(**props)
             return ConfluenceListBox(entries)
+        self.props = props
         if "DisplayName" in props:
             title = "Feed: %(DisplayName)s" % props
         else:
@@ -66,30 +127,17 @@ class PluginView(ConfluenceMainView):
             help_string=__help__,
         )
 
+    def reload(self):
+        log.info("Updating feed '%s'..." % self.props["URL"])
+        update_feed_entries(**self.props)
+        self.__init__(props=self.props)
+
 
 class ConfluenceFeedEntry(ConfluenceSimpleListEntry):
     def __init__(self, data):
-        type = data.find("id").text
-        type = re.search(r",[0-9]+:([a-z]*)-", type).groups()[0]
-        date = data.find("dc:date").text
-        date = dt.strptime(date, "%Y-%m-%dT%H:%M:%S%z")\
-            .strftime("%Y-%m-%d %H:%M")
-
-        data = {
-            "author": data.find("dc:creator").text,
-            "content": data.find("summary").text,
-            "date": date,
-            "updated": data.find("updated").text,
-            "published": data.find("published").text,
-            "id": data.find("id").text,
-            "title": data.find("title").text,
-            "url": data.find("link")["href"],
-            "type": type,
-        }
-
-        if type in ["page", "blogpost"]:
+        if data['type'] in ["page", "blogpost"]:
             view = PageView(data["url"])
-        elif type == "comment":
+        elif data['type'] == "comment":
             view = CommentView(data["url"], title_text=data["title"])
 
         #  name = "[%(type)s] %(title)s (%(author)s), %(date)s" % data

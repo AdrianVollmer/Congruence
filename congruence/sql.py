@@ -14,10 +14,16 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from congruence.logging import log
+
 import os
 
 from sqlalchemy import create_engine
 import xdg
 
 DB_FILE = os.path.join(xdg.XDG_DATA_HOME, "congruence", "db.sqlite")
+if not os.path.exists(os.path.dirname(DB_FILE)):
+    os.makedirs(os.path.dirname(DB_FILE))
+log.info("Connecting to database at %s" % DB_FILE)
 engine = create_engine('sqlite:///' + DB_FILE)
+connection = engine.connect()

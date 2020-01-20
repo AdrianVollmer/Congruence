@@ -259,10 +259,19 @@ class ConfluenceMainView(urwid.Frame):
             key = 'down'
             self.view.keypress(size, key)
             return
+        if key == 'r':
+            self.reload()
+            # Re-build view
+            self.app.pop_view()
+            self.app.push_view(self.build())
+            return
         if key == 'q':
             self.app.pop_view()
             return None
         return self.body.keypress(size, key)
+
+    def reload(self):
+        pass
 
 
 class ConfluenceApp(object):
