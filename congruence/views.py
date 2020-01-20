@@ -22,6 +22,61 @@
 #      Copyright (C) 2004-2007  Ian Ward
 # Urwid web site: http://excess.org/urwid/
 
+__help__ = """About Congruence:
+    Adrian Vollmer, 2020
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus non risus
+pellentesque, tincidunt risus in, tempor quam. Vestibulum fermentum lectus
+nisi, at tristique quam sollicitudin ut. Fusce viverra faucibus viverra. Sed
+nec sagittis enim. Mauris bibendum sem sit amet placerat malesuada. Sed elit
+dolor, facilisis ut consequat eu, fermentum id arcu. Suspendisse pretium
+sagittis dignissim. Fusce non elit massa. Pellentesque vestibulum sem id
+urna interdum, nec dapibus lectus pellentesque.
+
+Suspendisse eget accumsan magna. Pellentesque ut nunc vitae quam faucibus
+porta. Suspendisse quis ipsum ut lacus ultricies porttitor eget vel lacus.
+Vivamus eget nisl eu sapien tristique dapibus nec et mauris. Donec eu
+iaculis tortor. Cras ornare arcu quis quam viverra, at varius odio rutrum.
+Proin commodo tempor felis at sagittis. Vivamus sit amet nisi at tortor
+ultrices condimentum id non odio. Maecenas nec libero velit. Sed sodales
+fringilla eros eget congue. Vestibulum ligula urna, vulputate a arcu ac,
+viverra convallis neque. Suspendisse tristique lacus feugiat volutpat
+tristique.
+
+Duis consequat elementum turpis. Maecenas eget sem eu eros commodo vehicula
+at semper sem. Duis scelerisque cursus lorem non accumsan. Vestibulum dictum
+magna vestibulum varius pretium. Suspendisse viverra ornare nulla vel
+vehicula. Curabitur est lectus, fermentum non convallis non, tempor quis
+ligula. Sed molestie placerat dignissim. Etiam justo lorem, blandit a
+interdum sit amet, consectetur eget tortor. Suspendisse finibus urna in
+commodo pulvinar. Praesent in sapien in mi sagittis lacinia ac at neque.
+Curabitur ultricies dui quis eleifend ultrices. Donec feugiat convallis
+porttitor. Donec ullamcorper arcu consectetur eleifend facilisis. Nullam
+quis blandit massa. Sed at tellus porttitor, ultricies massa eget, convallis
+libero.
+
+Integer sed augue libero. Pellentesque scelerisque libero dui, vel venenatis
+sapien congue eu. Proin feugiat quis ligula sed pulvinar. Ut nec commodo
+lacus. Nam pulvinar, magna sed feugiat dignissim, metus nisl finibus lectus,
+vitae fermentum massa sapien quis erat. Nunc vel lacinia sem. Etiam vitae
+fermentum ligula. Quisque vitae dolor pretium ante accumsan gravida eu eget
+quam. Integer semper lectus at quam maximus, eu malesuada enim placerat.
+Donec feugiat mi neque, quis egestas justo fringilla et. Nullam bibendum
+interdum purus, eu vehicula odio ullamcorper non.
+
+Ut gravida pellentesque efficitur. Fusce imperdiet sapien nibh, eu feugiat
+ex laoreet vitae. Proin accumsan metus ante, at mollis dolor vestibulum in.
+Phasellus viverra faucibus justo vel cursus. Aliquam vehicula, urna tempus
+auctor interdum, nisi tortor pellentesque lectus, ut vulputate justo massa
+quis risus. Aenean ex arcu, mattis ut ante eu, pulvinar ultrices nibh. Nam
+at luctus lacus. Quisque blandit, risus et vestibulum pharetra, sapien nisl
+pellentesque dolor, et tempor nisi mauris id felis. Quisque et tempor odio.
+Proin quis risus nunc. Donec vel fermentum est, nec sodales est. Curabitur
+vitae orci mauris. Aliquam ullamcorper gravida nunc, nec scelerisque ex
+varius quis. Pellentesque vel magna eu eros volutpat dignissim a sit amet
+lorem. Aenean nulla elit, facilisis at purus non, interdum consequat massa.
+Suspendisse fringilla arcu nisi, eget viverra metus congue vitae.  """
+
 from congruence.args import config
 from congruence.palette import PALETTE
 from congruence.logging import log
@@ -95,31 +150,26 @@ class ConfluenceTreeListBox(urwid.TreeListBox):
         topnode = ConfluenceParentNode(self.WidgetClass, data)
         super().__init__(urwid.TreeWalker(topnode))
 
-    def keypress(self, size, key):
-        if key == 'k':
-            key = 'up'
-            super().keypress(size, key)
-            return
-        if key == 'j':
-            key = 'down'
-            super().keypress(size, key)
-            return
-        #  if key == 'enter':
-        #      selected_item = self.app.listbox.get_focus()[1].get_value()
-        #      self.app.push_view(selected_item.view().build())
-        #      return
-        #  if key == "?":
-        #      pass
-        return key
-        #  self.app.unhandled_input(key)
-
 
 class ConfluenceSimpleListEntry(urwid.WidgetWrap):
+    """Represents one item in a ListBox
+
+    text: can be a string or a list of strings. If it is a list, the item
+        will be separated into columns.
+    """
+
     def __init__(self, text, view=None):
-        self.text = text
         self.view = view
+        self.text = text
+        if isinstance(self.text, str):
+            line = urwid.Text(self.text)
+        else:
+            line = urwid.Columns(
+                [('pack', urwid.Text(t)) for t in text],
+                dividechars=1
+            )
         widget = urwid.AttrMap(
-            urwid.Text(self.text),
+            line,
             attr_map="body",
             focus_map="focus",
         )
@@ -144,21 +194,11 @@ class ConfluenceListBox(urwid.ListBox):
         self.entries = entries
         super().__init__(urwid.SimpleFocusListWalker(self.entries))
 
-    def keypress(self, size, key):
-        log.debug("Keypress in %s: %s" % ("ConfluenceListBox", key))
-        if key == 'j':
-            key = 'down'
-            super().keypress(size, key)
-            return
-        if key == 'k':
-            key = 'up'
-            super().keypress(size, key)
-            return
-        return key
-
 
 class ConfluenceMainView(urwid.Frame):
     """Represents the main view of the app
+
+    Every plugin should subclass this view.
 
     body_builder: A function, which takes no arguments and returns a
         urwid.Widget which implemented get_focus(). This widget can have a
@@ -166,27 +206,39 @@ class ConfluenceMainView(urwid.Frame):
         when 'enter' is pressed.
     title_text: an optional text for the header
     footer_text: an optional text for the footer
-
-    Every plugin should subclass this view.
     """
 
-    def __init__(self, body_builder, title_text="", footer_text=""):
+    def __init__(self, body_builder,
+                 title_text="",
+                 footer_text="",
+                 help_string=__help__):
         self.body_builder = body_builder
         self.title_text = title_text
         self.footer_text = footer_text
         self.footer = urwid.AttrWrap(urwid.Text(self.footer_text), 'foot')
         self.header = urwid.AttrWrap(urwid.Text(self.title_text), 'head')
+        self.help_string = help_string
 
     def build(self):
-        view = self.body_builder()
-        if view:
+        self.view = self.body_builder()
+        if self.view:
             super().__init__(
-                view,
+                self.view,
                 footer=self.footer,
                 header=self.header,
             )
             return self
         return None
+
+    def build_help(self):
+        def body_builder():
+            text = [urwid.Text(self.help_string)]
+            view = urwid.ListBox(urwid.SimpleFocusListWalker(text))
+            return view
+        return ConfluenceMainView(
+            body_builder,
+            title_text="Help: " + self.title_text,
+        ).build()
 
     def keypress(self, size, key):
         log.debug("Keypress in %s: %s" % (self.title_text, key))
@@ -201,6 +253,19 @@ class ConfluenceMainView(urwid.Frame):
                 # Redraw screen, because we're probably coming back from
                 # another app (cli browser or editor)
                 self.app.loop.screen.clear()
+        if key == "?":
+            if self.help_string:
+                next_view = self.build_help()
+                self.app.push_view(next_view)
+                return None
+        if key == 'k':
+            key = 'up'
+            self.view.keypress(size, key)
+            return
+        if key == 'j':
+            key = 'down'
+            self.view.keypress(size, key)
+            return
         if key == 'q':
             self.app.pop_view()
             return None
@@ -233,22 +298,24 @@ class ConfluenceApp(object):
             )
         self.view = ConfluenceMainView(
             lambda: ConfluenceListBox(self.entries),
-            "congruence main menu",
+            "Congruence main menu",
             "foo",
         ).build()
 
     def push_view(self, view):
         """Open a new view and keep track of the old one"""
+
         self._view_stack.append(self.loop.widget)
         self.loop.widget = view
 
     def pop_view(self):
         """Restore the last view down the list"""
+
         if self._view_stack:
             view = self._view_stack.pop()
             self.loop.widget = view
         else:
-            self.loop.widget = self.view
+            raise urwid.ExitMainLoop()
 
     def main(self):
         """Run the program."""

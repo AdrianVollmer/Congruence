@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.interface import make_request
+from congruence.interface import make_request, convert_date
 from congruence.views import ConfluenceMainView, ConfluenceListBox,\
         ConfluenceSimpleListEntry
 
@@ -48,6 +48,7 @@ class PluginView(ConfluenceMainView):
 
 class ConfluenceNotificationEntry(ConfluenceSimpleListEntry):
     def __init__(self, data):
-        name = f"{data['reference']['title']}: {data['title']}"
+        date = convert_date(data["created"])
+        name = f"{data['reference']['title']}: {data['title']} ({date})"
         view = None
         super().__init__(name, view)

@@ -43,7 +43,11 @@ class PluginView(ConfluenceMainView):
         def body_builder():
             entries = get_feed_entries(**props)
             return ConfluenceListBox(entries)
-        super().__init__(body_builder, "Feed: %(DisplayName)s" % props)
+        if "DisplayName" in props:
+            title = "Feed: %(DisplayName)s" % props
+        else:
+            title = "Feed"
+        super().__init__(body_builder, title)
 
 
 class ConfluenceFeedEntry(ConfluenceSimpleListEntry):
@@ -71,7 +75,13 @@ class ConfluenceFeedEntry(ConfluenceSimpleListEntry):
         elif type == "comment":
             view = CommentView(data["url"], title_text=data["title"])
 
-        name = "[%(type)s] %(title)s (%(author)s), %(date)s" % data
+        #  name = "[%(type)s] %(title)s (%(author)s), %(date)s" % data
+        name = [
+            data["type"][0].upper(),
+            data["author"],
+            data["date"],
+            data["title"],
+        ]
 
         super().__init__(name, view)
 
