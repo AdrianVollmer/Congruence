@@ -14,6 +14,17 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+__help__ = """Confluence Feed
+
+What you see here are items contained in a Confluence RSS feed. The type of
+each item is indicated by a single letter:
+
+    * P: Page
+    * C: Comment
+    * B: Blogpost
+
+"""
+
 from congruence.views import ConfluenceMainView, ConfluenceListBox,\
     ConfluenceSimpleListEntry, ConfluenceTreeListBox, ConfluenceTreeWidget
 from congruence.interface import make_request, html_to_text
@@ -47,7 +58,11 @@ class PluginView(ConfluenceMainView):
             title = "Feed: %(DisplayName)s" % props
         else:
             title = "Feed"
-        super().__init__(body_builder, title)
+        super().__init__(
+            body_builder,
+            title,
+            help_string=__help__,
+        )
 
 
 class ConfluenceFeedEntry(ConfluenceSimpleListEntry):

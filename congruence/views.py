@@ -25,57 +25,8 @@
 __help__ = """About Congruence:
     Adrian Vollmer, 2020
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus non risus
-pellentesque, tincidunt risus in, tempor quam. Vestibulum fermentum lectus
-nisi, at tristique quam sollicitudin ut. Fusce viverra faucibus viverra. Sed
-nec sagittis enim. Mauris bibendum sem sit amet placerat malesuada. Sed elit
-dolor, facilisis ut consequat eu, fermentum id arcu. Suspendisse pretium
-sagittis dignissim. Fusce non elit massa. Pellentesque vestibulum sem id
-urna interdum, nec dapibus lectus pellentesque.
-
-Suspendisse eget accumsan magna. Pellentesque ut nunc vitae quam faucibus
-porta. Suspendisse quis ipsum ut lacus ultricies porttitor eget vel lacus.
-Vivamus eget nisl eu sapien tristique dapibus nec et mauris. Donec eu
-iaculis tortor. Cras ornare arcu quis quam viverra, at varius odio rutrum.
-Proin commodo tempor felis at sagittis. Vivamus sit amet nisi at tortor
-ultrices condimentum id non odio. Maecenas nec libero velit. Sed sodales
-fringilla eros eget congue. Vestibulum ligula urna, vulputate a arcu ac,
-viverra convallis neque. Suspendisse tristique lacus feugiat volutpat
-tristique.
-
-Duis consequat elementum turpis. Maecenas eget sem eu eros commodo vehicula
-at semper sem. Duis scelerisque cursus lorem non accumsan. Vestibulum dictum
-magna vestibulum varius pretium. Suspendisse viverra ornare nulla vel
-vehicula. Curabitur est lectus, fermentum non convallis non, tempor quis
-ligula. Sed molestie placerat dignissim. Etiam justo lorem, blandit a
-interdum sit amet, consectetur eget tortor. Suspendisse finibus urna in
-commodo pulvinar. Praesent in sapien in mi sagittis lacinia ac at neque.
-Curabitur ultricies dui quis eleifend ultrices. Donec feugiat convallis
-porttitor. Donec ullamcorper arcu consectetur eleifend facilisis. Nullam
-quis blandit massa. Sed at tellus porttitor, ultricies massa eget, convallis
-libero.
-
-Integer sed augue libero. Pellentesque scelerisque libero dui, vel venenatis
-sapien congue eu. Proin feugiat quis ligula sed pulvinar. Ut nec commodo
-lacus. Nam pulvinar, magna sed feugiat dignissim, metus nisl finibus lectus,
-vitae fermentum massa sapien quis erat. Nunc vel lacinia sem. Etiam vitae
-fermentum ligula. Quisque vitae dolor pretium ante accumsan gravida eu eget
-quam. Integer semper lectus at quam maximus, eu malesuada enim placerat.
-Donec feugiat mi neque, quis egestas justo fringilla et. Nullam bibendum
-interdum purus, eu vehicula odio ullamcorper non.
-
-Ut gravida pellentesque efficitur. Fusce imperdiet sapien nibh, eu feugiat
-ex laoreet vitae. Proin accumsan metus ante, at mollis dolor vestibulum in.
-Phasellus viverra faucibus justo vel cursus. Aliquam vehicula, urna tempus
-auctor interdum, nisi tortor pellentesque lectus, ut vulputate justo massa
-quis risus. Aenean ex arcu, mattis ut ante eu, pulvinar ultrices nibh. Nam
-at luctus lacus. Quisque blandit, risus et vestibulum pharetra, sapien nisl
-pellentesque dolor, et tempor nisi mauris id felis. Quisque et tempor odio.
-Proin quis risus nunc. Donec vel fermentum est, nec sodales est. Curabitur
-vitae orci mauris. Aliquam ullamcorper gravida nunc, nec scelerisque ex
-varius quis. Pellentesque vel magna eu eros volutpat dignissim a sit amet
-lorem. Aenean nulla elit, facilisis at purus non, interdum consequat massa.
-Suspendisse fringilla arcu nisi, eget viverra metus congue vitae.  """
+Main menu
+"""
 
 from congruence.args import config
 from congruence.palette import PALETTE
@@ -211,13 +162,15 @@ class ConfluenceMainView(urwid.Frame):
     def __init__(self, body_builder,
                  title_text="",
                  footer_text="",
-                 help_string=__help__):
+                 help_string=None):
         self.body_builder = body_builder
         self.title_text = title_text
         self.footer_text = footer_text
         self.footer = urwid.AttrWrap(urwid.Text(self.footer_text), 'foot')
         self.header = urwid.AttrWrap(urwid.Text(self.title_text), 'head')
-        self.help_string = help_string
+        self.help_string = None
+        if help_string:
+            self.help_string = help_string
 
     def build(self):
         self.view = self.body_builder()
@@ -234,6 +187,7 @@ class ConfluenceMainView(urwid.Frame):
         def body_builder():
             text = [urwid.Text(self.help_string)]
             view = urwid.ListBox(urwid.SimpleFocusListWalker(text))
+            # TODO add shortcuts
             return view
         return ConfluenceMainView(
             body_builder,
@@ -300,6 +254,7 @@ class ConfluenceApp(object):
             lambda: ConfluenceListBox(self.entries),
             "Congruence main menu",
             "foo",
+            help_string=__help__,
         ).build()
 
     def push_view(self, view):

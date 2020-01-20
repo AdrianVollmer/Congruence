@@ -14,6 +14,11 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+__help__ = """Confluence Microblog
+
+Here you can see the latest entries of the microblog plugin.
+
+"""
 from congruence.views import ConfluenceMainView, ConfluenceListBox
 from congruence.interface import make_request, html_to_text
 

@@ -14,6 +14,11 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+__help__ = """Confluence Notifications
+
+This view displays your latest notifications.
+
+"""
 from congruence.interface import make_request, convert_date
 from congruence.views import ConfluenceMainView, ConfluenceListBox,\
         ConfluenceSimpleListEntry
@@ -43,7 +48,7 @@ class PluginView(ConfluenceMainView):
                              for n in notifications]
 
             return ConfluenceListBox(notifications)
-        super().__init__(body_builder, "Notifications")
+        super().__init__(body_builder, "Notifications", help_string=__help__)
 
 
 class ConfluenceNotificationEntry(ConfluenceSimpleListEntry):
