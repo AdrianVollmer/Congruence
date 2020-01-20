@@ -54,6 +54,7 @@ def get_nested_content(url, attr_picker):
     for c in items:
         parent = result
         # Step down the ancestor list
+        # ATTENTION: Apparently the order is arbitrary... can break
         for a in reversed(c["ancestors"]):
             parent = get_by_id(parent, a["id"])["children"]
 

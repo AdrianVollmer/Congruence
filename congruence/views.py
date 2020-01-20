@@ -91,8 +91,7 @@ class ConfluenceTreeListBox(urwid.TreeListBox):
         'name' and 'children'. The latter is a list of dictionaries and the
         former is an arbitrary dictionary which is passed to the constructor
         of WidgetClass.
-    WidgetClass: some subclass of ConfluenceTreeWidget whose constructor
-        takes a dictionary.
+    WidgetClass: some subclass of ConfluenceTreeWidget.
 
     """
 
@@ -287,4 +286,5 @@ class ConfluenceApp(object):
             import_module('congruence.plugins.' + name.lower()),
             "PluginView"
         )
+        # TODO check for must-haves
         return view(props=props)
