@@ -51,3 +51,15 @@ with open(config_file, 'r') as stream:
         config = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
         print(exc)
+
+MANDATORY_ARGUMENTS = [
+    "Host",
+    "Protocol",
+    "Username",
+    "Password_Command",
+]
+for m in MANDATORY_ARGUMENTS:
+    if m not in config:
+        raise IndexError("Mandatory argument not set in config: %s" % m)
+
+# TODO set default values
