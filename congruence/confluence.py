@@ -142,6 +142,27 @@ class CommentView(ConfluenceMainView):
 
 
 class CommentWidget(ConfluenceCardTreeWidget):
+    def __init__(self, widget):
+        def body_builder():
+            # Build details view
+            data = self.get_node().get_value()
+            id = list(data.keys())[0]
+            data = data[id]
+            data["id"] = id
+            del data['content']
+            max_len = max([len(k) for k, _ in data.items()])
+            log.debug(max_len)
+            line = [[urwid.Text(k), urwid.Text(v)] for k, v in data.items()]
+            line = [urwid.Columns([(max_len + 1, k), v])
+                    for k, v in line]
+            view = urwid.ListBox(urwid.SimpleFocusListWalker(line))
+            return view
+        self.view = ConfluenceMainView(
+            body_builder,
+            title_text="Comment details",
+        )
+        super().__init__(widget)
+
     def get_display_header(self):
         node = self.get_value()
         if node["title"] == 'root':
@@ -165,6 +186,7 @@ def get_comments_of_page(id):
             "username": c["version"]["by"]["username"],
             "displayName": c["version"]["by"]["displayName"],
             "date": date,
+            "versions": str(c["version"]["number"]),
             "content": html_to_text(c["body"]["view"]["value"]),
             # TODO insert selection of inline comments
         }
@@ -172,3 +194,5 @@ def get_comments_of_page(id):
           + "expand=body.view,content,version,ancestors"\
           + "&depth=all&limit=9999"
     return get_nested_content(url, attr_picker)
+    # Likes can be retrieved like so (might be unstable):
+    # https://confluence.syss.intern/rest/likes/1.0/content/31424614/likes
