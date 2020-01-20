@@ -57,6 +57,8 @@ metadata.create_all(engine)
 
 
 def get_feed_entries(**kwargs):
+    """Load feed entries from database"""
+
     parsed_entries = get_from_db(kwargs["URL"])
     result = [ConfluenceFeedEntry(e) for e in parsed_entries]
     #  result = change_filter(result)
@@ -64,6 +66,8 @@ def get_feed_entries(**kwargs):
 
 
 def update_feed_entries(**kwargs):
+    """Request the feed over the network"""
+
     response = make_request(kwargs["URL"])
     soup = BeautifulSoup(response.text, features="lxml")
     feed_entries = soup.findAll("entry")
