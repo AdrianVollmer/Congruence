@@ -47,21 +47,21 @@ def get_timestamp():
     return timestamp
 
 
-def make_api_call(endpoint, parameters, base="rest/api", headers={},
-                  update_chache=False):
-    """This accesses the REST API"""
-    url = f"{base}/{endpoint}"
-    r = make_request(url, params=parameters, headers=headers)
-    return json.loads(r.text)
-
-
-def make_feedbuilder_call(update_cache=False, **kwargs):
-    """This requests to build a feed
-
-    This is needed because the API is not always able to sort after
-    'lastUpdated'
-    """
-    pass
+#  def make_api_call(endpoint, parameters, base="rest/api", headers={},
+#                    update_chache=False):
+#      """This accesses the REST API"""
+#      url = f"{base}/{endpoint}"
+#      r = make_request(url, params=parameters, headers=headers)
+#      return json.loads(r.text)
+#  
+#  
+#  def make_feedbuilder_call(update_cache=False, **kwargs):
+#      """This requests to build a feed
+#  
+#      This is needed because the API is not always able to sort after
+#      'lastUpdated'
+#      """
+#      pass
 
 
 def make_request(url, params={}, data=None, method="GET", headers={}):
