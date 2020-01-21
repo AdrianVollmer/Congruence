@@ -259,8 +259,8 @@ class ConfluenceMainView(urwid.Frame):
             key = 'down'
             self.view.keypress(size, key)
             return
-        if key == 'r':
-            self.reload()
+        if key == 'm':
+            self.load_more()
             # Re-build view
             self.app.pop_view()
             self.app.push_view(self.build())
@@ -270,7 +270,7 @@ class ConfluenceMainView(urwid.Frame):
             return None
         return self.body.keypress(size, key)
 
-    def reload(self):
+    def load_more(self):
         pass
 
 

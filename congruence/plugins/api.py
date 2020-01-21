@@ -39,7 +39,6 @@ def get_feed_entries(properties):
     response = make_api_call(
         "search",
         parameters=properties["Parameters"],
-        headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0"},
     )
     result = [ConfluenceAPIEntry(e) for e in response]
     #  result = change_filter(result)
@@ -51,10 +50,13 @@ class APIView(ConfluenceMainView):
         def body_builder():
             if not self.entries:
                 self.entries = get_feed_entries(self.properties)
+            else:
+                self.entries += get_feed_entries(self.properties)
             return ConfluenceListBox(self.entries)
         self.properties = properties
-        self.properties['start'] = 0
-        self.entries = []
+        self.properties["Parameters"]['start'] = 0
+        if "entries" not in self.__dict__:
+            self.entries = []
         if "DisplayName" in self.properties:
             title = "API: %(DisplayName)s" % self.properties
         else:
@@ -66,10 +68,12 @@ class APIView(ConfluenceMainView):
         )
 
     def load_more(self):
-        log.info("Load more '%s'..." % self.properties["URL"])
-        self.properties["start"] += self.properties["limit"]
-        self.entries = get_feed_entries(self.properties)
-        #  self.__init__(properties=self.properties)
+        log.info("Load more '%s'..." % self.title_text)
+        self.properties["Parameters"]["start"] +=\
+            self.properties["Parameters"]["limit"]
+        self.entries += get_feed_entries(self.properties)
+        self.__init__(properties=self.properties)
+        # TODO keep focus where it was
 
 
 class ConfluenceAPIEntry(ConfluenceSimpleListEntry):
