@@ -53,6 +53,7 @@ def get_microblog(properties):
 
 class MicroblogView(CongruenceListBox):
     def __init__(self, properties={}):
+        self.title = "Microblog"
         self.properties = properties
         self.entries = get_microblog(self.properties)
         #  self.title = title
@@ -116,6 +117,7 @@ class CardListBoxEntry(urwid.Pile):
 
 class MicroblogReplyView(CongruenceListBox):
     def __init__(self, entries):
+        self.title = "Replies"
         self.entries = [MicroblogEntry(entries, is_reply=True)]
         self.entries += [MicroblogEntry(e, is_reply=True)
                          for e in entries["replies"]]
@@ -125,6 +127,7 @@ class MicroblogReplyView(CongruenceListBox):
 
 class MicroblogReplyDetails(CongruenceListBox):
     def __init__(self, data):
+        self.title = "Details"
         # Build details view
         log.debug(data)
         del data['renderedContent']

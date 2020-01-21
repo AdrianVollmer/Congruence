@@ -49,6 +49,7 @@ def get_feed_entries(properties):
 
 class APIView(CongruenceListBox):
     def __init__(self, properties={}, focus=None):
+        self.title = "API"
         self.properties = properties
         self.entries = get_feed_entries(self.properties)
         super().__init__(self.entries, help_string=__help__)

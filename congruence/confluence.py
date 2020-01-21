@@ -126,6 +126,7 @@ class CommentView(CongruenceTreeListBox):
     """
 
     def __init__(self, data):
+        self.title = "Comments"
         comment_id = data['content']['id']
         log.debug("Build CommentView for page with id '%s'" % comment_id)
         container = data['content']['_expandable']['container']
@@ -166,6 +167,7 @@ class CommentWidget(CongruenceCardTreeWidget):
 
 class CommentDetails(CongruenceListBox):
     def __init__(self, data):
+        self.title = "Details"
         # Build details view
         del data['content']
         max_len = max([len(k) for k, _ in data.items()])
