@@ -275,8 +275,7 @@ class CongruenceApp(object):
         if key == 'q':
             self.pop_view()
         if key == 'Q':
-            self.active = False
-            raise urwid.ExitMainLoop()
+            self.exit()
 
     def __init__(self):
         # Set these class variables so each instance can refer to the app
@@ -349,7 +348,11 @@ class CongruenceApp(object):
             self.loop.widget.body = view
             self.header.set_text(('head', self.get_full_title()))
         else:
-            raise urwid.ExitMainLoop()
+            self.exit()
+
+    def exit(self):
+        self.active = False
+        raise urwid.ExitMainLoop()
 
     def main(self):
         """Run the program."""
