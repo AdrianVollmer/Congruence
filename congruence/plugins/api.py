@@ -41,12 +41,12 @@ def get_feed_entries(properties):
         parameters=properties["Parameters"],
         headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0"},
     )
-    result = [ConfluenceFeedEntry(e) for e in response]
+    result = [ConfluenceAPIEntry(e) for e in response]
     #  result = change_filter(result)
     return result
 
 
-class FeedView(ConfluenceMainView):
+class APIView(ConfluenceMainView):
     def __init__(self, properties={}):
         def body_builder():
             if not self.entries:
@@ -56,9 +56,9 @@ class FeedView(ConfluenceMainView):
         self.properties['start'] = 0
         self.entries = []
         if "DisplayName" in self.properties:
-            title = "Feed: %(DisplayName)s" % self.properties
+            title = "API: %(DisplayName)s" % self.properties
         else:
-            title = "Feed"
+            title = "API"
         super().__init__(
             body_builder,
             title,
@@ -66,13 +66,13 @@ class FeedView(ConfluenceMainView):
         )
 
     def load_more(self):
-        log.info("Updating feed '%s'..." % self.properties["URL"])
+        log.info("Load more '%s'..." % self.properties["URL"])
         self.properties["start"] += self.properties["limit"]
         self.entries = get_feed_entries(self.properties)
-        self.__init__(properties=self.properties)
+        #  self.__init__(properties=self.properties)
 
 
-class ConfluenceFeedEntry(ConfluenceSimpleListEntry):
+class ConfluenceAPIEntry(ConfluenceSimpleListEntry):
     def __init__(self, data):
         content = data['content']
         if content['type'] in ["page", "blogpost"]:
@@ -94,4 +94,4 @@ class ConfluenceFeedEntry(ConfluenceSimpleListEntry):
         super().__init__(name, view)
 
 
-PluginView = FeedView
+PluginView = APIView
