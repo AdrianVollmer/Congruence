@@ -108,7 +108,7 @@ def not_authenticated(response):
     if (
         response.history
         and response.history[0].status_code == 302
-        and "logon" in response.history[0].headers["location"]
+        and "/login.action" in response.history[0].headers["location"]
     ):
         return True
     return False
