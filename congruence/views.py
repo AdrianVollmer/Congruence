@@ -250,8 +250,11 @@ class CongruenceFooter(urwid.Pile):
 
     def __init__(self):
         self.key_map = urwid.AttrMap(urwid.Text("keys"), 'head')
-        self.status_line = urwid.Text("")
+        self.status_line = urwid.Text("", wrap='clip')
         super().__init__([self.key_map, self.status_line])
+
+    def set_status(self, message, msgtype):
+        self.status_line = urwid.AttrMap(urwid.Text(message), msgtype)
 
 
 class HelpView(urwid.ListBox):
@@ -273,6 +276,7 @@ class CongruenceApp(object):
         if key == 'q':
             self.pop_view()
         if key == 'Q':
+            self.active = False
             raise urwid.ExitMainLoop()
 
     def __init__(self):
@@ -308,25 +312,20 @@ class CongruenceApp(object):
             header=urwid.AttrMap(urwid.Text(self.title), 'head'),
             footer=self.footer,
         )
+        self.active = True
 
     def get_current_widget(self):
         return self.loop.widget.body
 
-    def alert(self, message, type='info'):
+    def alert(self, message, msgtype='info'):
         """Show a message in the status line
 
-
-        :type: one of 'info', 'warning', 'error'
+        :message: the alert message as a string
+        :msgtype: one of 'info', 'warning', 'error'
         """
 
-        log.info("Alert (%s): %s" % (type, message))
-        color = {
-            'info': 'white',
-        }
-        self._set_status(message, color[type])
-
-    def _set_status(self, message, color):
-        pass
+        log.info("Alert (%s): %s" % (msgtype, message))
+        self.footer.status_line.set_text((msgtype, message))
 
     def push_view(self, view, title=""):
         """Open a new view and keep track of the old one"""
@@ -351,7 +350,13 @@ class CongruenceApp(object):
             self.view,
             PALETTE,
             unhandled_input=self.unhandled_input)
-        self.loop.run()
+        while self.active:
+            try:
+                self.loop.run()
+            except Exception as e:
+                self.pop_view()
+                log.error(str(e))
+                self.alert(str(e), 'error')
 
     def get_plugin_class(self, name):
         """This function retrieves the class the plugin"""

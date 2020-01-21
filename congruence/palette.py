@@ -25,5 +25,7 @@ PALETTE = [
     ('key', 'light cyan', 'black', 'underline'),
     ('title', 'white', 'black', 'bold'),
     ('flag', 'dark gray', 'light gray'),
-    ('error', 'dark red', 'light gray'),
+    ('error', 'dark red', 'default'),
+    ('info', 'light gray', 'default'),
+    ('warning', 'yellow', 'default'),
 ]
