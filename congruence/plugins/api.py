@@ -50,14 +50,11 @@ class APIView(ConfluenceMainView):
         def body_builder():
             if not self.entries:
                 self.entries = get_feed_entries(self.properties)
-            else:
-                self.entries += get_feed_entries(self.properties)
             view = ConfluenceListBox(self.entries)
             if focus:
                 view.set_focus(focus)
             return view
         self.properties = properties
-        self.properties["Parameters"]['start'] = 0
         if "entries" not in self.__dict__:
             self.entries = []
         if "DisplayName" in self.properties:
@@ -72,6 +69,8 @@ class APIView(ConfluenceMainView):
 
     def load_more(self):
         log.info("Load more '%s'..." % self.title_text)
+        if 'start' not in self.properties["Parameters"]:
+            self.properties["Parameters"]['start'] = 0
         self.properties["Parameters"]["start"] +=\
             self.properties["Parameters"]["limit"]
         self.entries += get_feed_entries(self.properties)
