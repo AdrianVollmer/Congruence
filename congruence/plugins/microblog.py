@@ -48,13 +48,13 @@ def get_microblog():
 
 
 class PluginView(ConfluenceMainView):
-    def __init__(self, props={}, entries=None, title="Microblog"):
+    def __init__(self, properties={}, entries=None, title="Microblog"):
         def body_builder():
             if self.entries is None:
                 self.entries = get_microblog()
             return ConfluenceListBox(self.entries)
 
-        self.props = props
+        self.properties = properties
         self.entries = entries
         self.title = title
         super().__init__(body_builder, self.title)

@@ -329,11 +329,11 @@ class ConfluenceApp(object):
             unhandled_input=self.unhandled_input)
         self.loop.run()
 
-    def get_plugin_view(self, name, props={}):
+    def get_plugin_view(self, name, properties={}):
         """This function builds the first view of the app"""
         view = getattr(
             import_module('congruence.plugins.' + name.lower()),
             "PluginView"
         )
         # TODO check for must-haves
-        return view(props=props)
+        return view(properties=properties)

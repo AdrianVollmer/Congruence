@@ -44,21 +44,14 @@ def get_timestamp():
     return timestamp
 
 
-#  def make_api_call(endpoint, parameters, base="rest/api", headers={},
-#                    update_chache=False):
-#      """This accesses the REST API"""
-#      url = f"{base}/{endpoint}"
-#      r = make_request(url, params=parameters, headers=headers)
-#      return json.loads(r.text)
-#  
-#  
-#  def make_feedbuilder_call(update_cache=False, **kwargs):
-#      """This requests to build a feed
-#  
-#      This is needed because the API is not always able to sort after
-#      'lastUpdated'
-#      """
-#      pass
+def make_api_call(endpoint, parameters, base="rest/api", headers={}):
+    """This accesses the REST API"""
+    url = f"{base}/{endpoint}"
+    r = make_request(url, params=parameters, headers=headers)
+    result = json.loads(r.text)
+    if "results" in result:
+        return result['results']
+    return []
 
 
 def make_request(url, params={}, data=None, method="GET", headers={}):
@@ -92,7 +85,7 @@ def make_request(url, params={}, data=None, method="GET", headers={}):
 
 
 def not_authenticated(response):
-    if response.status_code == 401:
+    if response.status_code in [401, 403]:
         return True
     if (
         response.status_code == 404

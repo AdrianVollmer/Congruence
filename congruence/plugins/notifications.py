@@ -26,15 +26,15 @@ from congruence.views import ConfluenceMainView, ConfluenceListBox,\
 import json
 
 
-def get_notifications(props={"limit": 30}):
+def get_notifications(properties={"limit": 30}):
     r = make_request("rest/mywork/latest/notification/nested",
-                     params=props,
+                     params=properties,
                      )
     return json.loads(r.text)
 
 
 class PluginView(ConfluenceMainView):
-    def __init__(self, props={}):
+    def __init__(self, properties={}):
         def body_builder():
             entries = get_notifications()
 
