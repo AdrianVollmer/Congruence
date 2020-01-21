@@ -19,6 +19,8 @@ from congruence.views import ConfluenceMainView, ConfluenceTreeListBox,\
         ConfluenceCardTreeWidget
 from congruence.interface import make_request, html_to_text
 from congruence.logging import log
+from congruence.args import config
+from congruence.browser import open_gui_browser
 
 import json
 import re
@@ -106,7 +108,7 @@ class PageView(ConfluenceMainView):
 
             if external:
                 content = f"<html><head></head><body>{content}</body></html>"
-                process = Popen("elinks", stdin=PIPE, stderr=PIPE)
+                process = Popen(config["CliBrowser"], stdin=PIPE, stderr=PIPE)
                 process.stdin.write(content.encode())
                 process.communicate()
                 return None
@@ -186,6 +188,15 @@ class CommentTree(ConfluenceTreeListBox):
             if node:
                 self.set_focus(node)
 
+    def keypress(self, size, key):
+        if key == 'b':
+            url = self.get_focus()[0].get_value()["url"]
+            log.debug(url)
+            open_gui_browser(url)
+            return
+        super().keypress(size, key)
+        return key
+
 
 def get_comments_of_page(id):
     def attr_picker(c):
@@ -196,6 +207,7 @@ def get_comments_of_page(id):
             "username": c["version"]["by"]["username"],
             "displayName": c["version"]["by"]["displayName"],
             "date": date,
+            "url": c["_links"]["webui"],
             "versions": str(c["version"]["number"]),
             "content": html_to_text(c["body"]["view"]["value"]),
             # TODO insert selection of inline comments

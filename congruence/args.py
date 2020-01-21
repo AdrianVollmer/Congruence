@@ -75,3 +75,8 @@ DEFAULTS = {
 for key, value in DEFAULTS.items():
     if key not in config:
         config[key] = value
+
+
+HOST = config["Host"]
+PROTO = config["Protocol"]
+BASE_URL = f"{PROTO}://{HOST}"

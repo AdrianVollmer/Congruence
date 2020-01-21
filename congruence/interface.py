@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.args import config, cookie_jar
+from congruence.args import config, cookie_jar, BASE_URL
 from congruence.logging import log
 
 from datetime import datetime as dt
@@ -36,9 +36,6 @@ if "Proxy" in config:
     session.proxies = {config["Protocol"]: config["Proxy"]}
 
 
-HOST = config["Host"]
-PROTO = config["Protocol"]
-BASE_URL = f"{PROTO}://{HOST}"
 XSRF = ""
 
 
