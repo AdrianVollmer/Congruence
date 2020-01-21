@@ -31,6 +31,7 @@ import urwid
 def get_microblog(properties):
     """Load Microblog entries via HTTP"""
 
+    log.info("Fetch microblog...")
     response = make_request(
         "rest/microblog/1.0/microposts/search",
         params={
@@ -121,7 +122,6 @@ class MicroblogReplyView(CongruenceListBox):
         self.entries = [MicroblogEntry(entries, is_reply=True)]
         self.entries += [MicroblogEntry(e, is_reply=True)
                          for e in entries["replies"]]
-        log.debug(self.entries)
         super().__init__(self.entries, help_string=__help__)
 
 
@@ -129,7 +129,6 @@ class MicroblogReplyDetails(CongruenceListBox):
     def __init__(self, data):
         self.title = "Details"
         # Build details view
-        log.debug(data)
         del data['renderedContent']
         max_len = max([len(k) for k, _ in data.items()])
         line = [[urwid.Text(k), urwid.Text(str(v))] for k, v in data.items()]

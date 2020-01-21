@@ -363,7 +363,6 @@ class CongruenceApp(object):
             try:
                 self.loop.run()
             except Exception as e:
-                self.pop_view()
                 log.error(str(e))
                 self.alert(str(e), 'error')
 
