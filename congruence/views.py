@@ -290,6 +290,7 @@ class CongruenceApp(object):
 
         # Initialize view stack
         self._view_stack = []
+        self._title_stack = []
 
         # Create a view of all plugins defined in the config
         self.entries = []
@@ -306,13 +307,17 @@ class CongruenceApp(object):
             )
         self.body = CongruenceListBox(self.entries, help_string=__help__)
         self.title = "Congruence"
+        self.header = urwid.Text(('head', self.title))
         self.footer = CongruenceFooter()
         self.view = urwid.Frame(
             self.body,
-            header=urwid.AttrMap(urwid.Text(self.title), 'head'),
+            header=self.header,
             footer=self.footer,
         )
         self.active = True
+
+    def get_full_title(self):
+        return ' / '.join(self._title_stack)
 
     def get_current_widget(self):
         return self.loop.widget.body
@@ -327,19 +332,23 @@ class CongruenceApp(object):
         log.info("Alert (%s): %s" % (msgtype, message))
         self.footer.status_line.set_text((msgtype, message))
 
-    def push_view(self, view, title=""):
+    def push_view(self, view):
         """Open a new view and keep track of the old one"""
-
+        title = getattr(view, "title", "untitled")
         log.debug("Pushing view '%s'" % title)
+        self._title_stack.append(title)
         self._view_stack.append(self.loop.widget.body)
         self.loop.widget.body = view
+        self.header.set_text(('head', self.get_full_title()))
 
     def pop_view(self):
         """Restore the last view down the list"""
 
         if self._view_stack:
             view = self._view_stack.pop()
+            self._title_stack.pop()
             self.loop.widget.body = view
+            self.header.set_text(('head', self.get_full_title()))
         else:
             raise urwid.ExitMainLoop()
 
