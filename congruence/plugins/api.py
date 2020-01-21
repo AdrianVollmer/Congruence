@@ -46,13 +46,16 @@ def get_feed_entries(properties):
 
 
 class APIView(ConfluenceMainView):
-    def __init__(self, properties={}):
+    def __init__(self, properties={}, focus=None):
         def body_builder():
             if not self.entries:
                 self.entries = get_feed_entries(self.properties)
             else:
                 self.entries += get_feed_entries(self.properties)
-            return ConfluenceListBox(self.entries)
+            view = ConfluenceListBox(self.entries)
+            if focus:
+                view.set_focus(focus)
+            return view
         self.properties = properties
         self.properties["Parameters"]['start'] = 0
         if "entries" not in self.__dict__:
@@ -72,8 +75,8 @@ class APIView(ConfluenceMainView):
         self.properties["Parameters"]["start"] +=\
             self.properties["Parameters"]["limit"]
         self.entries += get_feed_entries(self.properties)
-        self.__init__(properties=self.properties)
-        # TODO keep focus where it was
+        focus = self.body.get_focus()[1]
+        self.__init__(properties=self.properties, focus=focus)
 
 
 class ConfluenceAPIEntry(ConfluenceSimpleListEntry):
