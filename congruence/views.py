@@ -307,17 +307,17 @@ class CongruenceApp(object):
             )
         self.body = CongruenceListBox(self.entries, help_string=__help__)
         self.title = "Congruence"
-        self.header = urwid.Text(('head', self.title))
+        self.header = urwid.Text(self.title)
         self.footer = CongruenceFooter()
         self.view = urwid.Frame(
             self.body,
-            header=self.header,
+            header=urwid.AttrMap(self.header, 'head'),
             footer=self.footer,
         )
         self.active = True
 
     def get_full_title(self):
-        return ' / '.join(self._title_stack)
+        return ' / '.join([self.title] + self._title_stack)
 
     def get_current_widget(self):
         return self.loop.widget.body
