@@ -99,27 +99,29 @@ def get_id_from_url(url):
 class PageView(CongruenceListBox):
     """Open a confluence page/blogpost in the external CLI browser"""
 
-    def __init__(self, url, external=True):
-        def body_builder():
-            log.debug("Build HTML view for %s" % self.url)
-            id = get_id_from_url(self.url)
-            rest_url = f"rest/api/content/{id}?expand=body.storage"
-            content = make_request(rest_url).text
-            content = json.loads(content)
-            content = content["body"]["storage"]["value"]
+    def __init__(self, data, external=True):
+        self.title = "Page"
+        self.data = data
+        id = self.data['content']['id']
+        #  log.debug(data)
+        log.debug("Build HTML view for page with id '%s'" % id)
+        rest_url = f"rest/api/content/{id}?expand=body.storage"
+        content = make_request(rest_url).text
+        content = json.loads(content)
+        content = content["body"]["storage"]["value"]
 
-            if external:
-                content = f"<html><head></head><body>{content}</body></html>"
-                process = Popen(config["CliBrowser"], stdin=PIPE, stderr=PIPE)
-                process.stdin.write(content.encode())
-                process.communicate()
-                return None
-            else:
-                content = f"<html><head></head><body>{content}</body></html>"
-                text = html_to_text(content)
-                return urwid.Frame(urwid.Filler(urwid.Text(text)))
-        self.url = url
-        super().__init__(body_builder)
+        if external:
+            content = f"<html><head></head><body>{content}</body></html>"
+            process = Popen(config["CliBrowser"], stdin=PIPE, stderr=PIPE)
+            process.stdin.write(content.encode())
+            process.communicate()
+            #  super().__init__(config["CliBrowser"], main_loop=self.app.loop)
+            super().__init__([])
+            self.app.pop_view()
+        else:
+            content = f"<html><head></head><body>{content}</body></html>"
+            text = html_to_text(content)
+            return urwid.Frame(urwid.Filler(urwid.Text(text)))
 
 
 class CommentView(CongruenceTreeListBox):

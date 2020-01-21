@@ -51,17 +51,29 @@ class APIView(CongruenceListBox):
     def __init__(self, properties={}, focus=None):
         self.title = "API"
         self.properties = properties
-        self.entries = get_feed_entries(self.properties)
+        self.entries = getattr(self, "entries", [])
+        self.entries += get_feed_entries(self.properties)
         super().__init__(self.entries, help_string=__help__)
+        if focus:
+            self.set_focus(focus[1])
+
+    def keypress(self, size, key):
+        log.debug("Keypress in APIView: %s", key)
+        if key == 'm':
+            self.load_more()
+            # Re-build view
+            self.app.pop_view()
+            self.app.push_view(self)
+            return
+        return super().keypress(size, key)
 
     def load_more(self):
-        log.info("Load more '%s'..." % self.title_text)
+        log.info("Load more ...")
         if 'start' not in self.properties["Parameters"]:
             self.properties["Parameters"]['start'] = 0
         self.properties["Parameters"]["start"] +=\
             self.properties["Parameters"]["limit"]
-        self.entries += get_feed_entries(self.properties)
-        focus = self.body.get_focus()[1]
+        focus = self.get_focus()
         self.__init__(properties=self.properties, focus=focus)
 
 

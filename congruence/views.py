@@ -241,12 +241,6 @@ class CongruenceListBox(urwid.ListBox):
             key = 'down'
             self.keypress(size, key)
             return
-        if key == 'm':
-            self.load_more()
-            # Re-build view
-            self.app.pop_view()
-            self.app.push_view(self.build())
-            return
         return super().keypress(size, key)
 
 
@@ -368,7 +362,7 @@ class CongruenceApp(object):
             try:
                 self.loop.run()
             except Exception as e:
-                log.error(str(e))
+                log.exception(e)
                 self.alert(str(e), 'error')
 
     def get_plugin_class(self, name):

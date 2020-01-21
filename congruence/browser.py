@@ -20,6 +20,8 @@ from congruence.logging import log
 from shlex import split
 from subprocess import Popen, PIPE
 
+import urwid
+
 
 def open_gui_browser(url):
     if not url.startswith(BASE_URL):
@@ -35,3 +37,20 @@ def open_gui_browser(url):
     log.info("Executing: `%s`" % cmd)
     process = Popen(split(cmd), stdin=PIPE, stderr=PIPE)
     process.communicate()
+
+
+class CliBrowserView(urwid.Terminal):
+    """A urwid widget for displaying a CLI browser
+
+    :url: the url to display. If it is -, read from stdin.
+    """
+
+    def __init__(self, url):
+        cmd = config["CliBrowser"]
+        if '%s' not in cmd:
+            cmd += " '%s'"
+        cmd = cmd % url
+        if url == '-':
+            cmd = cmd.split(' ')[0]
+
+        super().__init__(cmd)
