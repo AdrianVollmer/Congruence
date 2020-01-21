@@ -19,6 +19,8 @@ PALETTE = [
     ('focus', 'black', 'brown'),
     ('head', 'yellow', 'black', 'standout'),
     ('selected', 'light cyan', 'black', 'standout'),
+    ('card-head', 'light gray', 'black'),
+    ('card-focus', 'black', 'brown'),
     ('foot', 'light gray', 'black'),
     ('key', 'light cyan', 'black', 'underline'),
     ('title', 'white', 'black', 'bold'),

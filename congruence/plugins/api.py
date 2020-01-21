@@ -26,11 +26,13 @@ is indicated by a single letter:
 
 """
 
-from congruence.views import ConfluenceMainView, ConfluenceListBox,\
-    ConfluenceSimpleListEntry
+from congruence.views import CongruenceListBox,\
+    CongruenceListBoxEntry
 from congruence.interface import make_api_call, convert_date
 from congruence.logging import log
 from congruence.confluence import PageView, CommentView
+
+import urwid
 
 
 def get_feed_entries(properties):
@@ -40,32 +42,16 @@ def get_feed_entries(properties):
         "search",
         parameters=properties["Parameters"],
     )
-    result = [ConfluenceAPIEntry(e) for e in response]
+    result = [CongruenceAPIEntry(e) for e in response]
     #  result = change_filter(result)
     return result
 
 
-class APIView(ConfluenceMainView):
+class APIView(CongruenceListBox):
     def __init__(self, properties={}, focus=None):
-        def body_builder():
-            if not self.entries:
-                self.entries = get_feed_entries(self.properties)
-            view = ConfluenceListBox(self.entries)
-            if focus:
-                view.set_focus(focus)
-            return view
         self.properties = properties
-        if "entries" not in self.__dict__:
-            self.entries = []
-        if "DisplayName" in self.properties:
-            title = "API: %(DisplayName)s" % self.properties
-        else:
-            title = "API"
-        super().__init__(
-            body_builder,
-            title,
-            help_string=__help__,
-        )
+        self.entries = get_feed_entries(self.properties)
+        super().__init__(self.entries, help_string=__help__)
 
     def load_more(self):
         log.info("Load more '%s'..." % self.title_text)
@@ -78,18 +64,12 @@ class APIView(ConfluenceMainView):
         self.__init__(properties=self.properties, focus=focus)
 
 
-class ConfluenceAPIEntry(ConfluenceSimpleListEntry):
+class CongruenceAPIEntryLine(urwid.Columns):
     def __init__(self, data):
-        content = data['content']
-        if content['type'] in ["page", "blogpost"]:
-            view = PageView(data["url"])
-        elif content['type'] == "comment":
-            view = CommentView(data["url"], title_text=data["title"])
-        else:
-            view = None
-
+        self.data = data
+        content = self.data['content']
         lastUpdated = content['history']['lastUpdated']
-        name = [
+        title = [
             content["type"][0].upper(),
             content["space"]["key"],
             lastUpdated['by']["displayName"],
@@ -97,7 +77,28 @@ class ConfluenceAPIEntry(ConfluenceSimpleListEntry):
             content["title"],
         ]
 
-        super().__init__(name, view)
+        super().__init__(
+            [('pack', urwid.Text(t)) for t in title],
+            dividechars=1
+        )
+
+
+class CongruenceAPIEntry(CongruenceListBoxEntry):
+    def __init__(self, data):
+        self.data = data
+
+        key_map = {}
+        content = self.data['content']
+        if content['type'] in ["page", "blogpost"]:
+            key_map["enter"] = PageView
+        elif content['type'] == "comment":
+            key_map["enter"] = CommentView
+
+        super().__init__(
+            self.data,
+            CongruenceAPIEntryLine,
+            key_map,
+        )
 
 
 PluginView = APIView

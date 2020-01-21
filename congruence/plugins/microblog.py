@@ -14,20 +14,21 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__help__ = """Confluence Microblog
+__help__ = """Congruence Microblog
 
 Here you can see the latest entries of the microblog plugin.
 
 """
-from congruence.views import ConfluenceMainView, ConfluenceListBox
-from congruence.interface import make_request, html_to_text
+from congruence.views import CongruenceListBox, CongruenceListBoxEntry
+from congruence.interface import make_request, html_to_text, convert_date
+from congruence.logging import log
 
 import json
 
 import urwid
 
 
-def get_microblog():
+def get_microblog(properties):
     """Load Microblog entries via HTTP"""
 
     response = make_request(
@@ -43,58 +44,47 @@ def get_microblog():
         },
     )
     entries = json.loads(response.text)
-    result = [MicroblogEntry(s) for s in entries["microposts"]]
+    #  log.debug(entries)
+    result = []
+    for e in entries['microposts']:
+        result.append(MicroblogEntry(e))
     return result
 
 
-class PluginView(ConfluenceMainView):
-    def __init__(self, properties={}, entries=None, title="Microblog"):
-        def body_builder():
-            if self.entries is None:
-                self.entries = get_microblog()
-            return ConfluenceListBox(self.entries)
-
+class MicroblogView(CongruenceListBox):
+    def __init__(self, properties={}):
         self.properties = properties
-        self.entries = entries
-        self.title = title
-        super().__init__(body_builder, self.title)
+        self.entries = get_microblog(self.properties)
+        #  self.title = title
+        super().__init__(self.entries, help_string=__help__)
 
 
-class MicroblogEntry(urwid.Pile):
+class MicroblogEntry(CongruenceListBoxEntry):
     """Represents microblog entries or replies to one entry as a list of
     widgets"""
 
-    def __init__(self, data):
+    def __init__(self, data, is_reply=False):
         self.data = data
-        self.data["children"] = []
-        topic = self.data["topic"]["name"]
-        self.data["name"] = (
-            "%(authorFullName)s, "
-            "%(friendlyFormattedCreationDate)s"
-            f" [{topic}]"
-        ) % self.data
-
-        replies = [MicroblogEntry(s) for s in self.data["replies"]]
-        self.view = PluginView(
-            entries=replies,
-            title="Re: " + self.data["name"],
+        key_map = {
+            'enter': MicroblogReplyDetails if is_reply else MicroblogReplyView
+        }
+        super().__init__(
+            self.data,
+            CardListBoxEntry,
+            key_map=key_map,
         )
 
+
+class CardListBoxEntry(urwid.Pile):
+    def __init__(self, data):
+        self.data = data
         widgets = [
             self.render_head(self.data),
             self.render_content(self.data),
         ]
-
         super().__init__(widgets)
 
-    def selectable(self):
-        return True
-
-    def keypress(self, size, key):
-        return key
-
     def render_head(self, entry):
-        import datetime as dt
         liked_by = [u["userFullname"] for u in entry["likingUsers"]]
         max_likes = 3
         if len(liked_by) > max_likes:
@@ -109,17 +99,40 @@ class MicroblogEntry(urwid.Pile):
         # TODO process 'hasliked'
         header = "%s (%s)%s" % (
             entry["authorFullName"],
-            dt.datetime.fromtimestamp(entry["creationDate"]/1000.)
-            .strftime("%Y-%m-%d %H:%M"),
+            convert_date(entry["creationDate"]),
             liked_by,
         )
         return urwid.AttrMap(
             urwid.Text(header),
-            'head',
-            focus_map='selected'
+            'card-head',
+            focus_map='card-focus'
         )
 
     def render_content(self, entry):
         text = entry["renderedContent"]
         text = html_to_text(text).strip()
         return urwid.AttrMap(urwid.Text(text), 'body')
+
+
+class MicroblogReplyView(CongruenceListBox):
+    def __init__(self, entries):
+        self.entries = [MicroblogEntry(entries, is_reply=True)]
+        self.entries += [MicroblogEntry(e, is_reply=True)
+                         for e in entries["replies"]]
+        log.debug(self.entries)
+        super().__init__(self.entries, help_string=__help__)
+
+
+class MicroblogReplyDetails(CongruenceListBox):
+    def __init__(self, data):
+        # Build details view
+        log.debug(data)
+        del data['renderedContent']
+        max_len = max([len(k) for k, _ in data.items()])
+        line = [[urwid.Text(k), urwid.Text(str(v))] for k, v in data.items()]
+        line = [urwid.Columns([(max_len + 1, k), v])
+                for k, v in line]
+        super().__init__(line)
+
+
+PluginView = MicroblogView

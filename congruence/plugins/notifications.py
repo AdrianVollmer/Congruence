@@ -20,10 +20,12 @@ This view displays your latest notifications.
 
 """
 from congruence.interface import make_request, convert_date
-from congruence.views import ConfluenceMainView, ConfluenceListBox,\
-        ConfluenceSimpleListEntry
+from congruence.views import CongruenceListBox,\
+        CongruenceListBoxEntry
 
 import json
+
+import urwid
 
 
 def get_notifications(properties={"limit": 30}):
@@ -33,27 +35,44 @@ def get_notifications(properties={"limit": 30}):
     return json.loads(r.text)
 
 
-class PluginView(ConfluenceMainView):
+class PluginView(CongruenceListBox):
     def __init__(self, properties={}):
-        def body_builder():
-            entries = get_notifications()
+        entries = get_notifications()
 
-            notifications = []
-            for e in entries:
-                for n in e["notifications"]:
-                    n["reference"] = e["item"]
-                    notifications.append(n)
+        notifications = []
+        for e in entries:
+            for n in e["notifications"]:
+                n["reference"] = e["item"]
+                n = NotificationEntry(n)
+                notifications.append(n)
 
-            notifications = [ConfluenceNotificationEntry(n)
-                             for n in notifications]
-
-            return ConfluenceListBox(notifications)
-        super().__init__(body_builder, "Notifications", help_string=__help__)
+        super().__init__(notifications)
 
 
-class ConfluenceNotificationEntry(ConfluenceSimpleListEntry):
+class NotificationEntry(CongruenceListBoxEntry):
     def __init__(self, data):
+        self.data = data
+
+        key_map = {}
+        #  if content['type'] in ["page", "blogpost"]:
+        #      key_map["enter"] = PageView
+        #  elif content['type'] == "comment":
+        #      key_map["enter"] = CommentView
+        #      self.view = CommentView(self.data["url"],
+        #                              title_text=self.data["title"])
+        #  else:
+        #      self.view = None
+
+        super().__init__(
+            self.data,
+            NotificationLine,
+            key_map,
+        )
+
+
+class NotificationLine(urwid.Text):
+    def __init__(self, data):
+        self.data = data
         date = convert_date(data["created"])
         name = f"{data['reference']['title']}: {data['title']} ({date})"
-        view = None
-        super().__init__(name, view)
+        super().__init__(name)

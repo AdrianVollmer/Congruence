@@ -15,8 +15,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #  from congruence.args import config
-from congruence.views import ConfluenceApp
+from congruence.views import CongruenceApp
 
 
 def main():
-    ConfluenceApp().main()
+    CongruenceApp().main()

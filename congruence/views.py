@@ -37,28 +37,46 @@ from importlib import import_module
 import urwid
 
 
-class ConfluenceTreeWidget(urwid.TreeWidget):
+class CongruenceTextBox(urwid.Widget):
+    pass
+
+
+class CongruenceTreeListBoxEntry(urwid.TreeWidget):
     """ Display widget for leaf nodes """
+
+    def __init__(self, node, key_map={}):
+        self.node = node
+        self.key_map = key_map
+        super().__init__(node)
 
     def get_display_text(self):
         return "TODO"
 
+    def keypress(self, size, key):
+        log.debug("Keypress in TreeListBoxEntry: %s" % key)
+        for k, v in self.key_map.items():
+            if k == key:
+                data = list(self.node.get_value().values())[0]
+                self.app.push_view(v(data))
+                return
+        return key
 
-class ConfluenceCardTreeWidget(ConfluenceTreeWidget):
+
+class CongruenceCardTreeWidget(CongruenceTreeListBoxEntry):
     """This class can be used to display a carded TreeWidget"""
 
     indent_cols = 2
 
     def get_value(self):
-        node = self.get_node().get_value()
-        return list(node.values())[0]
+        node = list(self.get_node().get_value().values())[0]
+        return node
 
     def get_display_header(self):
         node = self.get_value()
         if node["title"] == 'root':
             return "Root"
         else:
-            return node["header"]
+            return node["title"]
 
     def get_display_body(self):
         node = self.get_value()
@@ -87,79 +105,98 @@ class ConfluenceCardTreeWidget(ConfluenceTreeWidget):
         return urwid.Padding(widget, width=('relative', 100), left=indent_cols)
 
 
-class ConfluenceNode(urwid.TreeNode):
+class CongruenceNode(urwid.TreeNode):
     """ Data storage object for leaf nodes """
 
-    def __init__(self, WidgetClass, data, **kwargs):
-        self.WidgetClass = WidgetClass
+    def __init__(self, wrapper, data, **kwargs):
+        self.wrapper = wrapper
         super().__init__(data, **kwargs)
 
     def load_widget(self):
-        return self.WidgetClass(self)
+        return self.wrapper(self)
 
 
-class ConfluenceParentNode(urwid.ParentNode):
+class CongruenceParentNode(urwid.ParentNode):
     """ Data storage object for interior/parent nodes """
 
-    def __init__(self, WidgetClass, data, **kwargs):
-        self.WidgetClass = WidgetClass
+    def __init__(self, wrapper, data, **kwargs):
+        self.wrapper = wrapper
         super().__init__(data, **kwargs)
 
     def load_widget(self):
-        return self.WidgetClass(self)
+        return self.wrapper(self)
 
     def load_child_keys(self):
         data = self.get_value()
         return range(len(data['children']))
 
     def load_child_node(self, key):
-        """Return either an ConfluenceNode or ConfluenceParentNode"""
+        """Return either an CongruenceNode or CongruenceParentNode"""
         childdata = self.get_value()['children'][key]
         childdepth = self.get_depth() + 1
         if 'children' in childdata:
-            childclass = ConfluenceParentNode
+            childclass = CongruenceParentNode
         else:
-            childclass = ConfluenceNode
-        return childclass(self.WidgetClass,
+            childclass = CongruenceNode
+        return childclass(self.wrapper,
                           childdata, parent=self, key=key, depth=childdepth)
 
 
-class ConfluenceTreeListBox(urwid.TreeListBox):
-    """Displays a tree view of 'WidgetClass' objects
+class CongruenceTreeListBox(urwid.TreeListBox):
+    """Displays a tree view of 'wrapper' objects
 
-    data: a tree-like dict-structure. Each dictionary needs to have the keys
+    :data: a tree-like dict-structure. Each dictionary needs to have the keys
         'name' and 'children'. The latter is a list of dictionaries and the
         former is an arbitrary dictionary which is passed to the constructor
-        of WidgetClass.
-    WidgetClass: some subclass of ConfluenceTreeWidget.
-
+        of wrapper.
+    :wrapper: some subclass of CongruenceTreeWidget.
     """
 
-    def __init__(self, data, WidgetClass):
-        self.WidgetClass = WidgetClass
-        topnode = ConfluenceParentNode(self.WidgetClass, data)
+    def __init__(self, data, wrapper):
+        self.wrapper = wrapper
+        topnode = CongruenceParentNode(self.wrapper, data)
         super().__init__(urwid.TreeWalker(topnode))
 
+    def keypress(self, size, key):
+        log.debug("Keypress in TreeListBox: %s", key)
+        if key == 'k':
+            key = 'up'
+            self.keypress(size, key)
+            return
+        if key == 'j':
+            key = 'down'
+            self.keypress(size, key)
+            return
+        return super().keypress(size, key)
+        #  return key
 
-class ConfluenceSimpleListEntry(urwid.WidgetWrap):
+
+class CongruenceListBoxEntry(urwid.WidgetWrap):
     """Represents one item in a ListBox
 
-    text: can be a string or a list of strings. If it is a list, the item
-        will be separated into columns.
+    :data: an object holding data which this ListBoxEntry represents.
+    :wrapper: a subclass of urwid.Widget whose constructor takes `data` as
+        an argument.
+    :key_map: a dictionary where the keys are literal keys and the values
+        are functions or classes, which will be called with `data` as the
+        argument when the corresponding key is pressed. The return values is
+        pushed onto the view stack.
     """
 
-    def __init__(self, text, view=None):
-        self.view = view
-        self.text = text
-        if isinstance(self.text, str):
-            line = urwid.Text(self.text)
+    def __init__(self, data, wrapper, key_map={}):
+        self.data = data
+        self.key_map = key_map
+        if isinstance(wrapper, str):
+            widget = urwid.Text(wrapper)
         else:
-            line = urwid.Columns(
-                [('pack', urwid.Text(t)) for t in text],
-                dividechars=1
-            )
+            widget = wrapper(data)
+        #  else:
+        #      line = urwid.Columns(
+        #          [('pack', urwid.Text(t)) for t in text],
+        #          dividechars=1
+        #      )
         widget = urwid.AttrMap(
-            line,
+            widget,
             attr_map="body",
             focus_map="focus",
         )
@@ -169,89 +206,35 @@ class ConfluenceSimpleListEntry(urwid.WidgetWrap):
         return True
 
     def keypress(self, size, key):
-        log.debug("Keypress in ListEntry %s: %s" % (self.text, key))
+        log.debug("Keypress in ListBoxEntry: %s" % key)
+        for k, v in self.key_map.items():
+            if k == key:
+                self.app.push_view(v(self.data))
+                return
         return key
 
 
-class ConfluenceListBox(urwid.ListBox):
-    """Displays a list of ConfluenceSimpleListEntry objects
+class CongruenceListBox(urwid.ListBox):
+    """Displays a list of CongruenceListBoxEntry objects
 
-    list: a list of ConfluenceSimpleListEntry objects
+    list: a list of CongruenceListBoxEntry objects
 
     """
 
-    def __init__(self, entries):
+    def __init__(self, entries, help_string=None):
         self.entries = entries
+        self.help_string = help_string
         super().__init__(urwid.SimpleFocusListWalker(self.entries))
 
-
-class ConfluenceMainView(urwid.Frame):
-    """Represents the main view of the app
-
-    Every plugin should subclass this view.
-
-    body_builder: A function, which takes no arguments and returns a
-        urwid.Widget which implemented get_focus(). This widget can have a
-        'view' attribute of type ConfluenceMainView, which will be shown
-        when 'enter' is pressed.
-    title_text: an optional text for the header
-    """
-
-    def __init__(self, body_builder,
-                 title_text="",
-                 help_string=None):
-        self.body_builder = body_builder
-        self.title_text = title_text
-        self.header = urwid.AttrWrap(urwid.Text(self.title_text), 'head')
-        self.help_string = None
-        if help_string:
-            self.help_string = help_string
-
-    def build(self):
-        self.view = self.body_builder()
-        if self.view:
-            super().__init__(
-                self.view,
-                header=self.header,
-            )
-            return self
-        return None
-
-    def build_help(self):
-        def body_builder():
-            text = [urwid.Text(self.help_string)]
-            view = urwid.ListBox(urwid.SimpleFocusListWalker(text))
-            return view
-        return ConfluenceMainView(
-            body_builder,
-            title_text="Help: " + self.title_text,
-        ).build()
-
     def keypress(self, size, key):
-        log.debug("Keypress in %s: %s" % (self.title_text, key))
-        if key == 'enter':
-            node = self.body.get_focus()[0]
-            if hasattr(node, "view") and node.view:
-                log.debug("Push View")
-                next_view = node.view.build()
-                if next_view:
-                    self.app.push_view(next_view)
-                    return None
-                # Redraw screen, because we're probably coming back from
-                # another app (cli browser or editor)
-                self.app.loop.screen.clear()
-        if key == "?":
-            if self.help_string:
-                next_view = self.build_help()
-                self.app.push_view(next_view)
-                return None
+        log.debug("Keypress in ListBox: %s", key)
         if key == 'k':
             key = 'up'
-            self.view.keypress(size, key)
+            self.keypress(size, key)
             return
         if key == 'j':
             key = 'down'
-            self.view.keypress(size, key)
+            self.keypress(size, key)
             return
         if key == 'm':
             self.load_more()
@@ -259,26 +242,47 @@ class ConfluenceMainView(urwid.Frame):
             self.app.pop_view()
             self.app.push_view(self.build())
             return
-        if key == 'q':
-            self.app.pop_view()
-            return None
-        return self.body.keypress(size, key)
-
-    def load_more(self):
-        pass
+        return super().keypress(size, key)
 
 
-class ConfluenceApp(object):
+class CongruenceFooter(urwid.Pile):
+    """Represents the footer, consisting of a key map and a status line"""
+
+    def __init__(self):
+        self.key_map = urwid.AttrMap(urwid.Text("keys"), 'head')
+        self.status_line = urwid.Text("")
+        super().__init__([self.key_map, self.status_line])
+
+
+class HelpView(urwid.ListBox):
+    def __init__(self, help_string):
+        text = [urwid.Text(help_string)]
+        super().__init__(urwid.SimpleFocusListWalker(text))
+
+
+class CongruenceApp(object):
     """This class represents the app"""
 
     def unhandled_input(self, key):
-        if key in ('q', 'Q'):
+        if key == '?':
+            widget = self.get_current_widget()
+            helpstr = getattr(widget, "help_string", None)
+            if helpstr:
+                view = HelpView(helpstr)
+                self.push_view(view)
+        if key == 'q':
+            self.pop_view()
+        if key == 'Q':
             raise urwid.ExitMainLoop()
 
     def __init__(self):
-        # Set this class variable so each instance can refer to the app
-        # object
-        ConfluenceMainView.app = self
+        # Set these class variables so each instance can refer to the app
+        # object to use push_view/pop_view and status messages
+        # TODO: static methods?
+        CongruenceListBox.app = self
+        CongruenceListBoxEntry.app = self
+        CongruenceTreeListBox.app = self
+        CongruenceTreeListBoxEntry.app = self
 
         # Initialize view stack
         self._view_stack = []
@@ -286,30 +290,57 @@ class ConfluenceApp(object):
         # Create a view of all plugins defined in the config
         self.entries = []
         for name, p in config["Plugins"].items():
-            view = self.get_plugin_view(name, p)
+            title = name
             if p and "DisplayName" in p:
-                name = p["DisplayName"]
+                title = p["DisplayName"]
             self.entries.append(
-                ConfluenceSimpleListEntry(name, view=view),
+                CongruenceListBoxEntry(
+                    p,
+                    title,
+                    {'enter': self.get_plugin_class(name)},
+                ),
             )
-        self.view = ConfluenceMainView(
-            lambda: ConfluenceListBox(self.entries),
-            "Congruence main menu",
-            help_string=__help__,
-        ).build()
+        self.body = CongruenceListBox(self.entries, help_string=__help__)
+        self.title = "Congruence"
+        self.footer = CongruenceFooter()
+        self.view = urwid.Frame(
+            self.body,
+            header=urwid.AttrMap(urwid.Text(self.title), 'head'),
+            footer=self.footer,
+        )
 
-    def push_view(self, view):
+    def get_current_widget(self):
+        return self.loop.widget.body
+
+    def alert(self, message, type='info'):
+        """Show a message in the status line
+
+
+        :type: one of 'info', 'warning', 'error'
+        """
+
+        log.info("Alert (%s): %s" % (type, message))
+        color = {
+            'info': 'white',
+        }
+        self._set_status(message, color[type])
+
+    def _set_status(self, message, color):
+        pass
+
+    def push_view(self, view, title=""):
         """Open a new view and keep track of the old one"""
 
-        self._view_stack.append(self.loop.widget)
-        self.loop.widget = view
+        log.debug("Pushing view '%s'" % title)
+        self._view_stack.append(self.loop.widget.body)
+        self.loop.widget.body = view
 
     def pop_view(self):
         """Restore the last view down the list"""
 
         if self._view_stack:
             view = self._view_stack.pop()
-            self.loop.widget = view
+            self.loop.widget.body = view
         else:
             raise urwid.ExitMainLoop()
 
@@ -322,11 +353,12 @@ class ConfluenceApp(object):
             unhandled_input=self.unhandled_input)
         self.loop.run()
 
-    def get_plugin_view(self, name, properties={}):
-        """This function builds the first view of the app"""
+    def get_plugin_class(self, name):
+        """This function retrieves the class the plugin"""
+
         view = getattr(
             import_module('congruence.plugins.' + name.lower()),
             "PluginView"
         )
         # TODO check for must-haves
-        return view(properties=properties)
+        return view

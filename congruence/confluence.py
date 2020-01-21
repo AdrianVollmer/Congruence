@@ -15,9 +15,9 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from congruence.views import ConfluenceMainView, ConfluenceTreeListBox,\
-        ConfluenceCardTreeWidget
-from congruence.interface import make_request, html_to_text
+from congruence.views import CongruenceTreeListBox,\
+        CongruenceCardTreeWidget, CongruenceListBox
+from congruence.interface import make_request, html_to_text, convert_date
 from congruence.logging import log
 from congruence.args import config
 from congruence.browser import open_gui_browser
@@ -26,7 +26,6 @@ import json
 import re
 from subprocess import Popen, PIPE
 
-from dateutil.parser import parse as dtparse
 import urwid
 
 
@@ -94,7 +93,7 @@ def get_id_from_url(url):
     return None
 
 
-class PageView(ConfluenceMainView):
+class PageView(CongruenceListBox):
     """Open a confluence page/blogpost in the external CLI browser"""
 
     def __init__(self, url, external=True):
@@ -120,90 +119,72 @@ class PageView(ConfluenceMainView):
         super().__init__(body_builder)
 
 
-class CommentView(ConfluenceMainView):
+class CommentView(CongruenceTreeListBox):
     """Display a comment tree
 
-    url: URL to the Confluence page
-    focused_comment_id: ID of the comment which gets the initial focus
+    :data: a comment object inside the tree as a dictionary.
     """
 
-    def __init__(self, url, focused_comment_id=None, **kwargs):
-        def body_builder():
-            id = get_id_from_url(self.url)
-            log.debug("Build CommentView for page with id '%s'" % id)
-            comments = {
-                "0": {"title": "root"},
-                "children": get_comments_of_page(id),
-            }
-            #  TODO use focused_comment_id
-            return CommentTree(comments, focus_id=self.focused_comment_id)
-
-        self.url = url
-        self.focused_comment_id = re.search(r'#comment-(.*)$', url).groups()[0]
-        super().__init__(body_builder, **kwargs)
-
-
-class CommentWidget(ConfluenceCardTreeWidget):
-    def __init__(self, widget):
-        def body_builder():
-            # Build details view
-            data = self.get_node().get_value()
-            id = list(data.keys())[0]
-            data = data[id]
-            data["id"] = id
-            del data['content']
-            max_len = max([len(k) for k, _ in data.items()])
-            log.debug(max_len)
-            line = [[urwid.Text(k), urwid.Text(v)] for k, v in data.items()]
-            line = [urwid.Columns([(max_len + 1, k), v])
-                    for k, v in line]
-            view = urwid.ListBox(urwid.SimpleFocusListWalker(line))
-            return view
-        self.view = ConfluenceMainView(
-            body_builder,
-            title_text="Comment details",
-        )
-        super().__init__(widget)
-
-    def get_display_header(self):
-        node = self.get_value()
-        if node["title"] == 'root':
-            return "Comments"
-        else:
-            return "%(displayName)s, %(date)s" % node
-
-
-class CommentTree(ConfluenceTreeListBox):
-    def __init__(self, comments, focus_id=None):
-        self.comments = comments
-        super().__init__(self.comments, CommentWidget)
-        if focus_id:
-            node = self._body.focus
-            while True:
-                node = self._body.get_next(node)[1]
-                if not node:
-                    break
-                if list(node.get_value().keys())[0] == focus_id:
-                    break
-            if node:
-                self.set_focus(node)
+    def __init__(self, data):
+        comment_id = data['content']['id']
+        log.debug("Build CommentView for page with id '%s'" % comment_id)
+        container = data['content']['_expandable']['container']
+        page_id = re.search(r'/([^/]*$)', container).groups()[0]
+        comments = {
+            "0": {"title": "root"},
+            "children": get_comments_of_page(page_id),
+        }
+        super().__init__(comments, CommentWidget)
+        # set focus
+        node = self._body.focus
+        while True:
+            node = self._body.get_next(node)[1]
+            if not node:
+                break
+            if list(node.get_value().keys())[0] == comment_id:
+                break
+        if node:
+            self.set_focus(node)
 
     def keypress(self, size, key):
         if key == 'b':
             url = self.get_focus()[0].get_value()["url"]
-            log.debug(url)
             open_gui_browser(url)
             return
-        super().keypress(size, key)
-        return key
+        return super().keypress(size, key)
+
+
+class CommentWidget(CongruenceCardTreeWidget):
+    def __init__(self, node):
+        super().__init__(
+            node,
+            key_map={
+                'enter': CommentDetails,
+            }
+        )
+
+
+class CommentDetails(CongruenceListBox):
+    def __init__(self, data):
+        # Build details view
+        del data['content']
+        max_len = max([len(k) for k, _ in data.items()])
+        line = [[urwid.Text(k), urwid.Text(str(v))] for k, v in data.items()]
+        line = [urwid.Columns([(max_len + 1, k), v])
+                for k, v in line]
+        super().__init__(line)
 
 
 def get_comments_of_page(id):
     def attr_picker(c):
         date = c["version"]["when"]
-        date = dtparse(date).strftime("%Y-%m-%d %H:%M")
+        date = convert_date(date)
+        title = "%s, %s" % (
+            c["version"]["by"]["displayName"],
+            date,
+        )
         return {
-            "title": c["title"],
+            "title": title,
             "username": c["version"]["by"]["username"],
             "displayName": c["version"]["by"]["displayName"],
             "date": date,
