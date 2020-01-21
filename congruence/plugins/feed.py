@@ -78,15 +78,22 @@ def store_in_db(url, entries):
         "id": e["id"],
         "data": json.dumps(e)
     } for e in entries]
-    connection.execute(query, values_list)
+    if values_list:
+        connection.execute(query, values_list)
 
 
 def get_from_db(url):
     log.info("Accessing DB to get cached feed...")
     query = db.select([feed])
     ResultProxy = connection.execute(query)
-    result = ResultProxy.fetchall()
-    return [json.loads(e[3]) for e in result]
+    ans = ResultProxy.fetchall()
+    result = []
+    for e in ans:
+        try:
+            result.append(json.loads(e[3]))
+        except TypeError:
+            log.error("Could not parse DB entry: %s" % e[3])
+    return result
 
 
 def xml_to_dict(soup):
