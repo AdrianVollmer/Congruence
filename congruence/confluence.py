@@ -14,6 +14,9 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+This file contains views and functions which are specific to Confluence
+"""
 
 from congruence.views import CongruenceTreeListBox,\
         CongruenceCardTreeWidget, CongruenceListBox

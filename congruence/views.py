@@ -22,6 +22,11 @@
 #      Copyright (C) 2004-2007  Ian Ward
 # Urwid web site: http://excess.org/urwid/
 
+"""
+This file contains general 'views' (i.e. urwid widgets) which are
+particular to this app and not to Confluence
+"""
+
 __help__ = """About Congruence:
     Adrian Vollmer, 2020
 
