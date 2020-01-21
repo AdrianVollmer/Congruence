@@ -32,17 +32,19 @@ parser.add_argument(
     '-l', '--log-level',
     type=int,
     default=None,
-    help="enable logging to a file with the given log level (0-4)"
+    help="enable logging to a file $XDG_DATA_HOME/congruence"
+         " with the given log level (0-4)"
 )
 
 args = parser.parse_args()
 
+data_home = os.path.join(xdg.XDG_DATA_HOME, "congruence")
 config_home = os.path.join(xdg.XDG_CONFIG_HOME, "congruence")
 config_file = os.path.join(config_home, "config.yaml")
 cache_home = os.path.join(xdg.XDG_CACHE_HOME, "congruence")
 cookie_jar = os.path.join(cache_home, "cookiejar.dat")
 
-for d in [cache_home, config_home]:
+for d in [cache_home, config_home, data_home]:
     if not os.path.exists(d):
         os.makedirs(d)
 
@@ -80,3 +82,4 @@ for key, value in DEFAULTS.items():
 HOST = config["Host"]
 PROTO = config["Protocol"]
 BASE_URL = f"{PROTO}://{HOST}"
+LOG_FILE = os.path.join(data_home, "congruence.log")

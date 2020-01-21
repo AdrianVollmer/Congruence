@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.args import args
+from congruence.args import args, LOG_FILE
 
 import logging
 
@@ -35,7 +35,7 @@ if args.log_level:
     ][args.log_level]
 
     logging.basicConfig(
-        filename="congruence.log",
+        filename=LOG_FILE,
         filemode='w',
         level=log_level,
         format=FORMAT,
