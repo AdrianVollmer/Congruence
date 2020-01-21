@@ -195,17 +195,13 @@ class ConfluenceMainView(urwid.Frame):
         'view' attribute of type ConfluenceMainView, which will be shown
         when 'enter' is pressed.
     title_text: an optional text for the header
-    footer_text: an optional text for the footer
     """
 
     def __init__(self, body_builder,
                  title_text="",
-                 footer_text="",
                  help_string=None):
         self.body_builder = body_builder
         self.title_text = title_text
-        self.footer_text = footer_text
-        self.footer = urwid.AttrWrap(urwid.Text(self.footer_text), 'foot')
         self.header = urwid.AttrWrap(urwid.Text(self.title_text), 'head')
         self.help_string = None
         if help_string:
@@ -216,7 +212,6 @@ class ConfluenceMainView(urwid.Frame):
         if self.view:
             super().__init__(
                 self.view,
-                footer=self.footer,
                 header=self.header,
             )
             return self
@@ -226,7 +221,6 @@ class ConfluenceMainView(urwid.Frame):
         def body_builder():
             text = [urwid.Text(self.help_string)]
             view = urwid.ListBox(urwid.SimpleFocusListWalker(text))
-            # TODO add shortcuts
             return view
         return ConfluenceMainView(
             body_builder,
@@ -301,7 +295,6 @@ class ConfluenceApp(object):
         self.view = ConfluenceMainView(
             lambda: ConfluenceListBox(self.entries),
             "Congruence main menu",
-            "foo",
             help_string=__help__,
         ).build()
 
