@@ -34,19 +34,6 @@ from congruence.confluence import PageView, CommentView
 import urwid
 
 
-def get_feed_entries(properties):
-    """Load feed entries from database"""
-
-    response = make_api_call(
-        "search",
-        parameters=properties["Parameters"],
-    )
-    result = [CongruenceAPIEntry(e) for e in response]
-    #  result = change_filter(result)
-    app.alert('Received %d items' % len(result), 'info')
-    return result
-
-
 class APIView(CongruenceListBox):
     def __init__(self, properties={}):
         self.title = "API"
@@ -62,24 +49,44 @@ class APIView(CongruenceListBox):
             self.load_more()
             self.redraw()
             return
+        if key == 'M':
+            self.load_much_more()
+            self.redraw()
+            return
         if key == 'u':
             self.update()
             self.redraw()
             return
         return super().keypress(size, key)
 
+    def get_feed_entries(self):
+        response = make_api_call(
+            "search",
+            parameters=self.properties["Parameters"],
+        )
+        result = [CongruenceAPIEntry(e) for e in response]
+        #  result = change_filter(result)
+        app.alert('Received %d items' % len(result), 'info')
+        self.properties["Parameters"]["start"] += \
+            self.properties["Parameters"]["limit"]
+        return result
+
     def load_more(self):
         log.info("Load more ...")
+        self.entries += self.get_feed_entries()
+
+    def load_much_more(self):
+        log.info("Load much more ...")
         p = self.properties
-        p["Parameters"]["start"] +=\
-            p["Parameters"]["limit"]
-        self.entries += get_feed_entries(self.properties)
+        p["Parameters"]["limit"] *= 5
+        self.entries += self.get_feed_entries()
+        p["Parameters"]["limit"] //= 5
 
     def update(self):
         log.info("Update ...")
         p = self.properties
         p["Parameters"]["start"] = 0
-        self.entries = get_feed_entries(self.properties)
+        self.entries = self.get_feed_entries()
 
 
 class CongruenceAPIEntryLine(urwid.Columns):
