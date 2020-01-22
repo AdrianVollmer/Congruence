@@ -172,6 +172,14 @@ class CongruenceTreeListBox(urwid.TreeListBox):
             key = 'down'
             self.keypress(size, key)
             return
+        if key == '[':
+            key = 'page up'
+            self.keypress(size, key)
+            return
+        if key == ']':
+            key = 'page down'
+            self.keypress(size, key)
+            return
         return super().keypress(size, key)
         #  return key
 
@@ -240,6 +248,14 @@ class CongruenceListBox(urwid.ListBox):
             return
         if key == 'j':
             key = 'down'
+            self.keypress(size, key)
+            return
+        if key == '[':
+            key = 'page up'
+            self.keypress(size, key)
+            return
+        if key == ']':
+            key = 'page down'
             self.keypress(size, key)
             return
         return super().keypress(size, key)
