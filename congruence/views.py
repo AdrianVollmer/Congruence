@@ -222,14 +222,15 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
 class CongruenceListBox(urwid.ListBox):
     """Displays a list of CongruenceListBoxEntry objects
 
-    list: a list of CongruenceListBoxEntry objects
+    :entries: a list of CongruenceListBoxEntry objects
 
     """
 
     def __init__(self, entries, help_string=None):
         self.entries = entries
         self.help_string = help_string
-        super().__init__(urwid.SimpleFocusListWalker(self.entries))
+        self.walker = urwid.SimpleFocusListWalker(self.entries)
+        super().__init__(self.walker)
 
     def keypress(self, size, key):
         log.debug("Keypress in ListBox: %s", key)
@@ -242,6 +243,9 @@ class CongruenceListBox(urwid.ListBox):
             self.keypress(size, key)
             return
         return super().keypress(size, key)
+
+    def redraw(self):
+        self.walker[:] = self.entries
 
 
 class CongruenceFooter(urwid.Pile):
@@ -281,6 +285,8 @@ class CongruenceApp(object):
         # Set these class variables so each instance can refer to the app
         # object to use push_view/pop_view and status messages
         # TODO: static methods?
+        global app
+        app = self
         CongruenceListBox.app = self
         CongruenceListBoxEntry.app = self
         CongruenceTreeListBox.app = self
