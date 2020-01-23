@@ -42,8 +42,8 @@ Make sure you have all dependencies installed. The easiest is to just
 execute `pip3 install --user -r requirements.txt`. Alternatively, use your
 favorite virtual environment manager.
 
-Next, copy `config.yaml.sample` to `$XDG_CONFIG_HOME/ccli/config.yaml` (or
-`$HOME/.config/ccli/` if `$XDG_CONFIG_HOME` is not defined) and edit it to
+Next, copy `config.yaml.sample` to `$XDG_CONFIG_HOME/congruence/config.yaml` (or
+`$HOME/.config/congruence/` if `$XDG_CONFIG_HOME` is not defined) and edit it to
 your liking.
 
 License
