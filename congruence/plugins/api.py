@@ -35,27 +35,32 @@ import urwid
 
 
 class APIView(CongruenceListBox):
+
+    key_map = {
+        'm': ("load_more", "Load more objects"),
+        'M': ("load_more", "Load much more objects"
+              " (five times the regular amount)"),
+    }
+
     def __init__(self, properties={}):
         self.title = "API"
         self.properties = properties
         self.start = 0
         self.entries = []
-        self.update()
         super().__init__(self.entries, help_string=__help__)
+        self.update()
+        self.set_focus(0)
 
     def keypress(self, size, key):
         log.debug("Keypress in APIView: %s", key)
         if key == 'm':
             self.load_more()
-            self.redraw()
             return
         if key == 'M':
             self.load_much_more()
-            self.redraw()
             return
         if key == 'u':
             self.update()
-            self.redraw()
             return
         return super().keypress(size, key)
 
@@ -74,6 +79,7 @@ class APIView(CongruenceListBox):
     def load_more(self):
         log.info("Load more ...")
         self.entries += self.get_feed_entries()
+        self.redraw()
 
     def load_much_more(self):
         log.info("Load much more ...")
@@ -81,12 +87,14 @@ class APIView(CongruenceListBox):
         p["Parameters"]["limit"] *= 5
         self.entries += self.get_feed_entries()
         p["Parameters"]["limit"] //= 5
+        self.redraw()
 
     def update(self):
         log.info("Update ...")
         p = self.properties
         p["Parameters"]["start"] = 0
         self.entries = self.get_feed_entries()
+        self.redraw()
 
 
 class CongruenceAPIEntryLine(urwid.Columns):
