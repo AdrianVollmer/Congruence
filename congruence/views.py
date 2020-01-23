@@ -147,7 +147,23 @@ class CongruenceParentNode(urwid.ParentNode):
                           childdata, parent=self, key=key, depth=childdepth)
 
 
-class CongruenceTreeListBox(urwid.TreeListBox):
+class RememberParentKeyMapMeta(urwid.widget.WidgetMeta):
+    """This is metaclass which keeps track of the 'key_map' class variable
+
+    Subclasses will know what the value of key_map in its base classes were.
+    """
+    def __init__(cls, name, bases, attrs):
+        cls.parent_key_map = {}
+        for base in filter(lambda b: hasattr(b, 'key_map'), bases):
+            for k, v in base.key_map.items():
+                cls.parent_key_map[k] = v
+            for k, v in base.parent_key_map.items():
+                cls.parent_key_map[k] = v
+        super().__init__(name, bases, attrs)
+
+
+class CongruenceTreeListBox(urwid.TreeListBox,
+                            metaclass=RememberParentKeyMapMeta):
     """Displays a tree view of 'wrapper' objects
 
     :data: a tree-like dict-structure. Each dictionary needs to have the keys
@@ -157,29 +173,31 @@ class CongruenceTreeListBox(urwid.TreeListBox):
     :wrapper: some subclass of CongruenceTreeWidget.
     """
 
+    key_map = {
+        'k': ('up', 'move up'),
+        'j': ('down', 'move down'),
+        '[': ('page up', 'move page up'),
+        ']': ('page down', 'move page down'),
+    }
+
     def __init__(self, data, wrapper):
         self.wrapper = wrapper
         topnode = CongruenceParentNode(self.wrapper, data)
         super().__init__(urwid.TreeWalker(topnode))
 
+    def get_keymap(self):
+        return {
+            **(self.parent_key_map),
+            **(self.key_map),
+            **(self.get_focus()[0].key_map),
+        }
+
     def keypress(self, size, key):
         log.debug("Keypress in TreeListBox: %s", key)
-        if key == 'k':
-            key = 'up'
-            self.keypress(size, key)
-            return
-        if key == 'j':
-            key = 'down'
-            self.keypress(size, key)
-            return
-        if key == '[':
-            key = 'page up'
-            self.keypress(size, key)
-            return
-        if key == ']':
-            key = 'page down'
-            self.keypress(size, key)
-            return
+        for k, v in self.key_map.items():
+            if key == k:
+                self.keypress(size, v[0])
+                return
         return super().keypress(size, key)
         #  return key
 
@@ -222,17 +240,25 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
         log.debug("Keypress in ListBoxEntry: %s" % key)
         for k, v in self.key_map.items():
             if k == key:
-                self.app.push_view(v(self.data))
+                self.app.push_view(v[0](self.data))
                 return
         return key
 
 
-class CongruenceListBox(urwid.ListBox):
+class CongruenceListBox(urwid.ListBox,
+                        metaclass=RememberParentKeyMapMeta):
     """Displays a list of CongruenceListBoxEntry objects
 
     :entries: a list of CongruenceListBoxEntry objects
 
     """
+
+    key_map = {
+        'k': ('up', 'move up'),
+        'j': ('down', 'move down'),
+        '[': ('page up', 'move page up'),
+        ']': ('page down', 'move page down'),
+    }
 
     def __init__(self, entries, help_string=None):
         self.entries = entries
@@ -240,24 +266,19 @@ class CongruenceListBox(urwid.ListBox):
         self.walker = urwid.SimpleFocusListWalker(self.entries)
         super().__init__(self.walker)
 
+    def get_keymap(self):
+        return {
+            **(getattr(self, "parent_key_map", {})),
+            **(self.key_map),
+            **(self.get_focus()[0].key_map),
+        }
+
     def keypress(self, size, key):
         log.debug("Keypress in ListBox: %s", key)
-        if key == 'k':
-            key = 'up'
-            self.keypress(size, key)
-            return
-        if key == 'j':
-            key = 'down'
-            self.keypress(size, key)
-            return
-        if key == '[':
-            key = 'page up'
-            self.keypress(size, key)
-            return
-        if key == ']':
-            key = 'page down'
-            self.keypress(size, key)
-            return
+        for k, v in self.key_map.items():
+            if key == k:
+                self.keypress(size, v[0])
+                return
         return super().keypress(size, key)
 
     def redraw(self):
@@ -268,17 +289,23 @@ class CongruenceFooter(urwid.Pile):
     """Represents the footer, consisting of a key map and a status line"""
 
     def __init__(self):
-        self.key_map = urwid.AttrMap(urwid.Text("keys"), 'head')
+        self.key_legend = urwid.AttrMap(urwid.Text("keys"), 'head')
         self.status_line = urwid.Text("", wrap='clip')
-        super().__init__([self.key_map, self.status_line])
+        super().__init__([self.key_legend, self.status_line])
 
     def set_status(self, message, msgtype):
         self.status_line = urwid.AttrMap(urwid.Text(message), msgtype)
 
 
 class HelpView(urwid.ListBox):
-    def __init__(self, help_string):
-        text = [urwid.Text(help_string)]
+    title = "Help"
+
+    def __init__(self, widget):
+        help_string = getattr(widget, "help_string", None)
+        key_legend = "\nKey map:\n"
+        for k, v in widget.get_keymap().items():
+            key_legend += f"    {k}: {v[1]}\n"
+        text = [urwid.Text(help_string+key_legend)]
         super().__init__(urwid.SimpleFocusListWalker(text))
 
 
@@ -288,10 +315,8 @@ class CongruenceApp(object):
     def unhandled_input(self, key):
         if key == '?':
             widget = self.get_current_widget()
-            helpstr = getattr(widget, "help_string", None)
-            if helpstr:
-                view = HelpView(helpstr)
-                self.push_view(view)
+            view = HelpView(widget)
+            self.push_view(view)
         if key == 'q':
             self.pop_view()
         if key == 'Q':
