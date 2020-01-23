@@ -343,11 +343,14 @@ class CongruenceApp(object):
             title = name
             if p and "DisplayName" in p:
                 title = p["DisplayName"]
+            key_map = {
+                'enter': (self.get_plugin_class(name), 'next view'),
+            }
             self.entries.append(
                 CongruenceListBoxEntry(
                     p,
                     title,
-                    {'enter': self.get_plugin_class(name)},
+                    key_map=key_map,
                 ),
             )
         self.body = CongruenceListBox(self.entries, help_string=__help__)
