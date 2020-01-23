@@ -388,7 +388,7 @@ class CongruenceApp(object):
                 self.loop.run()
             except Exception as e:
                 log.exception(e)
-                self.alert(str(e), 'error')
+                self.alert("%s: %s" % (type(e).__name__, str(e)), 'error')
 
     def get_plugin_class(self, name):
         """This function retrieves the class the plugin"""
