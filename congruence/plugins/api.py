@@ -126,9 +126,9 @@ class CongruenceAPIEntry(CongruenceListBoxEntry):
         key_map = {}
         content = self.data['content']
         if content['type'] in ["page", "blogpost"]:
-            key_map["enter"] = PageView
+            key_map["enter"] = (PageView, 'next view')
         elif content['type'] == "comment":
-            key_map["enter"] = CommentView
+            key_map["enter"] = (CommentView, 'next view')
 
         super().__init__(
             self.data,
