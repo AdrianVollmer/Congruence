@@ -69,6 +69,9 @@ class APIView(CongruenceListBox):
             "search",
             parameters=self.properties["Parameters"],
         )
+        # TODO wrap data in objects
+        # TODO fix encoding
+        response = [e for e in response if 'content' in e]
         result = [CongruenceAPIEntry(e) for e in response]
         #  result = change_filter(result)
         app.alert('Received %d items' % len(result), 'info')
