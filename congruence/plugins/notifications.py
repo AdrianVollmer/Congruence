@@ -20,7 +20,7 @@ This view displays your latest notifications.
 
 """
 from congruence.interface import make_request, convert_date
-from congruence.views import CongruenceListBox,\
+from congruence.views.listbox import CongruenceListBox,\
         CongruenceListBoxEntry
 
 import json
@@ -53,21 +53,13 @@ class NotificationEntry(CongruenceListBoxEntry):
     def __init__(self, data):
         self.data = data
 
-        key_map = {}
-        #  if content['type'] in ["page", "blogpost"]:
-        #      key_map["enter"] = PageView
-        #  elif content['type'] == "comment":
-        #      key_map["enter"] = CommentView
-        #      self.view = CommentView(self.data["url"],
-        #                              title_text=self.data["title"])
-        #  else:
-        #      self.view = None
-
         super().__init__(
             self.data,
             NotificationLine,
-            key_map,
         )
+
+    def get_next_view(self):
+        pass
 
 
 class NotificationLine(urwid.Text):

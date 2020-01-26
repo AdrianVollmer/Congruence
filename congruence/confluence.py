@@ -18,8 +18,9 @@
 This file contains views and functions which are specific to Confluence
 """
 
-from congruence.views import CongruenceTreeListBox,\
-        CongruenceCardTreeWidget, CongruenceListBox
+from congruence.views.treelistbox import CongruenceTreeListBox,\
+        CongruenceCardTreeWidget
+from congruence.views.listbox import CongruenceListBox
 from congruence.interface import make_request, html_to_text, convert_date
 from congruence.logging import log
 from congruence.args import config

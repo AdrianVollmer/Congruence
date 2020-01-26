@@ -26,7 +26,9 @@ is indicated by a single letter:
 
 """
 
-from congruence.views import CongruenceListBox, CongruenceListBoxEntry, app
+from congruence.app import app
+from congruence.views.listbox import CongruenceListBox, \
+    CongruenceListBoxEntry
 from congruence.interface import make_api_call, convert_date
 from congruence.logging import log
 from congruence.confluence import PageView, CommentView
@@ -37,8 +39,9 @@ import urwid
 class APIView(CongruenceListBox):
 
     key_map = {
-        'm': ("load_more", "Load more objects"),
-        'M': ("load_more", "Load much more objects"
+        'u': ("update", "Update the entire list"),
+        'm': ("load more", "Load more objects"),
+        'M': ("load much more", "Load much more objects"
               " (five times the regular amount)"),
     }
 
@@ -51,18 +54,15 @@ class APIView(CongruenceListBox):
         self.update()
         self.set_focus(0)
 
-    def keypress(self, size, key):
-        log.debug("Keypress in APIView: %s", key)
-        if key == 'm':
+    def key_action(self, action, size=None):
+        if action == "load more":
             self.load_more()
-            return
-        if key == 'M':
+        elif action == "load much more":
             self.load_much_more()
-            return
-        if key == 'u':
+        elif action == "update":
             self.update()
-            return
-        return super().keypress(size, key)
+        else:
+            super().key_action(action, size=size)
 
     def get_feed_entries(self):
         response = make_api_call(
@@ -74,7 +74,7 @@ class APIView(CongruenceListBox):
         response = [e for e in response if 'content' in e]
         result = [CongruenceAPIEntry(e) for e in response]
         #  result = change_filter(result)
-        app.alert('Received %d items' % len(result), 'info')
+        self.app.alert('Received %d items' % len(result), 'info')
         self.properties["Parameters"]["start"] += \
             self.properties["Parameters"]["limit"]
         return result
@@ -105,13 +105,17 @@ class CongruenceAPIEntryLine(urwid.Columns):
         self.data = data
         content = self.data['content']
         lastUpdated = content['history']['lastUpdated']
-        title = [
-            content["type"][0].upper(),
-            content["space"]["key"],
-            lastUpdated['by']["displayName"],
-            convert_date(lastUpdated["when"]),
-            content["title"],
-        ]
+        try:
+            title = [
+                content["type"][0].upper(),
+                content["space"]["key"],
+                lastUpdated['by']["displayName"],
+                convert_date(lastUpdated["when"]),
+                content["title"],
+            ]
+        except KeyError as e:
+            app.alert("Unknown key: %s" % str(e))
+            title = content['id']
 
         super().__init__(
             [('pack', urwid.Text(t)) for t in title],
@@ -133,7 +137,7 @@ class CongruenceAPIEntry(CongruenceListBoxEntry):
         super().__init__(
             self.data,
             CongruenceAPIEntryLine,
-            key_map,
+            key_map=key_map,
         )
 
 

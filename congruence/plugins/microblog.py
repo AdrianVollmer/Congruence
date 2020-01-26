@@ -19,7 +19,7 @@ __help__ = """Congruence Microblog
 Here you can see the latest entries of the microblog plugin.
 
 """
-from congruence.views import CongruenceListBox, CongruenceListBoxEntry
+from congruence.views.listbox import CongruenceListBox, CongruenceListBoxEntry
 from congruence.interface import make_request, html_to_text, convert_date
 from congruence.logging import log
 
@@ -67,14 +67,16 @@ class MicroblogEntry(CongruenceListBoxEntry):
 
     def __init__(self, data, is_reply=False):
         self.data = data
-        key_map = {
-            'enter': MicroblogReplyDetails if is_reply else MicroblogReplyView
-        }
+        self.is_reply = is_reply
         super().__init__(
             self.data,
             CardListBoxEntry,
-            key_map=key_map,
         )
+
+    def get_next_view(self):
+        if self.is_reply:
+            return MicroblogReplyDetails(self.data)
+        return MicroblogReplyView(self.data)
 
 
 class CardListBoxEntry(urwid.Pile):
