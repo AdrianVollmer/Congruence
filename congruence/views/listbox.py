@@ -49,6 +49,7 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
         self.entries = entries
         self.help_string = help_string
         self.walker = urwid.SimpleFocusListWalker(self.entries)
+        self._search_results = []
         super().__init__(self.walker)
 
     def redraw(self):
@@ -68,14 +69,22 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
             view = self.get_focus()[0].get_next_view()
             if view:
                 self.app.push_view(view)
+        elif action == 'search':
+            self.search()
+        elif action == 'search next':
+            self.search_next(1)
+        elif action == 'search prev':
+            self.search_next(-1)
         elif action == 'limit':
             def limit(expr):
-                self._search_results = [
+                _search_results = [
                     e for e in self.entries if e.search_match(expr)
                 ]
-                log.debug(self._search_results)
-                self.walker[:] = self._search_results
-                self.app.alert("To view all items, limit to '.'.", 'info')
+                self.walker[:] = _search_results
+                if expr == '.':
+                    self.app.reset_status()
+                else:
+                    self.app.alert("To view all items, limit to '.'.", 'info')
 
             self.app.get_input(
                 'Search for:',
@@ -83,6 +92,30 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
             )
         else:
             raise KeyError("Unknown key action: %s" % action)
+
+    def search(self):
+        def search(expr):
+            self._search_results = [
+                e[0] for e in enumerate(self.entries)
+                if e[1].search_match(expr)
+            ]
+            self.app.alert("Found %d results" %
+                           len(self._search_results),
+                           'info')
+            if self._search_results:
+                self._current_search_result = 0
+                pos = self._search_results[self._current_search_result]
+                self.set_focus(pos)
+        self.app.get_input(
+            'Search for:',
+            search,
+        )
+
+    def search_next(self, count=1):
+        self._current_search_result += count
+        self._current_search_result %= len(self._search_results)
+        pos = self._search_results[self._current_search_result]
+        self.set_focus(pos)
 
 
 class CongruenceListBoxEntry(urwid.WidgetWrap):

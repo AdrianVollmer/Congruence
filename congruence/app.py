@@ -122,6 +122,9 @@ class CongruenceApp(object):
         log.info("Alert (%s): %s" % (msgtype, message))
         self.footer.status_line.set_text((msgtype, message))
 
+    def reset_status(self):
+        self.footer.status_line.set_text(('info', ''))
+
     def get_input(self, prompt, callback):
         footer = self.view.get_footer().widget_list[1]
 

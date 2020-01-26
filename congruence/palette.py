@@ -26,6 +26,6 @@ PALETTE = [
     ('title', 'white', 'black', 'bold'),
     ('flag', 'dark gray', 'light gray'),
     ('error', 'dark red', 'default'),
-    ('info', 'light gray', 'default'),
+    ('info', 'dark blue', 'default'),
     ('warning', 'yellow', 'default'),
 ]
