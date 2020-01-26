@@ -21,6 +21,7 @@ from congruence.logging import log
 from congruence.views.mainmenu import CongruenceMainMenu
 from congruence.views.listbox import CongruenceListBox
 from congruence.views.treelistbox import CongruenceTreeListBox
+from congruence.external import get_editor_input
 
 import urwid
 
@@ -139,6 +140,8 @@ class CongruenceApp(object):
         self.footer.status_line.set_text(('info', ''))
 
     def get_input(self, prompt, callback):
+        """Get user input in an Edit field in the footer"""
+
         footer = self.view.get_footer().widget_list[1]
 
         def handler(widget, text):
@@ -150,8 +153,17 @@ class CongruenceApp(object):
         urwid.connect_signal(edit, 'done', handler)
         self.view.set_focus('footer')
 
+    def get_long_input(self, prompt=""):
+        """Open an external editor to get user input"""
+
+        self.loop.screen.stop()
+        result = get_editor_input(prompt)
+        self.loop.run()
+        return result
+
     def push_view(self, view):
         """Open a new view and keep track of the old one"""
+
         title = getattr(view, "title", "untitled")
         log.debug("Pushing view '%s'" % title)
         self._title_stack.append(title)

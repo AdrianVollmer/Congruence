@@ -24,7 +24,7 @@ from congruence.views.listbox import CongruenceListBox
 from congruence.interface import make_request, html_to_text, convert_date
 from congruence.logging import log
 from congruence.args import config
-from congruence.browser import open_gui_browser
+#  from congruence.external import open_gui_browser
 
 import json
 import re
@@ -131,6 +131,11 @@ class CommentView(CongruenceTreeListBox):
     :data: a comment object inside the tree as a dictionary.
     """
 
+    key_map = {
+        'r': ("reply", "Reply to a comment"),
+        'l': ("like", "Toggle your 'like' of a comment"),
+    }
+
     def __init__(self, data):
         self.title = "Comments"
         comment_id = data['content']['id']
@@ -153,12 +158,15 @@ class CommentView(CongruenceTreeListBox):
         if node:
             self.set_focus(node)
 
-    def keypress(self, size, key):
-        if key == 'b':
-            url = self.get_focus()[0].get_value()["url"]
-            open_gui_browser(url)
-            return
-        return super().keypress(size, key)
+    def key_action(self, action, size=None):
+        if action == "reply":
+            reply = self.app.get_long_input("test")
+            log.debug(reply)
+            #  send_reply(reply)
+        elif action == "like":
+            self.load_much_more()
+        else:
+            super().key_action(action, size=size)
 
 
 class CommentWidget(CongruenceCardTreeWidget):

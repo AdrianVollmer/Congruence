@@ -19,6 +19,7 @@ from congruence.logging import log
 
 from shlex import split
 from subprocess import Popen, PIPE
+import tempfile
 
 import urwid
 
@@ -54,3 +55,24 @@ class CliBrowserView(urwid.Terminal):
             cmd = cmd.split(' ')[0]
 
         super().__init__(cmd)
+
+
+def get_editor_input(prompt):
+    """Open a tempfile with an external editor
+
+    :prompt: Text to be written to the file beforehand
+    """
+
+    tfile = tempfile.NamedTemporaryFile('w', delete=False)
+    tfile.write(prompt)
+    tfile.flush()
+    cmd = config["Editor"]
+    if '%s' not in cmd:
+        cmd += " '%s'"
+    cmd = cmd % tfile.name
+    log.info("Executing: `%s`" % cmd)
+    process = Popen(split(cmd))
+    process.communicate()
+    with open(tfile.name, 'r') as f:
+        content = f.read()
+    return content
