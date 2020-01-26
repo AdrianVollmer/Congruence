@@ -168,16 +168,18 @@ def convert_date(date, frmt='default'):
     """Convert the multitude of date formats to a common one"""
     try:
         date = dtparse(date)
+        now = dt.utcnow().replace(tzinfo=pytz.UTC)
     except (ValueError, TypeError):
         if isinstance(date, int):
             date = dt.fromtimestamp(date/1000.)
+            now = dt.now()
         else:
             date = dt.strptime(date, "%Y-%m-%dT%H:%M:%S%z")
-    now = dt.utcnow().replace(tzinfo=pytz.UTC)
+            now = dt.utcnow().replace(tzinfo=pytz.UTC)
+    diff = now - date
     if frmt == 'default':
         return date.strftime(config["DateFormat"])
     if frmt == 'friendly':
-        diff = now - date
         if diff < timedelta(minutes=24):
             return date.strftime("%H:%M")
         elif diff < timedelta(days=8):
@@ -187,7 +189,6 @@ def convert_date(date, frmt='default'):
         else:
             return date.strftime("%x")
     if frmt == 'timespan':
-        diff = now - date
         if diff < timedelta(minutes=60):
             result = diff.minutes
             return "%d min ago" % result
