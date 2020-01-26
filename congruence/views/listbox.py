@@ -74,6 +74,9 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
             if view:
                 view.title = "Details"
                 self.app.push_view(view)
+            else:
+                self.app.alert("Looks like this item has no details",
+                               "warning")
         elif action == 'search':
             self.search()
         elif action == 'search next':
