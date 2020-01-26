@@ -29,12 +29,17 @@ class CongruenceFooter(urwid.Pile):
     """Represents the footer, consisting of a key map and a status line"""
 
     def __init__(self):
-        self.key_legend = urwid.AttrMap(urwid.Text("keys"), 'head')
+        self.key_legend = urwid.AttrMap(urwid.Text("?:help", wrap='clip'),
+                                        'head')
         self.status_line = urwid.Text("", wrap='clip')
         super().__init__([self.key_legend, self.status_line], focus_item=1)
 
-    def set_status(self, message, msgtype):
-        self.status_line = urwid.AttrMap(urwid.Text(message), msgtype)
+    #  def set_status(self, message, msgtype):
+    #      self.status_line = urwid.AttrMap(urwid.Text(message), msgtype)
+
+    def update_keylegend(self, key_map):
+        text = ''.join([f'{k}:{v[0]}|' for k, v in key_map.items()])
+        self.key_legend.base_widget.set_text(text)
 
 
 class CongruenceInput(urwid.Edit):
@@ -111,6 +116,7 @@ class CongruenceApp(object):
             header=urwid.AttrMap(self.header, 'head'),
             footer=self.footer,
         )
+        self.footer.update_keylegend(self.body.key_map)
         self.active = True
 
     def get_full_title(self):
@@ -152,6 +158,7 @@ class CongruenceApp(object):
         self._view_stack.append(self.loop.widget.body)
         self.loop.widget.body = view
         self.header.set_text(('head', self.get_full_title()))
+        self.footer.update_keylegend(view.key_map)
 
     def pop_view(self):
         """Restore the last view down the list"""
@@ -161,6 +168,7 @@ class CongruenceApp(object):
             self._title_stack.pop()
             self.loop.widget.body = view
             self.header.set_text(('head', self.get_full_title()))
+            self.footer.update_keylegend(view.key_map)
         else:
             self.exit()
 
