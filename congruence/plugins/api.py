@@ -31,7 +31,7 @@ from congruence.views.listbox import CongruenceListBox, \
 from congruence.interface import make_api_call, convert_date, make_request
 from congruence.logging import log
 from congruence.args import config
-from congruence.confluence import PageView, CommentView
+from congruence.confluence import CommentView
 
 import re
 import json
@@ -73,6 +73,7 @@ class APIView(CongruenceListBox):
             super().key_action(action, size=size)
 
     def get_feed_entries(self):
+        self.app.alert('Submitting API call...', 'info')
         response = make_api_call(
             "search",
             parameters=self.properties["Parameters"],
@@ -139,7 +140,7 @@ class CongruenceAPIEntryLine(urwid.Columns):
             content["type"][0].upper(),
             space,
             lastUpdated['by']["displayName"],
-            convert_date(lastUpdated["when"]),
+            convert_date(lastUpdated["when"], "friendly"),
             content["title"],
         ]
 
@@ -161,7 +162,7 @@ class CongruenceAPIEntry(CongruenceListBoxEntry):
     def get_next_view(self):
         content = self.data['content']
         if content['type'] in ["page", "blogpost"]:
-            return PageView(self.data)
+            return None
         elif content['type'] == "comment":
             return CommentView(self.data)
 

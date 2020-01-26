@@ -18,7 +18,7 @@ from congruence.args import config, cookie_jar, BASE_URL
 from congruence.logging import log
 from congruence.app import app
 
-from datetime import datetime as dt
+from datetime import datetime as dt, timedelta
 import json
 from requests import Session, utils
 from shlex import split
@@ -28,6 +28,7 @@ import time
 from bs4 import BeautifulSoup
 import html2text
 from dateutil.parser import parse as dtparse
+import pytz
 
 
 session = Session()
@@ -163,7 +164,7 @@ def html_to_text(html):
         return html
 
 
-def convert_date(date):
+def convert_date(date, frmt='default'):
     """Convert the multitude of date formats to a common one"""
     try:
         date = dtparse(date)
@@ -172,7 +173,33 @@ def convert_date(date):
             date = dt.fromtimestamp(date/1000.)
         else:
             date = dt.strptime(date, "%Y-%m-%dT%H:%M:%S%z")
-    return date.strftime(config["DateFormat"])
+    now = dt.utcnow().replace(tzinfo=pytz.UTC)
+    if frmt == 'default':
+        return date.strftime(config["DateFormat"])
+    if frmt == 'friendly':
+        diff = now - date
+        if diff < timedelta(minutes=24):
+            return date.strftime("%H:%M")
+        elif diff < timedelta(days=8):
+            return date.strftime("%a")
+        elif diff < timedelta(days=31):
+            return date.strftime("%b %d")
+        else:
+            return date.strftime("%x")
+    if frmt == 'timespan':
+        diff = now - date
+        if diff < timedelta(minutes=60):
+            result = diff.minutes
+            return "%d min ago" % result
+        elif diff < timedelta(hours=24):
+            result = diff.hours
+            return "%d hours ago" % result
+        elif diff < timedelta(days=31):
+            result = diff.days
+            return "%d days ago" % result
+        else:
+            result = diff.years
+            return "%d years ago" % result
 
 
 load_session()
