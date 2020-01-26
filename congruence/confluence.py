@@ -113,12 +113,14 @@ class PageView(CongruenceListBox):
 
         if external:
             content = f"<html><head></head><body>{content}</body></html>"
+            self.app.loop.screen.stop()
             process = Popen(config["CliBrowser"], stdin=PIPE, stderr=PIPE)
             process.stdin.write(content.encode())
             process.communicate()
-            #  super().__init__(config["CliBrowser"], main_loop=self.app.loop)
-            super().__init__([])
+            self.app.loop.screen.start()
             self.app.pop_view()
+            #  self.app.loop.screen.clear()
+            #  self.app.loop.run()
         else:
             content = f"<html><head></head><body>{content}</body></html>"
             text = html_to_text(content)

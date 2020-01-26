@@ -24,6 +24,24 @@ import tempfile
 import urwid
 
 
+def open_cli_browser(url, app):
+    if not url.startswith(BASE_URL):
+        if url.startswith('/'):
+            url = f"{BASE_URL}{url}"
+        else:
+            url = f"{BASE_URL}/{url}"
+
+    cmd = config["CliiBrowser"]
+    if '%s' not in cmd:
+        cmd = cmd + " '%s'"
+    cmd = cmd % url
+    log.info("Executing: `%s`" % cmd)
+    app.loop.screen.stop()
+    process = Popen(split(cmd), stdin=PIPE, stderr=PIPE)
+    process.communicate()
+    app.loop.screen.start()
+
+
 def open_gui_browser(url):
     if not url.startswith(BASE_URL):
         if url.startswith('/'):

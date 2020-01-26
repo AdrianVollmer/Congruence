@@ -28,12 +28,14 @@ is indicated by a single letter:
 
 from congruence.views.listbox import CongruenceListBox, \
     CongruenceListBoxEntry
-from congruence.interface import make_api_call, convert_date
+from congruence.interface import make_api_call, convert_date, make_request
 from congruence.logging import log
+from congruence.args import config
 from congruence.confluence import PageView, CommentView
 
 import re
 import json
+from subprocess import Popen, PIPE
 
 import urwid
 
@@ -45,6 +47,7 @@ class APIView(CongruenceListBox):
         'm': ("load more", "Load more objects"),
         'M': ("load much more", "Load much more objects"
               " (five times the regular amount)"),
+        'b': ("cli browser", "Open with CLI browser"),
     }
 
     def __init__(self, properties={}):
@@ -64,6 +67,8 @@ class APIView(CongruenceListBox):
             self.load_much_more()
         elif action == "update":
             self.update()
+        elif action == "cli browser":
+            self.open_cli_browser()
         else:
             super().key_action(action, size=size)
 
@@ -103,6 +108,22 @@ class APIView(CongruenceListBox):
         p["Parameters"]["start"] = 0
         self.entries = self.get_feed_entries()
         self.redraw()
+
+    def open_cli_browser(self):
+        node = self.get_focus()[0]
+        id = node.data['content']['id']
+        #  log.debug(data)
+        log.debug("Build HTML view for page with id '%s'" % id)
+        rest_url = f"rest/api/content/{id}?expand=body.storage"
+        content = make_request(rest_url).text
+        content = json.loads(content)
+        content = content["body"]["storage"]["value"]
+
+        content = f"<html><head></head><body>{content}</body></html>"
+        process = Popen(config["CliBrowser"], stdin=PIPE, stderr=PIPE)
+        process.stdin.write(content.encode())
+        process.communicate()
+        self.app.loop.screen.clear()
 
 
 class CongruenceAPIEntryLine(urwid.Columns):

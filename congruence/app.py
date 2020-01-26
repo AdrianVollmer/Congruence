@@ -195,6 +195,7 @@ class CongruenceApp(object):
             self.view,
             PALETTE,
             unhandled_input=self.unhandled_input)
+        #  self.loop.run()
         while self.active:
             try:
                 self.loop.run()
