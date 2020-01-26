@@ -26,7 +26,6 @@ is indicated by a single letter:
 
 """
 
-from congruence.app import app
 from congruence.views.listbox import CongruenceListBox, \
     CongruenceListBoxEntry
 from congruence.interface import make_api_call, convert_date
@@ -108,17 +107,17 @@ class CongruenceAPIEntryLine(urwid.Columns):
         self.data = data
         content = self.data['content']
         lastUpdated = content['history']['lastUpdated']
-        try:
-            title = [
-                content["type"][0].upper(),
-                content["space"]["key"],
-                lastUpdated['by']["displayName"],
-                convert_date(lastUpdated["when"]),
-                content["title"],
-            ]
-        except KeyError as e:
-            app.alert("Unknown key: %s" % str(e))
-            title = content['id']
+        if 'space' in content:
+            space = content["space"]["key"]
+        else:
+            space = "?"
+        title = [
+            content["type"][0].upper(),
+            space,
+            lastUpdated['by']["displayName"],
+            convert_date(lastUpdated["when"]),
+            content["title"],
+        ]
 
         super().__init__(
             [('pack', urwid.Text(t)) for t in title],
