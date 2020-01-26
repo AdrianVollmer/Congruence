@@ -57,6 +57,7 @@ class MicroblogView(CongruenceListBox):
         self.title = "Microblog"
         self.properties = properties
         self.entries = get_microblog(self.properties)
+        self.app.alert('Received %d items' % len(self.entries), 'info')
         #  self.title = title
         super().__init__(self.entries, help_string=__help__)
 

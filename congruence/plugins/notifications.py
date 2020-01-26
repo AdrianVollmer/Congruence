@@ -38,6 +38,7 @@ def get_notifications(properties={"limit": 30}):
 class PluginView(CongruenceListBox):
     def __init__(self, properties={}):
         entries = get_notifications()
+        self.app.alert('Received %d items' % len(entries), 'info')
 
         self.title = "Notifications"
         notifications = []
