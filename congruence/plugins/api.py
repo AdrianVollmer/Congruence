@@ -34,6 +34,7 @@ from congruence.logging import log
 from congruence.confluence import PageView, CommentView
 
 import re
+import json
 
 import urwid
 
@@ -140,6 +141,11 @@ class CongruenceAPIEntry(CongruenceListBoxEntry):
             return PageView(self.data)
         elif content['type'] == "comment":
             return CommentView(self.data)
+
+    def get_details_view(self):
+        return CongruenceListBox(urwid.SimpleFocusListWalker([urwid.Text(
+            json.dumps(self.data, indent=2, sort_keys=True)
+        )]))
 
     def search_match(self, search_string):
         return re.match(

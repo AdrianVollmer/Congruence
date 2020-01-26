@@ -49,7 +49,7 @@ class CongruenceInput(urwid.Edit):
         return urwid.Edit.keypress(self, size, key)
 
 
-class HelpView(urwid.ListBox):
+class HelpView(CongruenceListBox):
     """Builds a view based on the metadata of a widget
 
     :widget: an object of type XYZ
@@ -58,6 +58,8 @@ class HelpView(urwid.ListBox):
 
     def __init__(self, widget):
         help_string = getattr(widget, "help_string", "")
+        if not help_string:
+            help_string = ""
         key_legend = "\nKey map:\n"
         for k, v in widget.get_keymap().items():
             if k == ' ':
@@ -75,8 +77,11 @@ class CongruenceApp(object):
     def unhandled_input(self, key):
         if key == '?':
             widget = self.get_current_widget()
-            view = HelpView(widget)
-            self.push_view(view)
+            try:
+                view = HelpView(widget)
+                self.push_view(view)
+            except AttributeError:
+                pass
         if key == 'q':
             self.pop_view()
         if key == 'Q':

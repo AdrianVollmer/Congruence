@@ -69,6 +69,11 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
             view = self.get_focus()[0].get_next_view()
             if view:
                 self.app.push_view(view)
+        elif action == 'show details':
+            view = self.get_focus()[0].get_details_view()
+            if view:
+                view.title = "Details"
+                self.app.push_view(view)
         elif action == 'search':
             self.search()
         elif action == 'search next':
@@ -155,7 +160,10 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
         return key
 
     def get_next_view(self):
-        pass
+        return None
+
+    def get_details_view(self):
+        return None
 
     def search_match(self, search_string):
         """Returns a Boolean whether the search string matches"""
