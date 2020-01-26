@@ -127,18 +127,17 @@ class CongruenceAPIEntry(CongruenceListBoxEntry):
     def __init__(self, data):
         self.data = data
 
-        key_map = {}
-        content = self.data['content']
-        if content['type'] in ["page", "blogpost"]:
-            key_map["enter"] = (PageView, 'next view')
-        elif content['type'] == "comment":
-            key_map["enter"] = (CommentView, 'next view')
-
         super().__init__(
             self.data,
             CongruenceAPIEntryLine,
-            key_map=key_map,
         )
+
+    def get_next_view(self):
+        content = self.data['content']
+        if content['type'] in ["page", "blogpost"]:
+            return PageView(self.data)
+        elif content['type'] == "comment":
+            return CommentView(self.data)
 
 
 PluginView = APIView

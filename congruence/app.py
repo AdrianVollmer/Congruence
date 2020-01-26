@@ -20,6 +20,7 @@ from congruence.palette import PALETTE
 from congruence.logging import log
 from congruence.views.mainmenu import CongruenceMainMenu
 from congruence.views.listbox import CongruenceListBox
+from congruence.views.treelistbox import CongruenceTreeListBox
 
 import urwid
 
@@ -72,6 +73,7 @@ class CongruenceApp(object):
         global app
         app = self
         CongruenceListBox.app = self
+        CongruenceTreeListBox.app = self
 
         # Initialize view stack
         self._view_stack = []

@@ -162,13 +162,8 @@ class CommentView(CongruenceTreeListBox):
 
 
 class CommentWidget(CongruenceCardTreeWidget):
-    def __init__(self, node):
-        super().__init__(
-            node,
-            key_map={
-                'enter': CommentDetails,
-            }
-        )
+    def get_next_view(self):
+        pass
 
 
 class CommentDetails(CongruenceListBox):

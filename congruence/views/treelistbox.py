@@ -21,7 +21,7 @@ from congruence.views.common import CongruenceView, RememberParentKeyMapMeta
 import urwid
 
 
-class CongruenceTreeListBox(urwid.TreeListBox, CongruenceView,
+class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
                             metaclass=RememberParentKeyMapMeta):
     """Displays a tree view of 'wrapper' objects
 
@@ -37,12 +37,26 @@ class CongruenceTreeListBox(urwid.TreeListBox, CongruenceView,
         'j': ('move down', 'move down'),
         '[': ('page up', 'move page up'),
         ']': ('page down', 'move page down'),
+        'enter': ('next view', 'Enter next view'),
     }
 
     def __init__(self, data, wrapper):
         self.wrapper = wrapper
         topnode = CongruenceParentNode(self.wrapper, data)
         super().__init__(urwid.TreeWalker(topnode))
+
+    def key_action(self, action, size=None):
+        log.debug('key_action %s' % action)
+        if action == 'move down':
+            urwid.TreeListBox.keypress(self, size, 'down')
+        elif action == 'move up':
+            urwid.TreeListBox.keypress(self, size, 'up')
+        elif action == 'next view':
+            view = self.get_focus()[0].get_next_view()
+            if view:
+                self.app.push_view(view)
+        else:
+            raise KeyError("Unknown key action: %s" % action)
 
 
 class CongruenceTreeListBoxEntry(urwid.TreeWidget):
@@ -60,8 +74,7 @@ class CongruenceTreeListBoxEntry(urwid.TreeWidget):
         log.debug("Keypress in TreeListBoxEntry: %s" % key)
         for k, v in self.key_map.items():
             if k == key:
-                data = list(self.node.get_value().values())[0]
-                self.app.push_view(v(data))
+                self.app.push_view(v[0](self.data))
                 return
         return key
 
