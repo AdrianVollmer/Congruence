@@ -48,7 +48,11 @@ class HelpView(urwid.ListBox):
         help_string = getattr(widget, "help_string", "")
         key_legend = "\nKey map:\n"
         for k, v in widget.get_keymap().items():
-            key_legend += f"    {k}: {v[1]}\n"
+            if k == ' ':
+                # Replace ' '  with 'space'
+                key_legend += f"    space: {v[1]}\n"
+            else:
+                key_legend += f"    {k}: {v[1]}\n"
         text = [urwid.Text(help_string+key_legend)]
         super().__init__(urwid.SimpleFocusListWalker(text))
 

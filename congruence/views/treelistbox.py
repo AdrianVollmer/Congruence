@@ -37,7 +37,10 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
         'j': ('move down', 'move down'),
         '[': ('page up', 'move page up'),
         ']': ('page down', 'move page down'),
-        'enter': ('next view', 'Enter next view'),
+        ' ': ('toggle collapse',
+              "Collapse the tree at the focused item"),
+        'enter': ('next view', 'Enter next view of the focused item'),
+        'd': ('show details', 'Show details about the focused item'),
     }
 
     def __init__(self, data, wrapper):
@@ -51,6 +54,14 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
             urwid.TreeListBox.keypress(self, size, 'down')
         elif action == 'move up':
             urwid.TreeListBox.keypress(self, size, 'up')
+        elif action == 'page down':
+            urwid.TreeListBox.keypress(self, size, 'page down')
+        elif action == 'page up':
+            urwid.TreeListBox.keypress(self, size, 'page up')
+        elif action == 'toggle collapse':
+            node = self.get_focus()[0]
+            node.expanded = not node.expanded
+            node.update_expanded_icon()
         elif action == 'next view':
             view = self.get_focus()[0].get_next_view()
             if view:
@@ -105,10 +116,11 @@ class CongruenceCardTreeWidget(CongruenceTreeListBoxEntry):
     def load_inner_widget(self):
         """Build a multi-line widget with a header and a body"""
 
-        icon = [self.unexpanded_icon, self.expanded_icon][self.expanded]
+        self.icon = [self.unexpanded_icon, self.expanded_icon][self.expanded]
         header = urwid.Text(self.get_display_header())
-        header = urwid.Columns([('fixed', 1, icon), header], dividechars=1)
-        header = urwid.AttrWrap(header, 'head')
+        header = urwid.Columns([('fixed', 1, self.icon), header],
+                               dividechars=1)
+        header = urwid.AttrWrap(header, 'card-head', 'card-focus')
         if self.get_display_body():
             body = urwid.AttrWrap(urwid.Text(self.get_display_body()), 'body')
             widget = urwid.Pile([header, body])
@@ -120,6 +132,12 @@ class CongruenceCardTreeWidget(CongruenceTreeListBoxEntry):
         widget = self.get_inner_widget()
         indent_cols = self.get_indent_cols()
         return urwid.Padding(widget, width=('relative', 100), left=indent_cols)
+
+    def update_expanded_icon(self):
+        """Update display widget text for parent widgets"""
+        # icon is first element in header widget
+        self._w.base_widget.widget_list[0].base_widget.widget_list[0] = [
+            self.unexpanded_icon, self.expanded_icon][self.expanded]
 
 
 class CongruenceNode(urwid.TreeNode):
