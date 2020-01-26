@@ -31,10 +31,22 @@ class CongruenceFooter(urwid.Pile):
     def __init__(self):
         self.key_legend = urwid.AttrMap(urwid.Text("keys"), 'head')
         self.status_line = urwid.Text("", wrap='clip')
-        super().__init__([self.key_legend, self.status_line])
+        super().__init__([self.key_legend, self.status_line], focus_item=1)
 
     def set_status(self, message, msgtype):
         self.status_line = urwid.AttrMap(urwid.Text(message), msgtype)
+
+
+class CongruenceInput(urwid.Edit):
+    signals = ['done']
+
+    def keypress(self, size, key):
+        if key == 'enter':
+            urwid.emit_signal(self, 'done',
+                              self, self.get_edit_text())
+            super().set_edit_text('')
+            return
+        return urwid.Edit.keypress(self, size, key)
 
 
 class HelpView(urwid.ListBox):
@@ -109,6 +121,18 @@ class CongruenceApp(object):
 
         log.info("Alert (%s): %s" % (msgtype, message))
         self.footer.status_line.set_text((msgtype, message))
+
+    def get_input(self, prompt, callback):
+        footer = self.view.get_footer().widget_list[1]
+
+        def handler(widget, text):
+            self.view.get_footer().widget_list[1] = footer
+            self.view.set_focus('body')
+            callback(text)
+        edit = CongruenceInput(caption=prompt + " ")
+        self.view.get_footer().widget_list[1] = edit
+        urwid.connect_signal(edit, 'done', handler)
+        self.view.set_focus('footer')
 
     def push_view(self, view):
         """Open a new view and keep track of the old one"""

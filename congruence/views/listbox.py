@@ -32,10 +32,15 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
     """
 
     key_map = {
-        'k': ('move up', 'move up'),
-        'j': ('move down', 'move down'),
-        '[': ('page up', 'move page up'),
-        ']': ('page down', 'move page down'),
+        'k': ('move up', 'Move up'),
+        'j': ('move down', 'Move down'),
+        '[': ('page up', 'Move page up'),
+        ']': ('page down', 'Move page down'),
+        '/': ('search', 'Search the list for some string'),
+        'n': ('search next', 'Jump to the next entry in the search result'),
+        'N': ('search prev',
+              'Jump to the previous entry in the search result'),
+        'l': ('limit', 'Limit entries matching some string'),
         'enter': ('next view', 'Enter next view'),
         'd': ('show details', 'Show details about the focused item'),
     }
@@ -50,7 +55,7 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
         self.walker[:] = self.entries
 
     def key_action(self, action, size=None):
-        log.debug('key_action %s' % action)
+        log.debug('Process key action "%s"' % action)
         if action == 'move down':
             urwid.ListBox.keypress(self, size, 'down')
         elif action == 'move up':
@@ -63,6 +68,19 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
             view = self.get_focus()[0].get_next_view()
             if view:
                 self.app.push_view(view)
+        elif action == 'limit':
+            def limit(expr):
+                self._search_results = [
+                    e for e in self.entries if e.search_match(expr)
+                ]
+                log.debug(self._search_results)
+                self.walker[:] = self._search_results
+                self.app.alert("To view all items, limit to '.'.", 'info')
+
+            self.app.get_input(
+                'Search for:',
+                limit,
+            )
         else:
             raise KeyError("Unknown key action: %s" % action)
 
@@ -81,7 +99,7 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
 
     def __init__(self, data, wrapper, key_map={}):
         self.data = data
-        self.key_map = key_map
+        self.key_map = {}  # TODO remove this
         if isinstance(wrapper, str):
             widget = urwid.Text(wrapper)
         else:
@@ -111,3 +129,8 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
 
     def get_next_view(self):
         pass
+
+    def search_match(self, search_string):
+        """Returns a Boolean whether the search string matches"""
+
+        raise NotImplementedError("search_match in %s" % type(self).__name__)

@@ -33,6 +33,8 @@ from congruence.interface import make_api_call, convert_date
 from congruence.logging import log
 from congruence.confluence import PageView, CommentView
 
+import re
+
 import urwid
 
 
@@ -138,6 +140,12 @@ class CongruenceAPIEntry(CongruenceListBoxEntry):
             return PageView(self.data)
         elif content['type'] == "comment":
             return CommentView(self.data)
+
+    def search_match(self, search_string):
+        return re.match(
+            search_string,
+            self.data['content']['title']
+        )
 
 
 PluginView = APIView
