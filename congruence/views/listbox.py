@@ -120,10 +120,11 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
         )
 
     def search_next(self, count=1):
-        self._current_search_result += count
-        self._current_search_result %= len(self._search_results)
-        pos = self._search_results[self._current_search_result]
-        self.set_focus(pos)
+        if self._search_results:
+            self._current_search_result += count
+            self._current_search_result %= len(self._search_results)
+            pos = self._search_results[self._current_search_result]
+            self.set_focus(pos)
 
 
 class CongruenceListBoxEntry(urwid.WidgetWrap):
