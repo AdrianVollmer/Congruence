@@ -129,13 +129,9 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
     :data: an object holding data which this ListBoxEntry represents.
     :wrapper: a subclass of urwid.Widget whose constructor takes `data` as
         an argument.
-    :key_map: a dictionary where the keys are literal keys and the values
-        are functions or classes, which will be called with `data` as the
-        argument when the corresponding key is pressed. The return values is
-        pushed onto the view stack.
     """
 
-    def __init__(self, data, wrapper, key_map={}):
+    def __init__(self, data, wrapper):
         self.data = data
         if isinstance(wrapper, str):
             widget = urwid.Text(wrapper)

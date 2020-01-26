@@ -38,6 +38,8 @@ class CongruenceFooter(urwid.Pile):
 
 
 class CongruenceInput(urwid.Edit):
+    """An Edit widget with an extra signal"""
+
     signals = ['done']
 
     def keypress(self, size, key):
