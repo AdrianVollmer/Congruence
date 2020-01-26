@@ -39,6 +39,7 @@ class PluginView(CongruenceListBox):
     def __init__(self, properties={}):
         entries = get_notifications()
 
+        self.title = "Notifications"
         notifications = []
         for e in entries:
             for n in e["notifications"]:
@@ -46,7 +47,7 @@ class PluginView(CongruenceListBox):
                 n = NotificationEntry(n)
                 notifications.append(n)
 
-        super().__init__(notifications)
+        super().__init__(notifications, help_string=__help__)
 
 
 class NotificationEntry(CongruenceListBoxEntry):
@@ -65,6 +66,6 @@ class NotificationEntry(CongruenceListBoxEntry):
 class NotificationLine(urwid.Text):
     def __init__(self, data):
         self.data = data
-        date = convert_date(data["created"])
+        date = convert_date(data["created"], "friendly")
         name = f"{data['reference']['title']}: {data['title']} ({date})"
         super().__init__(name)
