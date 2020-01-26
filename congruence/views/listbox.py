@@ -132,7 +132,6 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
 
     def __init__(self, data, wrapper, key_map={}):
         self.data = data
-        self.key_map = {}  # TODO remove this
         if isinstance(wrapper, str):
             widget = urwid.Text(wrapper)
         else:
@@ -153,11 +152,6 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
         return True
 
     def keypress(self, size, key):
-        log.debug("Keypress in ListBoxEntry: %s" % key)
-        for k, v in self.key_map.items():
-            if k == key:
-                self.app.push_view(v[0](self.data))
-                return
         return key
 
     def get_next_view(self):
