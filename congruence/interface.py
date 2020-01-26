@@ -16,6 +16,7 @@
 
 from congruence.args import config, cookie_jar, BASE_URL
 from congruence.logging import log
+from congruence.app import app
 
 from datetime import datetime as dt
 import json
@@ -47,11 +48,12 @@ def get_timestamp():
 def make_api_call(endpoint, parameters, base="rest/api", headers={}):
     """This accesses the REST API"""
     url = f"{base}/{endpoint}"
+    app.alert("Making API Call...", "info")
     r = make_request(url, params=parameters, headers=headers)
     result = json.loads(r.text)
     if "results" in result:
         return result['results']
-    return []
+    return None
 
 
 def make_request(url, params={}, data=None, method="GET", headers={}):
@@ -142,10 +144,15 @@ def authenticate_session():
         },
         method="POST",
     )
+    reason = response.headers['X-Seraph-LoginReason']
+    if not reason == "OK":
+        app.alert("Error while autenticating: %s" % reason, "error")
+        return False
     soup = BeautifulSoup(response.text, features="lxml")
     global XSRF
     XSRF = soup.find("meta", {"id": "atlassian-token"})["content"]
     save_session()
+    return True
 
 
 def html_to_text(html):

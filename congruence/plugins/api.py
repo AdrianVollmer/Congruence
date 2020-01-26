@@ -54,7 +54,8 @@ class APIView(CongruenceListBox):
         self.entries = []
         super().__init__(self.entries, help_string=__help__)
         self.update()
-        self.set_focus(0)
+        if self.entries:
+            self.set_focus(0)
 
     def key_action(self, action, size=None):
         if action == "load more":
@@ -73,13 +74,15 @@ class APIView(CongruenceListBox):
         )
         # TODO wrap data in objects
         # TODO fix encoding
-        response = [e for e in response if 'content' in e]
-        result = [CongruenceAPIEntry(e) for e in response]
-        #  result = change_filter(result)
-        self.app.alert('Received %d items' % len(result), 'info')
-        self.properties["Parameters"]["start"] += \
-            self.properties["Parameters"]["limit"]
-        return result
+        if response:
+            response = [e for e in response if 'content' in e]
+            result = [CongruenceAPIEntry(e) for e in response]
+            #  result = change_filter(result)
+            self.app.alert('Received %d items' % len(result), 'info')
+            self.properties["Parameters"]["start"] += \
+                self.properties["Parameters"]["limit"]
+            return result
+        return []
 
     def load_more(self):
         log.info("Load more ...")
