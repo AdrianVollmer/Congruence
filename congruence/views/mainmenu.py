@@ -40,12 +40,8 @@ class CongruenceMainMenu(CongruenceListBox):
     def __init__(self, plugins):
         # Create a view of all plugins defined in the config
         self.entries = []
-        for name, p in plugins.items():
-            data = {
-                "name": name,
-                "config": p,
-            }
-            self.entries.append(MainMenuEntry(data))
+        for p in plugins:
+            self.entries.append(MainMenuEntry(p))
         #  self.body = CongruenceListBox(self.entries, help_string=__help__)
         super().__init__(self.entries, help_string=__help__)
 
@@ -53,9 +49,9 @@ class CongruenceMainMenu(CongruenceListBox):
 class MainMenuEntry(CongruenceListBoxEntry):
     def __init__(self, data):
         self.plugin_data = data
-        title = data["name"]
-        if data['config'] and "DisplayName" in data['config']:
-            title = data['config']['DisplayName']
+        title = data["PluginName"]
+        if "DisplayName" in data:
+            title = data['DisplayName']
         # this now overwrite self.data
         return super().__init__(title, urwid.Text)
 
@@ -70,5 +66,5 @@ class MainMenuEntry(CongruenceListBoxEntry):
         return view
 
     def get_next_view(self):
-        viewClass = self.get_plugin_class(self.plugin_data['name'])
-        return viewClass(self.plugin_data['config'])
+        viewClass = self.get_plugin_class(self.plugin_data['PluginName'])
+        return viewClass(self.plugin_data)
