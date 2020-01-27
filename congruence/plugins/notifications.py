@@ -35,7 +35,7 @@ def get_notifications(properties={"limit": 30}):
     return json.loads(r.text)
 
 
-class PluginView(CongruenceListBox):
+class NotificationView(CongruenceListBox):
     def __init__(self, properties={}):
         entries = get_notifications()
         self.app.alert('Received %d items' % len(entries), 'info')
@@ -70,3 +70,6 @@ class NotificationLine(urwid.Text):
         date = convert_date(data["created"], "friendly")
         name = f"{data['reference']['title']}: {data['title']} ({date})"
         super().__init__(name)
+
+
+PluginView = NotificationView

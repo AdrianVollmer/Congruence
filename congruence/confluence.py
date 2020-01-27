@@ -23,12 +23,10 @@ from congruence.views.treelistbox import CongruenceTreeListBox,\
 from congruence.views.listbox import CongruenceListBox
 from congruence.interface import make_request, html_to_text, convert_date
 from congruence.logging import log
-from congruence.args import config
 #  from congruence.external import open_gui_browser
 
 import json
 import re
-from subprocess import Popen, PIPE
 
 import urwid
 
@@ -97,40 +95,10 @@ def get_id_from_url(url):
     return None
 
 
-class PageView(CongruenceListBox):
-    """Open a confluence page/blogpost in the external CLI browser"""
-
-    def __init__(self, data, external=True):
-        self.title = "Page"
-        self.data = data
-        id = self.data['content']['id']
-        #  log.debug(data)
-        log.debug("Build HTML view for page with id '%s'" % id)
-        rest_url = f"rest/api/content/{id}?expand=body.storage"
-        content = make_request(rest_url).text
-        content = json.loads(content)
-        content = content["body"]["storage"]["value"]
-
-        if external:
-            content = f"<html><head></head><body>{content}</body></html>"
-            self.app.loop.screen.stop()
-            process = Popen(config["CliBrowser"], stdin=PIPE, stderr=PIPE)
-            process.stdin.write(content.encode())
-            process.communicate()
-            self.app.loop.screen.start()
-            self.app.pop_view()
-            #  self.app.loop.screen.clear()
-            #  self.app.loop.run()
-        else:
-            content = f"<html><head></head><body>{content}</body></html>"
-            text = html_to_text(content)
-            return urwid.Frame(urwid.Filler(urwid.Text(text)))
-
-
 class CommentView(CongruenceTreeListBox):
     """Display a comment tree
 
-    :data: a comment object inside the tree as a dictionary.
+    :obj: one object of type Comment of the comment tree
     """
 
     key_map = {
@@ -138,11 +106,11 @@ class CommentView(CongruenceTreeListBox):
         'l': ("like", "Toggle your 'like' of a comment"),
     }
 
-    def __init__(self, data):
+    def __init__(self, obj):
         self.title = "Comments"
-        comment_id = data['content']['id']
+        comment_id = obj.id
         log.debug("Build CommentView for page with id '%s'" % comment_id)
-        container = data['content']['_expandable']['container']
+        container = obj.get_content()
         page_id = re.search(r'/([^/]*$)', container).groups()[0]
         comments = {
             "0": {"title": "root"},

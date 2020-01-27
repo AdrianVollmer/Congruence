@@ -28,12 +28,12 @@ is indicated by a single letter:
 
 from congruence.views.listbox import CongruenceListBox, \
     CongruenceListBoxEntry
-from congruence.interface import make_api_call, convert_date, make_request
+from congruence.interface import make_api_call, make_request
 from congruence.logging import log
 from congruence.args import config
 from congruence.confluence import CommentView
+from congruence.objects import determine_type
 
-import re
 import json
 from subprocess import Popen, PIPE
 
@@ -48,6 +48,7 @@ class APIView(CongruenceListBox):
         'M': ("load much more", "Load much more objects"
               " (five times the regular amount)"),
         'b': ("cli browser", "Open with CLI browser"),
+        'B': ("gui browser", "Open with GUI browser"),
     }
 
     def __init__(self, properties={}):
@@ -69,6 +70,8 @@ class APIView(CongruenceListBox):
             self.update()
         elif action == "cli browser":
             self.open_cli_browser()
+        elif action == "gui browser":
+            self.open_gui_browser()
         else:
             super().key_action(action, size=size)
 
@@ -112,8 +115,7 @@ class APIView(CongruenceListBox):
 
     def open_cli_browser(self):
         node = self.get_focus()[0]
-        id = node.data['content']['id']
-        #  log.debug(data)
+        id = node.obj.id
         log.debug("Build HTML view for page with id '%s'" % id)
         rest_url = f"rest/api/content/{id}?expand=body.storage"
         content = make_request(rest_url).text
@@ -126,23 +128,17 @@ class APIView(CongruenceListBox):
         process.communicate()
         self.app.loop.screen.clear()
 
+    #  def open_gui_browser(self):
+        #  node = self.get_focus()[0]
+        #  id = node.data['_links']['id']
+        #  log.debug(data)
+        #  log.debug("Build HTML view for page with id '%s'" % id)
+
 
 class CongruenceAPIEntryLine(urwid.Columns):
-    def __init__(self, data):
-        self.data = data
-        content = self.data['content']
-        lastUpdated = content['history']['lastUpdated']
-        if 'space' in content:
-            space = content["space"]["key"]
-        else:
-            space = "?"
-        title = [
-            content["type"][0].upper(),
-            space,
-            lastUpdated['by']["displayName"],
-            convert_date(lastUpdated["when"], "friendly"),
-            content["title"],
-        ]
+    def __init__(self, obj):
+        self.obj = obj
+        title = self.obj.get_title(cols=True)
 
         super().__init__(
             [('pack', urwid.Text(t)) for t in title],
@@ -152,30 +148,27 @@ class CongruenceAPIEntryLine(urwid.Columns):
 
 class CongruenceAPIEntry(CongruenceListBoxEntry):
     def __init__(self, data):
-        self.data = data
+        self.obj = determine_type(data)(data)
 
         super().__init__(
-            self.data,
+            self.obj,
             CongruenceAPIEntryLine,
         )
 
     def get_next_view(self):
-        content = self.data['content']
-        if content['type'] in ["page", "blogpost"]:
+        if self.obj.type in ["page", "blogpost"]:
             return None
-        elif content['type'] == "comment":
-            return CommentView(self.data)
+        elif self.obj.type == "comment":
+            return CommentView(self.obj)
 
     def get_details_view(self):
-        return CongruenceListBox(urwid.SimpleFocusListWalker([urwid.Text(
-            json.dumps(self.data, indent=2, sort_keys=True)
-        )]))
+        text = self.obj.get_json()
+        return CongruenceListBox(
+            urwid.SimpleFocusListWalker([urwid.Text(text)])
+        )
 
     def search_match(self, search_string):
-        return re.match(
-            search_string,
-            self.data['content']['title']
-        )
+        return self.obj.match(search_string)
 
 
 PluginView = APIView
