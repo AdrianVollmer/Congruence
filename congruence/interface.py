@@ -84,6 +84,8 @@ def make_request(url, params={}, data=None, method="GET", headers={}):
             authenticate_session()
         else:
             break
+    if not response.status_code == 200:
+        app.alert("Received HTTP code %d" % response.status_code, 'error')
     return response
 
 
