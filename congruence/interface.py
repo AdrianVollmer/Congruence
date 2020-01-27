@@ -180,7 +180,7 @@ def convert_date(date, frmt='default'):
     if frmt == 'default':
         return date.strftime(config["DateFormat"])
     if frmt == 'friendly':
-        if diff < timedelta(minutes=24):
+        if diff < timedelta(hours=24):
             return date.strftime("%H:%M")
         elif diff < timedelta(days=8):
             return date.strftime("%a")
