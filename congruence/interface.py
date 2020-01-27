@@ -79,6 +79,7 @@ def make_request(url, params={}, data=None, method="GET", headers={}):
         else:
             response = session.get(url, params=params, headers=headers)
         attempts += 1
+        response.encoding = 'utf-8'
         if not_authenticated(response):
             log.error("Not logged in, authenticating...")
             authenticate_session()
