@@ -81,17 +81,16 @@ class APIView(CongruenceListBox):
             "search",
             parameters=self.properties["Parameters"],
         )
-        # TODO wrap data in objects
-        # TODO fix encoding
+        result = []
         if response:
-            response = [e for e in response if 'content' in e]
-            result = [CongruenceAPIEntry(e) for e in response]
+            for each in response:
+                result.append(CongruenceAPIEntry(determine_type(each)(each),
+                                                 cols=True))
             #  result = change_filter(result)
             self.app.alert('Received %d items' % len(result), 'info')
             self.properties["Parameters"]["start"] += \
                 self.properties["Parameters"]["limit"]
-            return result
-        return []
+        return result
 
     def load_more(self):
         log.info("Load more ...")
@@ -135,26 +134,7 @@ class APIView(CongruenceListBox):
         #  log.debug("Build HTML view for page with id '%s'" % id)
 
 
-class CongruenceAPIEntryLine(urwid.Columns):
-    def __init__(self, obj):
-        self.obj = obj
-        title = self.obj.get_title(cols=True)
-
-        super().__init__(
-            [('pack', urwid.Text(t)) for t in title],
-            dividechars=1
-        )
-
-
 class CongruenceAPIEntry(CongruenceListBoxEntry):
-    def __init__(self, data):
-        self.obj = determine_type(data)(data)
-
-        super().__init__(
-            self.obj,
-            CongruenceAPIEntryLine,
-        )
-
     def get_next_view(self):
         if self.obj.type in ["page", "blogpost"]:
             return None
