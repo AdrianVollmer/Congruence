@@ -85,6 +85,9 @@ class CongruenceApp(object):
     def unhandled_input(self, key):
         if key == '?':
             widget = self.get_current_widget()
+            if isinstance(widget, HelpView):
+                # HelpViews don't need help
+                return
             try:
                 view = HelpView(widget)
                 self.push_view(view)
