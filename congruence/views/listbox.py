@@ -51,9 +51,37 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
         self.walker = urwid.SimpleFocusListWalker(self.entries)
         self._search_results = []
         super().__init__(self.walker)
+        self.align_columns()
+
+    def align_columns(self):
+        """Set all column widths to its common maximum"""
+
+        widths = None
+        for e in self.entries:
+            if hasattr(e, '_columns') and e._columns:
+                this_widths = list(map(len, e._columns))
+                if widths:
+                    for i, w in enumerate(this_widths):
+                        widths[i] = max(widths[i], w)
+                else:
+                    widths = this_widths
+        log.debug(widths)
+        if widths:
+            for e in self.entries:
+                for i, w in enumerate(widths[:-1]):
+                    # [:-1] because the last column can be any width
+                    log.debug(e._inner_widget.contents)
+                    log.debug(w)
+                    item = e._inner_widget.contents[i]
+                    _, _, box_widget = item[1]
+                    e._inner_widget.contents[i] = (
+                        item[0],
+                        e._inner_widget.options('given', w, False),
+                    )
 
     def redraw(self):
         self.walker[:] = self.entries
+        self.align_columns()
 
     def key_action(self, action, size=None):
         log.debug('Process key action "%s"' % action)
@@ -135,22 +163,24 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
 
     def __init__(self, obj, cols=False):
         self.obj = obj
+        self.cols = cols
         if isinstance(obj, str):
-            widget = urwid.Text(obj)
+            self.cols = False
+            self._inner_widget = urwid.Text(obj)
         elif cols:
-            columns = obj.get_title(cols)
-            widget = urwid.Columns(
-                [('pack', urwid.Text(t)) for t in columns],
+            self._columns = obj.get_title(cols=cols)
+            self._inner_widget = urwid.Columns(
+                [('pack', urwid.Text(t)) for t in self._columns],
                 dividechars=1,
             )
         else:
-            widget = urwid.Text(obj.get_title())
-        widget = urwid.AttrMap(
-            widget,
+            self._inner_widget = urwid.Text(obj.get_title())
+        self._widget = urwid.AttrMap(
+            self._inner_widget,
             attr_map="body",
             focus_map="focus",
         )
-        super().__init__(widget)
+        super().__init__(self._widget)
 
     def selectable(self):
         return True
