@@ -160,13 +160,13 @@ class Comment(ContentObject):
     def get_title(self, cols=False):
         if cols:
             return super().get_title(cols=True)
-        #  date = self._data["version"]["when"]
-        #  date = convert_date(date)
-        #  title = "%s, %s" % (
-        #      self._data["version"]["by"]["displayName"],
-        #      date,
-        #  )
-        return self.title
+        date = self._data["version"]["when"]
+        date = convert_date(date)
+        title = "%s, %s" % (
+            self._data["version"]["by"]["displayName"],
+            date,
+        )
+        return title
         #  return {
         #      "title": title,
         #      "username": self._data["version"]["by"]["username"],
