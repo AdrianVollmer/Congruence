@@ -130,22 +130,21 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
 class CongruenceListBoxEntry(urwid.WidgetWrap):
     """Represents one item in a ListBox
 
-    :data: an object holding data which this ListBoxEntry represents.
-    :wrapper: a subclass of urwid.Widget whose constructor takes `data` as
-        an argument.
+    :obj: a confluence content object or a string
     """
 
-    def __init__(self, data, wrapper):
-        self.data = data
-        if isinstance(wrapper, str):
-            widget = urwid.Text(wrapper)
+    def __init__(self, obj, cols=False):
+        self.obj = obj
+        if isinstance(obj, str):
+            widget = urwid.Text(obj)
+        elif cols:
+            columns = obj.get_title(cols)
+            widget = urwid.Columns(
+                [('pack', urwid.Text(t)) for t in columns],
+                dividechars=1,
+            )
         else:
-            widget = wrapper(data)
-        #  else:
-        #      line = urwid.Columns(
-        #          [('pack', urwid.Text(t)) for t in text],
-        #          dividechars=1
-        #      )
+            widget = urwid.Text(obj.get_title())
         widget = urwid.AttrMap(
             widget,
             attr_map="body",
@@ -169,3 +168,31 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
         """Returns a Boolean whether the search string matches"""
 
         raise NotImplementedError("search_match in %s" % type(self).__name__)
+
+
+class CardListBoxEntry(urwid.Pile):
+    def __init__(self, obj):
+        self.obj = obj
+        widgets = [
+            self.render_head(),
+            self.render_content(),
+        ]
+        super().__init__(widgets)
+
+    def render_head(self):
+        title = self.obj.get_title()
+        return urwid.AttrMap(
+            urwid.Text(title),
+            'card-head',
+            focus_map='card-focus'
+        )
+
+    def render_content(self):
+        text = self.obj.get_content()
+        return urwid.AttrMap(urwid.Text(text), 'body')
+
+    def selectable(self):
+        return True
+
+    def keypress(self, size, key):
+        return key

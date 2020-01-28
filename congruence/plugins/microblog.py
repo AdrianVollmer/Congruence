@@ -19,9 +19,10 @@ __help__ = """Congruence Microblog
 Here you can see the latest entries of the microblog plugin.
 
 """
-from congruence.views.listbox import CongruenceListBox, CongruenceListBoxEntry
+from congruence.views.listbox import CongruenceListBox, CardListBoxEntry
 from congruence.interface import make_request, html_to_text, convert_date
 from congruence.logging import log
+from congruence.objects import ContentObject
 
 import json
 
@@ -40,6 +41,7 @@ def get_microblog(properties):
             "replyLimit": "9999"
         },
         data='thread.topicId:(12 OR 13 OR 14 OR 15 OR 16)',
+        # TODO move ^ to config
         headers={
             "Content-Type": "application/json",
         },
@@ -48,7 +50,7 @@ def get_microblog(properties):
     #  log.debug(entries)
     result = []
     for e in entries['microposts']:
-        result.append(MicroblogEntry(e))
+        result.append(MicroblogEntry(MicroblogObject(e)))
     return result
 
 
@@ -62,35 +64,28 @@ class MicroblogView(CongruenceListBox):
         super().__init__(self.entries, help_string=__help__)
 
 
-class MicroblogEntry(CongruenceListBoxEntry):
+class MicroblogEntry(CardListBoxEntry):
     """Represents microblog entries or replies to one entry as a list of
     widgets"""
 
-    def __init__(self, data, is_reply=False):
-        self.data = data
+    def __init__(self, obj, is_reply=False):
+        self.obj = obj
         self.is_reply = is_reply
-        super().__init__(
-            self.data,
-            CardListBoxEntry,
-        )
+        super().__init__(self.obj)
 
     def get_next_view(self):
+        log.debug(self.is_reply)
         if self.is_reply:
-            return MicroblogReplyDetails(self.data)
-        return MicroblogReplyView(self.data)
+            return MicroblogReplyDetails(self.obj._data)
+        return MicroblogReplyView(self.obj._data)
 
 
-class CardListBoxEntry(urwid.Pile):
+class MicroblogObject(ContentObject):
     def __init__(self, data):
-        self.data = data
-        widgets = [
-            self.render_head(self.data),
-            self.render_content(self.data),
-        ]
-        super().__init__(widgets)
+        self._data = data
 
-    def render_head(self, entry):
-        liked_by = [u["userFullname"] for u in entry["likingUsers"]]
+    def get_title(self, cols=False):
+        liked_by = [u["userFullname"] for u in self._data["likingUsers"]]
         max_likes = 3
         if len(liked_by) > max_likes:
             liked_by = " Liked by %s and %d more" % (
@@ -102,28 +97,25 @@ class CardListBoxEntry(urwid.Pile):
         else:
             liked_by = ""
         # TODO process 'hasliked'
-        header = "%s (%s)%s" % (
-            entry["authorFullName"],
-            convert_date(entry["creationDate"]),
+        title = "%s (%s)%s" % (
+            self._data["authorFullName"],
+            convert_date(self._data["creationDate"]),
             liked_by,
         )
-        return urwid.AttrMap(
-            urwid.Text(header),
-            'card-head',
-            focus_map='card-focus'
-        )
+        return title
 
-    def render_content(self, entry):
-        text = entry["renderedContent"]
+    def get_content(self):
+        text = self._data["renderedContent"]
         text = html_to_text(text).strip()
-        return urwid.AttrMap(urwid.Text(text), 'body')
+        return text
 
 
 class MicroblogReplyView(CongruenceListBox):
     def __init__(self, entries):
         self.title = "Replies"
-        self.entries = [MicroblogEntry(entries, is_reply=True)]
-        self.entries += [MicroblogEntry(e, is_reply=True)
+        self.entries = [MicroblogEntry(MicroblogObject(entries),
+                                       is_reply=True)]
+        self.entries += [MicroblogEntry(MicroblogObject(e), is_reply=True)
                          for e in entries["replies"]]
         super().__init__(self.entries, help_string=__help__)
 
@@ -132,9 +124,10 @@ class MicroblogReplyDetails(CongruenceListBox):
     def __init__(self, data):
         self.title = "Details"
         # Build details view
-        del data['renderedContent']
         max_len = max([len(k) for k, _ in data.items()])
-        line = [[urwid.Text(k), urwid.Text(str(v))] for k, v in data.items()]
+        line = [[urwid.Text(k), urwid.Text(str(v))]
+                for k, v in data.items()
+                if not k == "renderedContent"]
         line = [urwid.Columns([(max_len + 1, k), v])
                 for k, v in line]
         super().__init__(line)
