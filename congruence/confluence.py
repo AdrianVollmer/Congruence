@@ -21,8 +21,9 @@ This file contains views and functions which are specific to Confluence
 from congruence.views.treelistbox import CongruenceTreeListBox,\
         CongruenceCardTreeWidget
 from congruence.views.listbox import CongruenceListBox
-from congruence.interface import make_request, html_to_text, convert_date
+from congruence.interface import make_request
 from congruence.logging import log
+from congruence.objects import Comment
 #  from congruence.external import open_gui_browser
 
 import json
@@ -31,17 +32,21 @@ import re
 import urwid
 
 
-def get_nested_content(url, attr_picker):
-    """Retrieve content from the Confluence API
+def get_comments_of_page(url):
+    """Retrieve comments of a page from the Confluence API
 
-    url: the REST endpoint to use.
-    attr_picker: a function that takes a dictionary and returns a
-        different (e.g. a condensend one) dictionary.
+    :id: the id of the page
     """
     def get_by_id(children, cid):
         for c in children:
             if cid in list(c.keys()):
                 return c
+    id = re.search('/([^/]*)$', url).groups()[0]
+    log.debug("Get comment tree of page %s" % id)
+
+    url = f"rest/api/content/{id}/child/comment?"\
+          + "expand=body.view,content,version,ancestors"\
+          + "&depth=all&limit=9999"
 
     items = []
     while True:
@@ -68,31 +73,11 @@ def get_nested_content(url, attr_picker):
             parent = get_by_id(parent, a["id"])["children"]
 
         parent.append({
-            c["id"]: attr_picker(c),
+            c["id"]: Comment(c),
             "children": [],
         })
 
     return result
-
-
-def get_id_from_url(url):
-    log.debug("Get pageId of %s" % url)
-    m = re.search(r'pageId=([0-9]*)', url)
-    if m:
-        return m.groups()[0]
-    m = re.search(r'display/([^/]+)(.*)/([^/]*)', url.split("?")[0])
-    if not m:
-        return None
-    space, date, title = m.groups()[:3]
-    type = "blogpost" if date else "page"
-    log.debug(f"Getting id of '{space}/{title}', type '{type}'")
-    # Better leave it all URL encoded
-    r = make_request("rest/api/content?"
-                     + f"type={type}&title={title}&spaceKey={space}")
-    j = json.loads(r.text)
-    if j["results"]:
-        return j["results"][0]["id"]
-    return None
 
 
 class CommentView(CongruenceTreeListBox):
@@ -109,12 +94,14 @@ class CommentView(CongruenceTreeListBox):
     def __init__(self, obj):
         self.title = "Comments"
         comment_id = obj.id
-        log.debug("Build CommentView for page with id '%s'" % comment_id)
-        container = obj.get_content()
-        page_id = re.search(r'/([^/]*$)', container).groups()[0]
+        log.debug("Build CommentView for comment with id '%s'" % comment_id)
+        #  log.debug(obj._data)
+        #  container = obj.get_content()
+        #  page_id = re.search(r'/([^/]*$)', container).groups()[0]
+        url = obj.get_parent_container()
         comments = {
             "0": {"title": "root"},
-            "children": get_comments_of_page(page_id),
+            "children": get_comments_of_page(url),
         }
         super().__init__(comments, CommentWidget)
         # set focus
