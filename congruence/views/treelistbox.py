@@ -101,17 +101,17 @@ class CongruenceCardTreeWidget(CongruenceTreeListBoxEntry):
 
     def get_display_header(self):
         node = self.get_value()
-        if node["title"] == 'root':
+        try:
+            return node.get_title()
+        except AttributeError:
             return "Root"
-        else:
-            return node["title"]
 
     def get_display_body(self):
         node = self.get_value()
-        if node["title"] == 'root':
+        try:
+            return node.get_content()
+        except AttributeError:
             return ""
-        else:
-            return node["content"]
 
     def load_inner_widget(self):
         """Build a multi-line widget with a header and a body"""

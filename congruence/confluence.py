@@ -140,35 +140,9 @@ class CommentDetails(CongruenceListBox):
     def __init__(self, data):
         self.title = "Details"
         # Build details view
-        del data['content']
+        #  del data['content']
         max_len = max([len(k) for k, _ in data.items()])
         line = [[urwid.Text(k), urwid.Text(str(v))] for k, v in data.items()]
         line = [urwid.Columns([(max_len + 1, k), v])
                 for k, v in line]
         super().__init__(line)
-
-
-def get_comments_of_page(id):
-    def attr_picker(c):
-        date = c["version"]["when"]
-        date = convert_date(date)
-        title = "%s, %s" % (
-            c["version"]["by"]["displayName"],
-            date,
-        )
-        return {
-            "title": title,
-            "username": c["version"]["by"]["username"],
-            "displayName": c["version"]["by"]["displayName"],
-            "date": date,
-            "url": c["_links"]["webui"],
-            "versions": str(c["version"]["number"]),
-            "content": html_to_text(c["body"]["view"]["value"]),
-            # TODO insert selection of inline comments
-        }
-    url = f"rest/api/content/{id}/child/comment?"\
-          + "expand=body.view,content,version,ancestors"\
-          + "&depth=all&limit=9999"
-    return get_nested_content(url, attr_picker)
-    # Likes can be retrieved like so (might be unstable):
-    # https://confluence.syss.intern/rest/likes/1.0/content/31424614/likes

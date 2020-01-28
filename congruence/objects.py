@@ -19,8 +19,9 @@
 This file contains classes which represent content objects in Confluence.
 """
 
-from congruence.interface import convert_date
+from congruence.interface import convert_date, html_to_text
 from congruence.logging import log
+from congruence.interface import make_request
 
 import json
 import re
@@ -37,7 +38,6 @@ def determine_type(data):
         'personal': Space,
         #  'known': User,
     }
-    log.debug(data)
     if 'content' in data:
         if 'type' in data['content']:
             return type_map[data['content']['type']]
@@ -53,8 +53,14 @@ class ConfluenceObject(ABC):
 class ContentObject(ConfluenceObject):
     def __init__(self, data):
         self._data = data
-        self.id = data['content']["id"]
-        self.title = data['content']["title"]
+        if 'content' in data:
+            self.url = data["url"]
+            content = data['content']
+        else:
+            self.url = data["_links"]["webui"]
+            content = data
+        self.id = content["id"]
+        self.title = content["title"]
         #  self.space = data["space"]
         self.liked = False  # TODO determine
 
@@ -150,6 +156,34 @@ class Comment(ContentObject):
         super().__init__(data)
         self.type = 'comment'
         self.short_type = 'C'
+
+    def get_title(self, cols=False):
+        if cols:
+            return super().get_title(cols=True)
+        date = self._data["version"]["when"]
+        date = convert_date(date)
+        title = "%s, %s" % (
+            self._data["version"]["by"]["displayName"],
+            date,
+        )
+        return title
+        #  return {
+        #      "title": title,
+        #      "username": self._data["version"]["by"]["username"],
+        #      "displayName": self._data["version"]["by"]["displayName"],
+        #      "date": date,
+        #      "url": self._data["_links"]["webui"],
+        #      "versions": str(self._data["version"]["number"]),
+        #      # TODO insert selection of inline comments
+        #  }
+
+    def get_content(self):
+        #  log.debug(self._data)
+        return html_to_text(self._data["body"]["view"]["value"])
+
+    def get_parent_container(self):
+        #  log.debug(self._data)
+        return self._data["content"]["_expandable"]["container"]
 
 
 class Attachment(ContentObject):
