@@ -22,10 +22,10 @@ This view displays your latest notifications.
 from congruence.interface import make_request, convert_date
 from congruence.views.listbox import CongruenceListBox,\
         CongruenceListBoxEntry
+from congruence.objects import ContentObject
+#  from congruence.logging import log
 
 import json
-
-import urwid
 
 
 def get_notifications(properties={"limit": 30}):
@@ -45,31 +45,35 @@ class NotificationView(CongruenceListBox):
         for e in entries:
             for n in e["notifications"]:
                 n["reference"] = e["item"]
-                n = NotificationEntry(n)
+                n = NotificationEntry(NotificationObject(n))
                 notifications.append(n)
 
         super().__init__(notifications, help_string=__help__)
 
 
 class NotificationEntry(CongruenceListBoxEntry):
-    def __init__(self, data):
-        self.data = data
+    def __init__(self, obj):
+        self.obj = obj
 
         super().__init__(
-            self.data,
-            NotificationLine,
+            self.obj.get_title(),
         )
 
     def get_next_view(self):
         pass
 
 
-class NotificationLine(urwid.Text):
+class NotificationObject(ContentObject):
     def __init__(self, data):
-        self.data = data
-        date = convert_date(data["created"], "friendly")
-        name = f"{data['reference']['title']}: {data['title']} ({date})"
-        super().__init__(name)
+        self._data = data
+
+    def get_title(self, cols=False):
+        #  log.debug(self._data)
+        return (
+            self._data["title"]
+            + " (" + convert_date(self._data['updated'], 'friendly')
+            + ")"
+        )
 
 
 PluginView = NotificationView
