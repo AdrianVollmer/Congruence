@@ -56,7 +56,7 @@ class ContentObject(ConfluenceObject):
         self.id = data['content']["id"]
         self.title = data['content']["title"]
         #  self.space = data["space"]
-        self.url = data["url"]
+        self.liked = False  # TODO determine
 
     def get_title(self, cols=False):
         if cols:
@@ -88,6 +88,47 @@ class ContentObject(ConfluenceObject):
     def get_content(self):
         # TODO load content if not in object already
         return self._data["content"]['_expandable']['container']
+
+    #  def get_like_status(self):
+
+    def like(self):
+        id = self.id
+        log.debug("Liking %s" % id)
+        headers = {
+            "Content-Type": "application/json",
+        }
+        r = make_request(f"rest/likes/1.0/content/{id}/likes",
+                         method='POST',
+                         headers=headers,
+                         data="")
+        if r.status_code == 200:
+            self.liked = True
+            return True
+        if r.status_code == 400:
+            # already liked
+            self.liked = True
+        log.error("Like failed")
+        return False
+
+    def unlike(self):
+        id = self.id
+        log.debug("Unliking %s" % id)
+        r = make_request(f"rest/likes/1.0/content/{id}/likes",
+                         method='DELETE',
+                         #  headers=headers,
+                         data="")
+
+        if r.status_code == 200:
+            self.liked = False
+            return True
+        log.error("Unlike failed")
+        return False
+
+    def toggle_like(self):
+        if self.liked:
+            return self.unlike()
+        else:
+            return self.like()
 
 
 class Page(ContentObject):

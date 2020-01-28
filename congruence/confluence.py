@@ -88,7 +88,7 @@ class CommentView(CongruenceTreeListBox):
 
     key_map = {
         'r': ("reply", "Reply to a comment"),
-        'l': ("like", "Toggle your 'like' of a comment"),
+        'L': ("like", "Toggle your 'like' of a comment"),
     }
 
     def __init__(self, obj):
@@ -121,7 +121,12 @@ class CommentView(CongruenceTreeListBox):
             log.debug(reply)
             #  send_reply(reply)
         elif action == "like":
-            self.load_much_more()
+            comment = self.get_focus()[0].get_value()
+            if comment.toggle_like():
+                if comment.liked:
+                    self.app.alert('You liked this', 'info')
+                else:
+                    self.app.alert('You unliked this', 'info')
         else:
             super().key_action(action, size=size)
 
