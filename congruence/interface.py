@@ -68,21 +68,23 @@ def make_request(url, params={}, data=None, method="GET", headers={}):
     attempts = 0
     while attempts < 2:
         log.info(f"Requesting {url}")
-        if data or method == "POST":
+        if not data and method == "GET":
+            response = session.get(url, params=params, headers=headers)
+        else:
             headers["X-Atlassian-Token"] = XSRF
-            response = session.post(
+            response = session.request(
+                method,
                 url,
                 params=params,
                 data=data,
-                headers=headers
+                headers=headers,
             )
-        else:
-            response = session.get(url, params=params, headers=headers)
         attempts += 1
         response.encoding = 'utf-8'
         if not_authenticated(response):
-            log.error("Not logged in, authenticating...")
-            authenticate_session()
+            log.error("Not logged in? Authenticating...")
+            if not authenticate_session():
+                return response
         else:
             break
     if not response.status_code == 200:
