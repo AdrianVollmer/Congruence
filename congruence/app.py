@@ -159,10 +159,11 @@ class CongruenceApp(object):
     def get_long_input(self, prompt=""):
         """Open an external editor to get user input"""
 
-        self.loop.screen.stop()
         result = get_editor_input(prompt)
-        self.loop.run()
-        return result
+        self.loop.screen.clear()
+        result = result.splitlines()
+        result = [line for line in result if not line.startswith('##')]
+        return '\n'.join(result)
 
     def push_view(self, view):
         """Open a new view and keep track of the old one"""
