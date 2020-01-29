@@ -117,9 +117,17 @@ class CommentView(CongruenceTreeListBox):
 
     def key_action(self, action, size=None):
         if action == "reply":
-            reply = self.app.get_long_input("test")
-            log.debug(reply)
-            #  send_reply(reply)
+            obj = self.get_focus()[0].get_value()
+            prev_msg = obj.get_content()
+            prev_msg = prev_msg.splitlines()
+            prev_msg = '\n'.join([f"## > {line}" for line in prev_msg])
+            prev_msg = "## %s wrote:\n%s" % (obj.author, prev_msg)
+            help_text = cs.REPLY_MSG + prev_msg
+            reply = self.app.get_long_input(help_text)
+
+            if reply:
+                obj.send_reply(reply)
+
         elif action == "like":
             comment = self.get_focus()[0].get_value()
             if comment.toggle_like():
