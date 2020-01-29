@@ -40,6 +40,7 @@ def get_microblog(properties):
             "limit": "9999",
             "replyLimit": "9999"
         },
+        method='POST',
         data='thread.topicId:(12 OR 13 OR 14 OR 15 OR 16)',
         # TODO move ^ to config
         headers={
@@ -47,10 +48,9 @@ def get_microblog(properties):
         },
     )
     entries = json.loads(response.text)
-    #  log.debug(entries)
     result = []
     for e in entries['microposts']:
-        result.append(MicroblogEntry(MicroblogObject(e)))
+        result.append(MicroblogEntry(MicroblogObject(e), is_reply=False))
     return result
 
 
@@ -60,7 +60,6 @@ class MicroblogView(CongruenceListBox):
         self.properties = properties
         self.entries = get_microblog(self.properties)
         self.app.alert('Received %d items' % len(self.entries), 'info')
-        #  self.title = title
         super().__init__(self.entries, help_string=__help__)
 
 
@@ -74,7 +73,6 @@ class MicroblogEntry(CardListBoxEntry):
         super().__init__(self.obj)
 
     def get_next_view(self):
-        log.debug(self.is_reply)
         if self.is_reply:
             return MicroblogReplyDetails(self.obj._data)
         return MicroblogReplyView(self.obj._data)

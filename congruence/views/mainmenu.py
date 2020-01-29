@@ -42,7 +42,6 @@ class CongruenceMainMenu(CongruenceListBox):
         self.entries = []
         for p in plugins:
             self.entries.append(MainMenuEntry(p))
-        #  self.body = CongruenceListBox(self.entries, help_string=__help__)
         super().__init__(self.entries, help_string=__help__)
 
 
