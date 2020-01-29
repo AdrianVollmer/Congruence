@@ -31,7 +31,7 @@ from congruence.views.listbox import CongruenceListBox, \
 from congruence.interface import make_api_call, make_request
 from congruence.logging import log
 from congruence.args import config
-from congruence.confluence import CommentView
+from congruence.confluence import CommentView, PageView
 from congruence.objects import determine_type
 
 import json
@@ -137,7 +137,7 @@ class APIView(CongruenceListBox):
 class CongruenceAPIEntry(CongruenceListBoxEntry):
     def get_next_view(self):
         if self.obj.type in ["page", "blogpost"]:
-            return None
+            return PageView(self.obj)
         elif self.obj.type == "comment":
             return CommentView(self.obj)
 

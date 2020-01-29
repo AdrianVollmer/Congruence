@@ -21,7 +21,7 @@ This file contains views and functions which are specific to Confluence
 from congruence.views.treelistbox import CongruenceTreeListBox,\
         CongruenceCardTreeWidget
 from congruence.views.listbox import CongruenceListBox
-from congruence.interface import make_request
+from congruence.interface import make_request, convert_date
 from congruence.logging import log
 from congruence.objects import Comment
 #  from congruence.external import open_gui_browser
@@ -146,3 +146,20 @@ class CommentDetails(CongruenceListBox):
         line = [urwid.Columns([(max_len + 1, k), v])
                 for k, v in line]
         super().__init__(line)
+
+
+class PageView(CongruenceListBox):
+    def __init__(self, obj):
+        self.title = "Page"
+        #  text = [urwid.Text(obj.get_json())]
+        update = obj._data["content"]["history"]["lastUpdated"]
+        infos = {
+            "Title": obj.get_title(),
+            "Space": obj._data["content"]["space"]["key"],
+            "Last updated by": update["by"]["displayName"],
+            "Last updated at": convert_date(update["when"]),
+            "Message": update["message"],
+            "Version number": update["number"],
+        }
+        text = urwid.Text('\n'.join([f"{k}: {v}" for k, v in infos.items()]))
+        super().__init__(urwid.SimpleFocusListWalker([text]))
