@@ -24,6 +24,7 @@ from congruence.views.listbox import CongruenceListBox
 from congruence.interface import make_request, convert_date
 from congruence.logging import log
 from congruence.objects import Comment
+import congruence.strings as cs
 #  from congruence.external import open_gui_browser
 
 import json
@@ -126,7 +127,11 @@ class CommentView(CongruenceTreeListBox):
             reply = self.app.get_long_input(help_text)
 
             if reply:
-                obj.send_reply(reply)
+                if obj.send_reply(reply):
+                    self.app.alert('Comment sent', 'info')
+                else:
+                    self.app.alert('Comment failed', 'error')
+            # TODO self.update()
 
         elif action == "like":
             comment = self.get_focus()[0].get_value()

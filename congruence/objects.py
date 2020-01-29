@@ -19,12 +19,13 @@
 This file contains classes which represent content objects in Confluence.
 """
 
-from congruence.interface import convert_date, html_to_text
+from congruence.interface import convert_date, html_to_text, md_to_html
 from congruence.logging import log
 from congruence.interface import make_request
 
 import json
 import re
+from uuid import uuid4
 from abc import ABC, abstractmethod
 
 
@@ -189,6 +190,28 @@ class Comment(ContentObject):
     def get_parent_container(self):
         #  log.debug(self._data)
         return self._data["content"]["_expandable"]["container"]
+
+    def send_reply(self, text):
+        page_id = self._data["ancestors"][0]["_expandable"]['container']
+        page_id = re.search(r'/([^/]*$)', page_id).groups()[0]
+        comment_id = self._data["ancestors"][0]["id"]
+        url = (f"/rest/tinymce/1/content/{page_id}/"
+               f"comments/{comment_id}/comment")
+        params = {'actions': 'true'}
+        answer = md_to_html(text, url_encode='html')
+        uuid = str(uuid4())
+        headers = {
+            "X-Atlassian-Token": "no-check",
+            "X-Requested-With": "XMLHttpRequest"
+        }
+
+        data = f"{answer}&watch=false&uuid={uuid}"
+        log.debug(data)
+        r = make_request(url, params, method="POST", data=data,
+                         headers=headers, no_token=True)
+        if r.status_code == 200:
+            return True
+        return False
 
 
 class Attachment(ContentObject):

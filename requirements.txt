@@ -1,4 +1,5 @@
 html2text
+markdown
 pyyaml
 sqlalchemy
 sqlite

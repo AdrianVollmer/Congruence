@@ -18,6 +18,7 @@ from congruence.args import config, cookie_jar, BASE_URL
 from congruence.logging import log
 from congruence.app import app
 
+from urllib.parse import urlencode
 from datetime import datetime as dt, timedelta
 import json
 from requests import Session, utils
@@ -29,6 +30,7 @@ from bs4 import BeautifulSoup
 import html2text
 from dateutil.parser import parse as dtparse
 import pytz
+import markdown
 
 
 session = Session()
@@ -57,7 +59,8 @@ def make_api_call(endpoint, parameters, base="rest/api", headers={}):
     return None
 
 
-def make_request(url, params={}, data=None, method="GET", headers={}):
+def make_request(url, params={}, data=None, method="GET", headers={},
+                 no_token=False):
     """This function performs the actual HTTP request"""
 
     if not url.startswith(BASE_URL):
@@ -71,7 +74,10 @@ def make_request(url, params={}, data=None, method="GET", headers={}):
         if not data and method == "GET":
             response = session.get(url, params=params, headers=headers)
         else:
-            headers["X-Atlassian-Token"] = XSRF
+            if not no_token:
+                # For whatever reason, some requests fail with a proper XSRF
+                # Token... for example posting a comment
+                headers["X-Atlassian-Token"] = XSRF
             response = session.request(
                 method,
                 url,
@@ -167,6 +173,13 @@ def html_to_text(html):
     except Exception as e:
         log.exception(e)
         return html
+
+
+def md_to_html(text, url_encode=None):
+    result = markdown.markdown(text)
+    if url_encode:
+        result = urlencode({url_encode: result})
+    return result
 
 
 def convert_date(date, frmt='default'):
