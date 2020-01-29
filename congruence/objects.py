@@ -156,6 +156,11 @@ class Comment(ContentObject):
         super().__init__(data)
         self.type = 'comment'
         self.short_type = 'C'
+        try:
+            self.author = self._data["version"]["by"]["displayName"]
+        except KeyError as e:
+            log.exception(e)
+            self.author = "unknown"
 
     def get_title(self, cols=False):
         if cols:
