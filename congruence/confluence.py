@@ -166,7 +166,7 @@ class PageView(CongruenceListBox):
             "Space": obj._data["content"]["space"]["key"],
             "Last updated by": update["by"]["displayName"],
             "Last updated at": convert_date(update["when"]),
-            "Message": update["message"],
+            "Change Message": update["message"],
             "Version number": update["number"],
         }
         text = urwid.Text('\n'.join([f"{k}: {v}" for k, v in infos.items()]))
