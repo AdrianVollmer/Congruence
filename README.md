@@ -25,7 +25,7 @@ their ability to interact with other programs and scripts, which makes
 automation so much easier. Displaying Confluence pages in a TUI browser like
 elinks or lynx naturally removes all distractions and focuses and what's
 most important: the content. Besides pages with lots of images or tables,
-this makes it surprisingly pleasant to read. And your fully-fledged GUI
+this makes it surprisingly pleasant to read. And your fully fledged GUI
 browser is just one key press away...
 
 Naturally, Congruence was written entirely in vim.
