@@ -65,13 +65,10 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
                         widths[i] = max(widths[i], w)
                 else:
                     widths = this_widths
-        log.debug(widths)
         if widths:
             for e in self.entries:
                 for i, w in enumerate(widths[:-1]):
                     # [:-1] because the last column can be any width
-                    log.debug(e._inner_widget.contents)
-                    log.debug(w)
                     item = e._inner_widget.contents[i]
                     _, _, box_widget = item[1]
                     e._inner_widget.contents[i] = (
