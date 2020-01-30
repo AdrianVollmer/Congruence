@@ -19,8 +19,7 @@ from congruence.args import config
 from congruence.palette import PALETTE
 from congruence.logging import log
 from congruence.views.mainmenu import CongruenceMainMenu
-from congruence.views.listbox import CongruenceListBox
-from congruence.views.common import CongruenceView
+from congruence.views.common import CongruenceView, CongruenceTextBox
 from congruence.external import get_editor_input
 
 import urwid
@@ -57,7 +56,7 @@ class CongruenceInput(urwid.Edit):
         return urwid.Edit.keypress(self, size, key)
 
 
-class HelpView(CongruenceListBox):
+class HelpView(CongruenceTextBox):
     """Builds a view based on the metadata of a widget
 
     :widget: an object of type XYZ
@@ -75,8 +74,8 @@ class HelpView(CongruenceListBox):
                 key_legend += f"    space: {v[1]}\n"
             else:
                 key_legend += f"    {k}: {v[1]}\n"
-        text = [urwid.Text(help_string+key_legend)]
-        super().__init__(urwid.SimpleFocusListWalker(text))
+        text = help_string+key_legend
+        super().__init__(text)
 
 
 class CongruenceApp(object):
