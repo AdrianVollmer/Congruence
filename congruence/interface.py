@@ -69,7 +69,7 @@ def make_request(url, params={}, data=None, method="GET", headers={},
         else:
             url = f"{BASE_URL}/{url}"
     attempts = 0
-    while attempts == 0:
+    while attempts < 2:
         log.info(f"Requesting {url}")
         if not data and method == "GET":
             response = session.get(url, params=params, headers=headers)
