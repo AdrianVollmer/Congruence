@@ -35,8 +35,8 @@ class CongruenceTextBox(urwid.Widget):
 class CongruenceView(object):
     def get_keymap(self):
         key_map = {
-            **self.app.key_map,
             **self.key_map,
+            **self.app.key_map,
         }
         return key_map
 
