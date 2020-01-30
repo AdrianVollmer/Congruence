@@ -14,8 +14,7 @@ takes a minimalist approach to accessing this bloated but quite useful piece
 of software.
 
 Fortunately, on the flip side, Confluence behaves nicely when interfacing
-with other things. There is an API! With documentation! And there are lots
-of JSON objects or XML documents suitable for programmatic processing.
+with other things. There is an API!
 
 I'm a big believer in minimalism and CLI/TUI tools. They always respond
 virtually instantly to user input (safe for communication over the network)
