@@ -63,13 +63,47 @@ class CongruenceTextBox(CongruenceView, urwid.ListBox,
         'j': ('move down', 'Move down'),
         '[': ('page up', 'Move page up'),
         ']': ('page down', 'Move page down'),
-        '/': ('search', 'Search the list for some string'),
-        'n': ('search next', 'Jump to the next entry in the search result'),
-        'N': ('search prev',
-              'Jump to the previous entry in the search result'),
+        #  '/': ('search', 'Search the list for some string'),
+        #  'n': ('search next', 'Jump to the next entry in the search result'),
+        #  'N': ('search prev',
+        #        'Jump to the previous entry in the search result'),
     }
 
     def __init__(self, text):
         self.text = text
         textbox = urwid.Text(self.text)
         super().__init__(urwid.SimpleFocusListWalker([textbox]))
+
+    def key_action(self, action, size=None):
+        log.debug('Process key action "%s"' % action)
+        if action == 'move down':
+            urwid.ListBox.keypress(self, size, 'down')
+        elif action == 'move up':
+            urwid.ListBox.keypress(self, size, 'up')
+        elif action == 'page down':
+            urwid.ListBox.keypress(self, size, 'page down')
+        elif action == 'page up':
+            urwid.ListBox.keypress(self, size, 'page up')
+        #  elif action == 'search':
+        #      self.search()
+        #  elif action == 'search next':
+        #      self.search_next(1)
+        #  elif action == 'search prev':
+        #      self.search_next(-1)
+        #  elif action == 'limit':
+        #      def limit(expr):
+        #          _search_results = [
+        #              e for e in self.entries if e.search_match(expr)
+        #          ]
+        #          self.walker[:] = _search_results
+        #          if expr == '.':
+        #              self.app.reset_status()
+        #          else:
+        #              self.app.alert("To view all items, limit to '.'.",
+        #                             'info')
+        #      self.app.get_input(
+        #          'Search for:',
+        #          limit,
+        #      )
+        else:
+            raise KeyError("Unknown key action: %s" % action)
