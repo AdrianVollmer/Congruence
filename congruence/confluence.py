@@ -9,8 +9,7 @@
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
+#  GNU General Public License for more details.  #
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -22,6 +21,7 @@ from congruence.views.treelistbox import CongruenceTreeListBox,\
         CongruenceCardTreeWidget
 from congruence.views.listbox import CongruenceListBox
 from congruence.interface import make_request, convert_date
+from congruence.tools import create_diff
 from congruence.logging import log
 from congruence.objects import Comment
 import congruence.strings as cs
@@ -162,7 +162,13 @@ class CommentDetails(CongruenceListBox):
 
 
 class PageView(CongruenceListBox):
+    key_map = {
+        'D': ('list diff', 'Show the diff of the current version and the'
+              ' previous one'),
+    }
+
     def __init__(self, obj):
+        self.obj = obj
         self.title = "Page"
         #  text = [urwid.Text(obj.get_json())]
         update = obj._data["content"]["history"]["lastUpdated"]
@@ -171,8 +177,49 @@ class PageView(CongruenceListBox):
             "Space": obj._data["content"]["space"]["key"],
             "Last updated by": update["by"]["displayName"],
             "Last updated at": convert_date(update["when"]),
-            "Change Message": update["message"],
+            "Last change message": update["message"],
             "Version number": update["number"],
         }
         text = urwid.Text('\n'.join([f"{k}: {v}" for k, v in infos.items()]))
+        super().__init__(urwid.SimpleFocusListWalker([text]))
+
+    def key_action(self, action, size=None):
+        if action == "list diff":
+            try:
+                view = DiffView(self.obj.id)
+                self.app.push_view(view)
+            except KeyError:
+                self.app.alert('No diff available', 'warning')
+        else:
+            super().key_action(action, size=size)
+
+
+class DiffView(CongruenceListBox):
+    def __init__(self, page_id, first=None, second=None):
+        self.title = "Diff"
+        url = f"rest/api/content/{page_id}"
+        params = {
+            "expand": "version,body.view"
+        }
+        # get first body
+        if first:
+            params['status'] = 'historical'
+            params['version'] = first
+        r = make_request(url, params=params)
+        data = json.loads(r.text)
+        first = data["version"]["number"]
+        self.version1 = data["body"]["view"]["value"]
+
+        # get second body
+        if not second:
+            second = first - 1
+        params['version'] = second
+        params['status'] = 'historical'
+
+        r = make_request(url, params=params)
+        data = json.loads(r.text)
+        self.version2 = data["body"]["view"]["value"]
+        self.diff = create_diff(self.version1, self.version2, html=True)
+
+        text = urwid.Text(self.diff)
         super().__init__(urwid.SimpleFocusListWalker([text]))
