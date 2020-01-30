@@ -20,7 +20,7 @@ from congruence.palette import PALETTE
 from congruence.logging import log
 from congruence.views.mainmenu import CongruenceMainMenu
 from congruence.views.listbox import CongruenceListBox
-from congruence.views.treelistbox import CongruenceTreeListBox
+from congruence.views.common import CongruenceView
 from congruence.external import get_editor_input
 
 import urwid
@@ -82,21 +82,31 @@ class HelpView(CongruenceListBox):
 class CongruenceApp(object):
     """This class represents the app"""
 
+    key_map = {
+        '?': ('show help', 'Show a description of what you are seeing'
+              ' together with the key map for the current view'),
+        'q': ('back', 'Go back to the last view'),
+        'Q': ('exit', 'Exit the program'),
+    }
+
     def unhandled_input(self, key):
-        if key == '?':
-            widget = self.get_current_widget()
-            if isinstance(widget, HelpView):
-                # HelpViews don't need help
-                return
-            try:
-                view = HelpView(widget)
-                self.push_view(view)
-            except AttributeError:
-                pass
-        if key == 'q':
-            self.pop_view()
-        if key == 'Q':
-            self.exit()
+        try:
+            if self.key_map[key][0] == 'show help':
+                widget = self.get_current_widget()
+                if isinstance(widget, HelpView):
+                    # HelpViews don't need help
+                    return
+                try:
+                    view = HelpView(widget)
+                    self.push_view(view)
+                except AttributeError:
+                    pass
+            elif self.key_map[key][0] == 'back':
+                self.pop_view()
+            elif self.key_map[key][0] == 'exit':
+                self.exit()
+        except KeyError:
+            pass
 
     def __init__(self):
         # Set these class variables so each instance can refer to the app
@@ -104,8 +114,7 @@ class CongruenceApp(object):
         # TODO: static methods?
         global app
         app = self
-        CongruenceListBox.app = self
-        CongruenceTreeListBox.app = self
+        CongruenceView.app = self
 
         # Initialize view stack
         self._view_stack = []
