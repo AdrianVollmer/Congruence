@@ -17,6 +17,7 @@
 This file contains views and functions which are specific to Confluence
 """
 
+from congruence.views.common import CongruenceTextBox
 from congruence.views.treelistbox import CongruenceTreeListBox,\
         CongruenceCardTreeWidget
 from congruence.views.listbox import CongruenceListBox
@@ -194,7 +195,7 @@ class PageView(CongruenceListBox):
             super().key_action(action, size=size)
 
 
-class DiffView(CongruenceListBox):
+class DiffView(CongruenceTextBox):
     def __init__(self, page_id, first=None, second=None):
         self.title = "Diff"
         url = f"rest/api/content/{page_id}"
@@ -221,5 +222,4 @@ class DiffView(CongruenceListBox):
         self.version2 = data["body"]["view"]["value"]
         self.diff = create_diff(self.version1, self.version2, html=True)
 
-        text = urwid.Text(self.diff)
-        super().__init__(urwid.SimpleFocusListWalker([text]))
+        super().__init__(self.diff)

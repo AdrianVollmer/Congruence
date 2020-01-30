@@ -14,22 +14,9 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Inspired by the example in the urwid library. Copyright notice:
-# Trivial data browser
-#    This version:
-#      Copyright (C) 2010  Rob Lanphier
-#    Derived from browse.py in urwid distribution
-#      Copyright (C) 2004-2007  Ian Ward
-# Urwid web site: http://excess.org/urwid/
-
-
 from congruence.logging import log
 
 import urwid
-
-
-class CongruenceTextBox(urwid.Widget):
-    pass
 
 
 class CongruenceView(object):
@@ -67,3 +54,22 @@ class RememberParentKeyMapMeta(urwid.widget.WidgetMeta):
                     **b.key_map,
                 }
         return type.__new__(cls, name, bases, attrs)
+
+
+class CongruenceTextBox(CongruenceView, urwid.ListBox,
+                        metaclass=RememberParentKeyMapMeta):
+    key_map = {
+        'k': ('move up', 'Move up'),
+        'j': ('move down', 'Move down'),
+        '[': ('page up', 'Move page up'),
+        ']': ('page down', 'Move page down'),
+        '/': ('search', 'Search the list for some string'),
+        'n': ('search next', 'Jump to the next entry in the search result'),
+        'N': ('search prev',
+              'Jump to the previous entry in the search result'),
+    }
+
+    def __init__(self, text):
+        self.text = text
+        textbox = urwid.Text(self.text)
+        super().__init__(urwid.SimpleFocusListWalker([textbox]))

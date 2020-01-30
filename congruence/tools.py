@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from congruence.interface import html_to_text
-from congruence.logging import log
+#  from congruence.logging import log
 
 from difflib import unified_diff
 
