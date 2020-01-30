@@ -162,7 +162,7 @@ class CommentDetails(CongruenceListBox):
         super().__init__(line)
 
 
-class PageView(CongruenceListBox):
+class PageView(CongruenceTextBox):
     key_map = {
         'D': ('list diff', 'Show the diff of the current version and the'
               ' previous one'),
@@ -181,8 +181,8 @@ class PageView(CongruenceListBox):
             "Last change message": update["message"],
             "Version number": update["number"],
         }
-        text = urwid.Text('\n'.join([f"{k}: {v}" for k, v in infos.items()]))
-        super().__init__(urwid.SimpleFocusListWalker([text]))
+        text = '\n'.join([f"{k}: {v}" for k, v in infos.items()])
+        super().__init__(text)
 
     def key_action(self, action, size=None):
         if action == "list diff":
