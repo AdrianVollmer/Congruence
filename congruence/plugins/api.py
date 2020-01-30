@@ -29,6 +29,7 @@ is indicated by a single letter:
 from congruence.views.listbox import CongruenceListBox, \
     CongruenceListBoxEntry
 from congruence.interface import make_api_call, make_request
+from congruence.external import open_gui_browser
 from congruence.logging import log
 from congruence.args import config
 from congruence.confluence import CommentView, PageView
@@ -127,11 +128,11 @@ class APIView(CongruenceListBox):
         process.communicate()
         self.app.loop.screen.clear()
 
-    #  def open_gui_browser(self):
-        #  node = self.get_focus()[0]
-        #  id = node.data['_links']['id']
-        #  log.debug(data)
-        #  log.debug("Build HTML view for page with id '%s'" % id)
+    def open_gui_browser(self):
+        node = self.get_focus()[0]
+        id = node.obj.id
+        url = f"pages/viewpage.action?pageId={id}"
+        open_gui_browser(url)
 
 
 class CongruenceAPIEntry(CongruenceListBoxEntry):
