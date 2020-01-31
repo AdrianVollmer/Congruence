@@ -37,11 +37,13 @@ def determine_type(data):
         'comment': Comment,
         'attachment': Attachment,
         'personal': Space,
-        #  'known': User,
+        'user': User,
     }
     if 'content' in data:
         if 'type' in data['content']:
             return type_map[data['content']['type']]
+    if 'entityType' in data:
+        return type_map[data['entityType']]
     raise KeyError("Unkown confluence object")
 
 
@@ -223,7 +225,21 @@ class Attachment(ContentObject):
 
 
 class User(ConfluenceObject):
-    pass
+    def __init__(self, data):
+        self._data = data
+        self.type = 'user'
+        super().__init__()
+
+    def get_title(self, cols=False):
+        if cols:
+            return [
+                'U',
+                '',
+                self._data['user']['displayName'],
+                convert_date(self._data['timestamp'], 'friendly'),
+                '',
+            ]
+        return self._data['title']
 
 
 class Space(ConfluenceObject):

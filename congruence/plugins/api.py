@@ -23,6 +23,7 @@ is indicated by a single letter:
     * C: Comment
     * B: Blogpost
     * A: Attachment
+    * U: User
 
 """
 
