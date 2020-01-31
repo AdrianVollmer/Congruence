@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
-import xdg
+import xdg.BaseDirectory
 import os
 import yaml
 
@@ -38,10 +38,10 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-data_home = os.path.join(xdg.XDG_DATA_HOME, "congruence")
-config_home = os.path.join(xdg.XDG_CONFIG_HOME, "congruence")
+data_home = xdg.BaseDirectory.save_data_path("congruence")
+config_home = xdg.BaseDirectory.save_config_path("congruence")
 config_file = os.path.join(config_home, "config.yaml")
-cache_home = os.path.join(xdg.XDG_CACHE_HOME, "congruence")
+cache_home = xdg.BaseDirectory.save_cache_path("congruence")
 cookie_jar = os.path.join(cache_home, "cookiejar.dat")
 
 for d in [cache_home, config_home, data_home]:
