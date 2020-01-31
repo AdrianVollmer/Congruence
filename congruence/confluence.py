@@ -220,6 +220,10 @@ class DiffView(CongruenceTextBox):
         r = make_request(url, params=params)
         data = json.loads(r.text)
         self.version2 = data["body"]["view"]["value"]
-        self.diff = create_diff(self.version1, self.version2, html=True)
+        self.diff = create_diff(self.version2,
+                                self.version1,
+                                fromfile="Version number %d" % second,
+                                tofile="Version number %d" % first,
+                                html=True)
 
         super().__init__(self.diff)

@@ -20,10 +20,16 @@ from congruence.interface import html_to_text
 from difflib import unified_diff
 
 
-def create_diff(v1, v2, html=False):
+def create_diff(v1, v2, fromfile="", tofile="", html=False):
     if html:
         v1 = html_to_text(v1)
         v2 = html_to_text(v2)
     #  log.debug(v1)
-    generator = unified_diff(v1.splitlines(), v2.splitlines())
+    generator = unified_diff(
+        v1.splitlines(),
+        v2.splitlines(),
+        fromfile=fromfile,
+        tofile=tofile,
+        lineterm="",
+    )
     return '\n'.join(generator)
