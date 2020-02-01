@@ -14,18 +14,28 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from congruence.args import config
+
+
 PALETTE = [
     ('body', 'default', 'dark gray'),
     ('focus', 'black', 'brown'),
     ('head', 'yellow', 'black', 'standout'),
-    ('selected', 'light cyan', 'black', 'standout'),
     ('card-head', 'light gray', 'black'),
     ('card-focus', 'black', 'brown'),
     ('foot', 'light gray', 'black'),
-    ('key', 'light cyan', 'black', 'underline'),
     ('title', 'white', 'black', 'bold'),
     ('flag', 'dark gray', 'light gray'),
     ('error', 'dark red', 'default'),
     ('info', 'dark blue', 'default'),
     ('warning', 'yellow', 'default'),
 ]
+
+
+for i, p in enumerate(PALETTE):
+    if 'Palette' in config and p[0] in config['Palette']:
+        PALETTE[i] = (
+            p[0],
+            config['Palette'][p[0]]['Foreground'],
+            config['Palette'][p[0]]['Background'],
+        )
