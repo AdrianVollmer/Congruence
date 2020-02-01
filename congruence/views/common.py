@@ -53,10 +53,7 @@ class RememberParentKeyMapMeta(urwid.widget.WidgetMeta):
             attrs['key_actions'] = []
         for b in bases:
             if hasattr(b, "key_actions"):
-                attrs['key_actions'] = (
-                    attrs['key_actions']
-                    + b.key_actions
-                )
+                attrs['key_actions'] += b.key_actions
         return type.__new__(cls, name, bases, attrs)
 
 
@@ -67,6 +64,8 @@ class CongruenceTextBox(CongruenceView, urwid.ListBox,
         'move down',
         'page up',
         'page down',
+        'scroll to bottom',
+        'scroll to top',
     ]
 
     def __init__(self, text):
@@ -84,6 +83,10 @@ class CongruenceTextBox(CongruenceView, urwid.ListBox,
             urwid.ListBox.keypress(self, size, 'page down')
         elif action == 'page up':
             urwid.ListBox.keypress(self, size, 'page up')
+        elif action == 'scroll to bottom':
+            self.set_focus(0, coming_from='above')
+        elif action == 'scroll to top':
+            self.set_focus(0, coming_from='below')
         #  elif action == 'search':
         #      self.search()
         #  elif action == 'search next':

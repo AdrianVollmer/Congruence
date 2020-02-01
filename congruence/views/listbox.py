@@ -42,20 +42,9 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
         'limit',
         'show details',
         'next view',
+        'scroll to bottom',
+        'scroll to top',
     ]
-    #  key_map = {
-    #      'k': ('move up', 'Move up'),
-    #      'j': ('move down', 'Move down'),
-    #      '[': ('page up', 'Move page up'),
-    #      ']': ('page down', 'Move page down'),
-    #      '/': ('search', 'Search the list for some string'),
-    #      'n': ('search next', 'Jump to the next entry in the search result'),
-    #      'N': ('search prev',
-    #            'Jump to the previous entry in the search result'),
-    #      'l': ('limit', 'Limit entries matching some string'),
-    #      'enter': ('next view', 'Enter next view'),
-    #      'd': ('show details', 'Show details about the focused item'),
-    #  }
 
     def __init__(self, entries, help_string=None):
         self.entries = entries
@@ -102,6 +91,10 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
             urwid.ListBox.keypress(self, size, 'page down')
         elif action == 'page up':
             urwid.ListBox.keypress(self, size, 'page up')
+        elif action == 'scroll to bottom':
+            self.set_focus(len(self.entries)-1)
+        elif action == 'scroll to top':
+            self.set_focus(0)
         elif action == 'next view':
             view = self.get_focus()[0].get_next_view()
             if view:

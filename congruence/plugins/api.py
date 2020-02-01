@@ -27,6 +27,7 @@ is indicated by a single letter:
 
 """
 
+from congruence.views.common import CongruenceTextBox
 from congruence.views.listbox import CongruenceListBox, \
     CongruenceListBoxEntry
 from congruence.interface import make_api_call, make_request
@@ -38,8 +39,6 @@ from congruence.objects import determine_type
 
 import json
 from subprocess import Popen, PIPE
-
-import urwid
 
 
 class APIView(CongruenceListBox):
@@ -144,9 +143,7 @@ class CongruenceAPIEntry(CongruenceListBoxEntry):
 
     def get_details_view(self):
         text = self.obj.get_json()
-        return CongruenceListBox(
-            urwid.SimpleFocusListWalker([urwid.Text(text)])
-        )
+        return CongruenceTextBox(text)
 
     def search_match(self, search_string):
         return self.obj.match(search_string)

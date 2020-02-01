@@ -24,6 +24,8 @@ KEYS = {
     'move down': ('j', "Move down"),
     'page up': ('[', "Move page up"),
     'page down': (']', "Move page down"),
+    'scroll to top': ('g', "Scroll to the top of this view"),
+    'scroll to bottom': ('G', "Scroll to the bottom of this view"),
     'search': ('/', "Search the list for some string"),
     'search next': ('n', "Jump to the next entry in the search result"),
     'search prev': ('N', "Jump to the previous entry in the search result"),
@@ -52,4 +54,5 @@ if 'KeyMap' in config:
         KEYS[k] = (v, KEYS[k][1])
 
 
+# TODO check for duplicates
 KEY_ACTIONS = {v[0]: k for k, v in KEYS.items()}
