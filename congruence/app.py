@@ -62,9 +62,7 @@ class HelpView(CongruenceTextBox):
     title = "Help"
 
     def __init__(self, widget):
-        help_string = getattr(widget, "help_string", "")
-        if not help_string:
-            help_string = ""
+        help_string = getattr(widget, "help_string", "") or ""
         key_legend = "\nKey map:\n"
         for action in widget.get_actions():
             key = KEYS[action][0]
