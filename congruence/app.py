@@ -18,7 +18,7 @@
 from congruence.args import config
 from congruence.palette import PALETTE
 from congruence.keys import KEYS, KEY_ACTIONS
-from congruence.logging import log
+from congruence.logging import log, log_stream
 from congruence.views.mainmenu import CongruenceMainMenu
 from congruence.views.common import CongruenceView, CongruenceTextBox
 from congruence.external import get_editor_input
@@ -79,7 +79,7 @@ class HelpView(CongruenceTextBox):
 class CongruenceApp(object):
     """This class represents the app"""
 
-    key_actions = ['show help', 'back', 'exit']
+    key_actions = ['show help', 'back', 'exit', 'show log']
 
     def unhandled_input(self, key):
         if key not in KEY_ACTIONS:
@@ -95,6 +95,12 @@ class CongruenceApp(object):
             self.pop_view()
         elif KEY_ACTIONS[key] == 'exit':
             self.exit()
+        elif KEY_ACTIONS[key] == 'show log':
+            log_text = log_stream.getvalue()
+            log.debug(log_text)
+            view = CongruenceTextBox(log_text)
+            view.title = "Log"
+            self.push_view(view)
 
     def __init__(self):
         # Set these class variables so each instance can refer to the app

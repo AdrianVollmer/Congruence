@@ -49,6 +49,7 @@ KEYS = {
                        " (five times the regular amount)"),
     'cli browser': ('b', "Open with CLI browser"),
     'gui browser': ('B', "Open with GUI browser"),
+    'show log': ('!', "Show application log"),
 }
 
 if 'KeyMap' in config:

@@ -17,6 +17,7 @@
 from congruence.args import args, LOG_FILE
 
 import logging
+from io import StringIO
 
 
 FORMAT = (
@@ -48,7 +49,12 @@ else:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
+log_stream = StringIO()
+stream_handler = logging.StreamHandler(log_stream)
+logFormatter = logging.Formatter(FORMAT)
+stream_handler.setFormatter(logFormatter)
 log = logging.getLogger(__name__)
+log.addHandler(stream_handler)
 
 # Disable annoying debug messages about charsets (probably from requests)
 logger = logging.getLogger('chardet.charsetprober')
