@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from congruence.args import config
-#  from congruence.logging import log
+from congruence.logging import log
 
 
 # action: (key, description)
@@ -56,5 +56,8 @@ if 'KeyMap' in config:
         KEYS[k] = (v, KEYS[k][1])
 
 
-# TODO check for duplicates
+all_keys = [v[0] for _, v in KEYS.items()]
+if not len(all_keys) == len(set(all_keys)):
+    log.warning("There are duplicate defined keys!")
+
 KEY_ACTIONS = {v[0]: k for k, v in KEYS.items()}
