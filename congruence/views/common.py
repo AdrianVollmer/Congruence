@@ -74,7 +74,7 @@ class CongruenceTextBox(CongruenceView, urwid.ListBox,
 
     def __init__(self, text, color=False):
         self.text = text
-        if color:
+        if color and text:
             textbox = []
             for l in self.text.splitlines():
                 textbox += translate_text_for_urwid(l) + ['\n']
