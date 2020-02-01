@@ -179,7 +179,7 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
         elif cols:
             self._columns = obj.get_title(cols=cols)
             self._inner_widget = urwid.Columns(
-                [('pack', urwid.Text(t)) for t in self._columns],
+                [(urwid.Text(t, wrap='clip')) for t in self._columns],
                 dividechars=1,
             )
         else:
