@@ -114,32 +114,29 @@ class CommentView(CongruenceTreeListBox):
         if node:
             self.set_focus(node)
 
-    def key_action(self, action, size=None):
-        if action == "reply":
-            obj = self.get_focus()[0].get_value()
-            prev_msg = obj.get_content()
-            prev_msg = prev_msg.splitlines()
-            prev_msg = '\n'.join([f"## > {line}" for line in prev_msg])
-            prev_msg = "## %s wrote:\n%s" % (obj.author, prev_msg)
-            help_text = cs.REPLY_MSG + prev_msg
-            reply = self.app.get_long_input(help_text)
+    def ka_reply(self, action, size=None):
+        obj = self.get_focus()[0].get_value()
+        prev_msg = obj.get_content()
+        prev_msg = prev_msg.splitlines()
+        prev_msg = '\n'.join([f"## > {line}" for line in prev_msg])
+        prev_msg = "## %s wrote:\n%s" % (obj.author, prev_msg)
+        help_text = cs.REPLY_MSG + prev_msg
+        reply = self.app.get_long_input(help_text)
 
-            if reply:
-                if obj.send_reply(reply):
-                    self.app.alert('Comment sent', 'info')
-                else:
-                    self.app.alert('Comment failed', 'error')
-            # TODO self.update()
+        if reply:
+            if obj.send_reply(reply):
+                self.app.alert('Comment sent', 'info')
+            else:
+                self.app.alert('Comment failed', 'error')
+        # TODO self.update()
 
-        elif action == "like":
-            comment = self.get_focus()[0].get_value()
-            if comment.toggle_like():
-                if comment.liked:
-                    self.app.alert('You liked this', 'info')
-                else:
-                    self.app.alert('You unliked this', 'info')
-        else:
-            super().key_action(action, size=size)
+    def ka_like(self, action, size=None):
+        comment = self.get_focus()[0].get_value()
+        if comment.toggle_like():
+            if comment.liked:
+                self.app.alert('You liked this', 'info')
+            else:
+                self.app.alert('You unliked this', 'info')
 
 
 class CommentWidget(CongruenceCardTreeWidget):
@@ -178,15 +175,12 @@ class PageView(CongruenceTextBox):
         text = '\n'.join([f'{k}: {v}' for k, v in infos.items()])
         super().__init__(text)
 
-    def key_action(self, action, size=None):
-        if action == 'list diff':
-            try:
-                view = DiffView(self.obj.id)
-                self.app.push_view(view)
-            except KeyError:
-                self.app.alert('No diff available', 'warning')
-        else:
-            super().key_action(action, size=size)
+    def ka_list_diff(self, action, size=None):
+        try:
+            view = DiffView(self.obj.id)
+            self.app.push_view(view)
+        except KeyError:
+            self.app.alert('No diff available', 'warning')
 
 
 class DiffView(CongruenceTextBox):
@@ -239,20 +233,18 @@ class DiffView(CongruenceTextBox):
 
         super().__init__(self.diff, color=True)
 
-    def key_action(self, action, size=None):
-        if action == 'cycle next':
-            try:
-                view = DiffView(self.page_id, self.first-1, self.second-1)
-                self.app.pop_view()
-                self.app.push_view(view)
-            except KeyError:
-                self.app.alert('No diff available', 'warning')
-        elif action == "cycle prev":
-            try:
-                view = DiffView(self.page_id, self.first+1, self.second+1)
-                self.app.pop_view()
-                self.app.push_view(view)
-            except KeyError:
-                self.app.alert('No diff available', 'warning')
-        else:
-            super().key_action(action, size=size)
+    def ka_cycle_next(self, action, size=None):
+        try:
+            view = DiffView(self.page_id, self.first-1, self.second-1)
+            self.app.pop_view()
+            self.app.push_view(view)
+        except KeyError:
+            self.app.alert('No diff available', 'warning')
+
+    def ka_cycle_prev(self, action, size=None):
+        try:
+            view = DiffView(self.page_id, self.first+1, self.second+1)
+            self.app.pop_view()
+            self.app.push_view(view)
+        except KeyError:
+            self.app.alert('No diff available', 'warning')

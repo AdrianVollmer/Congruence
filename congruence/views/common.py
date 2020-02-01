@@ -37,9 +37,12 @@ class CongruenceView(object):
         ):
             return key
         action = KEY_ACTIONS[key]
-        if action in self.key_actions:
-            self.key_action(action, size)
+        f = getattr(self, 'ka_' + action.replace(' ', '_'), None)
+        if callable(f):
+            f(action, size)
             return
+        else:
+            super().key_action(action, size=size)
 
 
 class RememberParentKeyMapMeta(urwid.widget.WidgetMeta):
@@ -80,40 +83,20 @@ class CongruenceTextBox(CongruenceView, urwid.ListBox,
             textbox = urwid.Text(self.text)
         super().__init__(urwid.SimpleFocusListWalker([textbox]))
 
-    def key_action(self, action, size=None):
-        log.debug('Process key action "%s"' % action)
-        if action == 'move down':
-            urwid.ListBox.keypress(self, size, 'down')
-        elif action == 'move up':
-            urwid.ListBox.keypress(self, size, 'up')
-        elif action == 'page down':
-            urwid.ListBox.keypress(self, size, 'page down')
-        elif action == 'page up':
-            urwid.ListBox.keypress(self, size, 'page up')
-        elif action == 'scroll to bottom':
-            self.set_focus(0, coming_from='above')
-        elif action == 'scroll to top':
-            self.set_focus(0, coming_from='below')
-        #  elif action == 'search':
-        #      self.search()
-        #  elif action == 'search next':
-        #      self.search_next(1)
-        #  elif action == 'search prev':
-        #      self.search_next(-1)
-        #  elif action == 'limit':
-        #      def limit(expr):
-        #          _search_results = [
-        #              e for e in self.entries if e.search_match(expr)
-        #          ]
-        #          self.walker[:] = _search_results
-        #          if expr == '.':
-        #              self.app.reset_status()
-        #          else:
-        #              self.app.alert("To view all items, limit to '.'.",
-        #                             'info')
-        #      self.app.get_input(
-        #          'Search for:',
-        #          limit,
-        #      )
-        else:
-            raise KeyError("Unknown key action: %s" % action)
+    def ka_move_down(self, action, size=None):
+        urwid.ListBox.keypress(self, size, 'down')
+
+    def ka_move_up(self, action, size=None):
+        urwid.ListBox.keypress(self, size, 'up')
+
+    def ka_page_down(self, action, size=None):
+        urwid.ListBox.keypress(self, size, 'page down')
+
+    def ka_page_up(self, action, size=None):
+        urwid.ListBox.keypress(self, size, 'page up')
+
+    def ka_scroll_to_bottom(self, action, size=None):
+        self.set_focus(0, coming_from='above')
+
+    def ka_scroll_to_top(self, action, size=None):
+        self.set_focus(0, coming_from='below')

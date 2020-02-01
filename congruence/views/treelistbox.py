@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from congruence.logging import log
+#  from congruence.logging import log
 from congruence.views.common import CongruenceView, RememberParentKeyMapMeta
 
 import urwid
@@ -46,26 +46,33 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
         topnode = CongruenceParentNode(self.wrapper, data)
         super().__init__(urwid.TreeWalker(topnode))
 
-    def key_action(self, action, size=None):
-        log.debug('key_action %s' % action)
-        if action == 'move down':
-            urwid.TreeListBox.keypress(self, size, 'down')
-        elif action == 'move up':
-            urwid.TreeListBox.keypress(self, size, 'up')
-        elif action == 'page down':
-            urwid.TreeListBox.keypress(self, size, 'page down')
-        elif action == 'page up':
-            urwid.TreeListBox.keypress(self, size, 'page up')
-        elif action == 'toggle collapse':
-            node = self.get_focus()[0]
-            node.expanded = not node.expanded
-            node.update_expanded_icon()
-        elif action == 'next view':
-            view = self.get_focus()[0].get_next_view()
-            if view:
-                self.app.push_view(view)
-        else:
-            raise KeyError("Unknown key action: %s" % action)
+    def ka_move_down(self, action, size=None):
+        urwid.ListBox.keypress(self, size, 'down')
+
+    def ka_move_up(self, action, size=None):
+        urwid.ListBox.keypress(self, size, 'up')
+
+    def ka_page_down(self, action, size=None):
+        urwid.ListBox.keypress(self, size, 'page down')
+
+    def ka_page_up(self, action, size=None):
+        urwid.ListBox.keypress(self, size, 'page up')
+
+    def ka_scroll_to_bottom(self, action, size=None):
+        self.set_focus(0, coming_from='above')
+
+    def ka_scroll_to_top(self, action, size=None):
+        self.set_focus(0, coming_from='below')
+
+    def ka_toggle_collapse(self, action, size=None):
+        node = self.get_focus()[0]
+        node.expanded = not node.expanded
+        node.update_expanded_icon()
+
+    def ka_next_view(self, action, size=None):
+        view = self.get_focus()[0].get_next_view()
+        if view:
+            self.app.push_view(view)
 
 
 class CongruenceTreeListBoxEntry(urwid.TreeWidget):

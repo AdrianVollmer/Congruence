@@ -61,19 +61,20 @@ class APIView(CongruenceListBox):
         if self.entries:
             self.set_focus(0)
 
-    def key_action(self, action, size=None):
-        if action == "load more":
-            self.load_more()
-        elif action == "load much more":
-            self.load_much_more()
-        elif action == "update":
-            self.update()
-        elif action == "cli browser":
-            self.open_cli_browser()
-        elif action == "gui browser":
-            self.open_gui_browser()
-        else:
-            super().key_action(action, size=size)
+    def ka_load_more(self, action, size=None):
+        self.load_more()
+
+    def ka_load_much_more(self, action, size=None):
+        self.load_much_more()
+
+    def ka_update(self, action, size=None):
+        self.update()
+
+    def ka_cli_browser(self, action, size=None):
+        self.open_cli_browser()
+
+    def ka_gui_browser(self, action, size=None):
+        self.open_gui_browser()
 
     def get_feed_entries(self):
         self.app.alert('Submitting API call...', 'info')

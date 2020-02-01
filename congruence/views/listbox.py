@@ -81,55 +81,62 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
         self.walker[:] = self.entries
         self.align_columns()
 
-    def key_action(self, action, size=None):
-        log.debug('Process key action "%s"' % action)
-        if action == 'move down':
-            urwid.ListBox.keypress(self, size, 'down')
-        elif action == 'move up':
-            urwid.ListBox.keypress(self, size, 'up')
-        elif action == 'page down':
-            urwid.ListBox.keypress(self, size, 'page down')
-        elif action == 'page up':
-            urwid.ListBox.keypress(self, size, 'page up')
-        elif action == 'scroll to bottom':
-            self.set_focus(len(self.entries)-1)
-        elif action == 'scroll to top':
-            self.set_focus(0)
-        elif action == 'next view':
+    def ka_move_down(self, action, size=None):
+        urwid.ListBox.keypress(self, size, 'down')
+
+    def ka_move_up(self, action, size=None):
+        urwid.ListBox.keypress(self, size, 'up')
+
+    def ka_page_down(self, action, size=None):
+        urwid.ListBox.keypress(self, size, 'page down')
+
+    def ka_page_up(self, action, size=None):
+        urwid.ListBox.keypress(self, size, 'page up')
+
+    def ka_scroll_to_bottom(self, action, size=None):
+        self.set_focus(0, coming_from='above')
+
+    def ka_scroll_to_top(self, action, size=None):
+        self.set_focus(0, coming_from='below')
+
+    def ka_next_view(self, action, size=None):
             view = self.get_focus()[0].get_next_view()
             if view:
                 self.app.push_view(view)
-        elif action == 'show details':
-            view = self.get_focus()[0].get_details_view()
-            if view:
-                view.title = "Details"
-                self.app.push_view(view)
-            else:
-                self.app.alert("Looks like this item has no details",
-                               "warning")
-        elif action == 'search':
-            self.search()
-        elif action == 'search next':
-            self.search_next(1)
-        elif action == 'search prev':
-            self.search_next(-1)
-        elif action == 'limit':
-            def limit(expr):
-                _search_results = [
-                    e for e in self.entries if e.search_match(expr)
-                ]
-                self.walker[:] = _search_results
-                if expr == '.':
-                    self.app.reset_status()
-                else:
-                    self.app.alert("To view all items, limit to '.'.", 'info')
 
-            self.app.get_input(
-                'Search for:',
-                limit,
-            )
+    def ka_show_details(self, action, size=None):
+        view = self.get_focus()[0].get_details_view()
+        if view:
+            view.title = "Details"
+            self.app.push_view(view)
         else:
-            raise KeyError("Unknown key action: %s" % action)
+            self.app.alert("Looks like this item has no details",
+                           "warning")
+
+    def ka_search(self, action, size=None):
+        self.search()
+
+    def ka_search_next(self, action, size=None):
+        self.search_next(1)
+
+    def ka_search_prev(self, action, size=None):
+        self.search_next(-1)
+
+    def ka_limit(self, action, size=None):
+        def limit(expr):
+            _search_results = [
+                e for e in self.entries if e.search_match(expr)
+            ]
+            self.walker[:] = _search_results
+            if expr == '.':
+                self.app.reset_status()
+            else:
+                self.app.alert("To view all items, limit to '.'.", 'info')
+
+        self.app.get_input(
+            'Search for:',
+            limit,
+        )
 
     def search(self):
         def search(expr):
