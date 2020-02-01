@@ -166,20 +166,20 @@ class PageView(CongruenceTextBox):
         self.obj = obj
         self.title = "Page"
         #  text = [urwid.Text(obj.get_json())]
-        update = obj._data["content"]["history"]["lastUpdated"]
+        update = obj._data['content']['history']['lastUpdated']
         infos = {
-            "Title": obj.get_title(),
-            "Space": obj._data["content"]["space"]["key"],
-            "Last updated by": update["by"]["displayName"],
-            "Last updated at": convert_date(update["when"]),
-            "Last change message": update["message"],
-            "Version number": update["number"],
+            'Title': obj.get_title(),
+            'Space': obj._data['content']['space']['key'],
+            'Last updated by': update['by']['displayName'],
+            'Last updated at': convert_date(update['when']),
+            'Last change message': update['message'],
+            'Version number': update['number'],
         }
-        text = '\n'.join([f"{k}: {v}" for k, v in infos.items()])
+        text = '\n'.join([f'{k}: {v}' for k, v in infos.items()])
         super().__init__(text)
 
     def key_action(self, action, size=None):
-        if action == "list diff":
+        if action == 'list diff':
             try:
                 view = DiffView(self.obj.id)
                 self.app.push_view(view)
@@ -190,34 +190,69 @@ class PageView(CongruenceTextBox):
 
 
 class DiffView(CongruenceTextBox):
+    key_actions = ['cycle next', 'cycle prev']
+
     def __init__(self, page_id, first=None, second=None):
+        self.page_id = page_id
         self.title = "Diff"
-        url = f"rest/api/content/{page_id}"
+        url = f'rest/api/content/{page_id}'
         params = {
-            "expand": "version,body.view"
+            'expand': 'version,body.view'
         }
         # get first body
         if first:
+            self.first = first
             params['status'] = 'historical'
             params['version'] = first
         r = make_request(url, params=params)
         data = json.loads(r.text)
-        first = data["version"]["number"]
-        self.version1 = data["body"]["view"]["value"]
+        self.first = data['version']['number']
+        self.version1 = data['body']['view']['value']
+        tofile = "Version number %d by %s, %s" % (
+            self.first,
+            data['version']['by']['displayName'],
+            convert_date(data['version']['when']),
+        )
 
         # get second body
         if not second:
-            second = first - 1
-        params['version'] = second
+            self.second = self.first - 1
+        else:
+            self.second = second
+        params['version'] = self.second
         params['status'] = 'historical'
 
         r = make_request(url, params=params)
         data = json.loads(r.text)
-        self.version2 = data["body"]["view"]["value"]
+        self.version2 = data['body']['view']['value']
+        fromfile = "Version number %d by %s, %s" % (
+            self.second,
+            data['version']['by']['displayName'],
+            convert_date(data['version']['when']),
+        )
+
         self.diff = create_diff(self.version2,
                                 self.version1,
-                                fromfile="Version number %d" % second,
-                                tofile="Version number %d" % first,
+                                fromfile=fromfile,
+                                tofile=tofile,
                                 html=True)
 
         super().__init__(self.diff)
+
+    def key_action(self, action, size=None):
+        if action == 'cycle next':
+            try:
+                view = DiffView(self.page_id, self.first-1, self.second-1)
+                self.app.pop_view()
+                self.app.push_view(view)
+            except KeyError:
+                self.app.alert('No diff available', 'warning')
+        elif action == "cycle prev":
+            try:
+                view = DiffView(self.page_id, self.first+1, self.second+1)
+                self.app.pop_view()
+                self.app.push_view(view)
+            except KeyError:
+                self.app.alert('No diff available', 'warning')
+        else:
+            super().key_action(action, size=size)

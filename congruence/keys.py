@@ -31,6 +31,8 @@ KEYS = {
     'search prev': ('N', "Jump to the previous entry in the search result"),
     'limit': ('l', "Limit entries matching some string"),
     'next view': ('enter', "Enter next view"),
+    'cycle next': ('J', "Cycle views forward"),
+    'cycle prev': ('K', "Cycle views backward"),
     'show details': ('d', "Show details about the focused item"),
     'toggle collapse': (' ', "Collapse the tree at the focused item"),
     'show help': ('?', "Show a description of what you are seeing"
