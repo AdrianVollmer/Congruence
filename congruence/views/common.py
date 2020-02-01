@@ -15,59 +15,59 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from congruence.logging import log
+from congruence.keys import KEY_ACTIONS
 
 import urwid
 
 
 class CongruenceView(object):
-    def get_keymap(self):
-        key_map = {
-            **self.key_map,
-            **self.app.key_map,
-        }
-        return key_map
+    def get_actions(self):
+        key_actions = self.key_actions + self.app.key_actions
+        return key_actions
 
     def selectable(self):
         return True
 
     def keypress(self, size, key):
         log.debug("Keypress in CongruenceView: %s" % key)
-        if key in self.key_map:
-            self.key_action(self.key_map[key][0], size)
+        if (
+            key not in KEY_ACTIONS
+            or KEY_ACTIONS[key] not in self.key_actions
+        ):
+            return key
+        action = KEY_ACTIONS[key]
+        if action in self.key_actions:
+            self.key_action(action, size)
             return
-        return key
 
 
 class RememberParentKeyMapMeta(urwid.widget.WidgetMeta):
-    """This is a metaclass which keeps track of the 'key_map' class variable
+    """This is a metaclass which keeps track of the 'key_actions' class variable
 
-    Subclasses will know what the value of key_map in its base classes were.
+    Subclasses will know what the value of key_actions in its base classes
+    were.
     """
 
     def __new__(cls, name, bases, attrs):
-        if 'key_map' not in attrs:
-            attrs['key_map'] = {}
+        if 'key_actions' not in attrs:
+            attrs['key_actions'] = []
         for b in bases:
-            if hasattr(b, "key_map"):
-                attrs['key_map'] = {
-                    **attrs['key_map'],
-                    **b.key_map,
-                }
+            if hasattr(b, "key_actions"):
+                attrs['key_actions'] = (
+                    attrs['key_actions']
+                    + b.key_actions
+                )
         return type.__new__(cls, name, bases, attrs)
 
 
 class CongruenceTextBox(CongruenceView, urwid.ListBox,
                         metaclass=RememberParentKeyMapMeta):
-    key_map = {
-        'k': ('move up', 'Move up'),
-        'j': ('move down', 'Move down'),
-        '[': ('page up', 'Move page up'),
-        ']': ('page down', 'Move page down'),
-        #  '/': ('search', 'Search the list for some string'),
-        #  'n': ('search next', 'Jump to the next entry in the search result'),
-        #  'N': ('search prev',
-        #        'Jump to the previous entry in the search result'),
-    }
+    key_actions = [
+        'move up',
+        'move down',
+        'page up',
+        'page down',
+    ]
 
     def __init__(self, text):
         self.text = text

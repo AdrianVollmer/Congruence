@@ -31,19 +31,31 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
 
     """
 
-    key_map = {
-        'k': ('move up', 'Move up'),
-        'j': ('move down', 'Move down'),
-        '[': ('page up', 'Move page up'),
-        ']': ('page down', 'Move page down'),
-        '/': ('search', 'Search the list for some string'),
-        'n': ('search next', 'Jump to the next entry in the search result'),
-        'N': ('search prev',
-              'Jump to the previous entry in the search result'),
-        'l': ('limit', 'Limit entries matching some string'),
-        'enter': ('next view', 'Enter next view'),
-        'd': ('show details', 'Show details about the focused item'),
-    }
+    key_actions = [
+        'move up',
+        'move down',
+        'page up',
+        'page down',
+        'search',
+        'search next',
+        'search prev',
+        'limit',
+        'show details',
+        'next view',
+    ]
+    #  key_map = {
+    #      'k': ('move up', 'Move up'),
+    #      'j': ('move down', 'Move down'),
+    #      '[': ('page up', 'Move page up'),
+    #      ']': ('page down', 'Move page down'),
+    #      '/': ('search', 'Search the list for some string'),
+    #      'n': ('search next', 'Jump to the next entry in the search result'),
+    #      'N': ('search prev',
+    #            'Jump to the previous entry in the search result'),
+    #      'l': ('limit', 'Limit entries matching some string'),
+    #      'enter': ('next view', 'Enter next view'),
+    #      'd': ('show details', 'Show details about the focused item'),
+    #  }
 
     def __init__(self, entries, help_string=None):
         self.entries = entries

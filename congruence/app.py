@@ -17,6 +17,7 @@
 
 from congruence.args import config
 from congruence.palette import PALETTE
+from congruence.keys import KEYS, KEY_ACTIONS
 from congruence.logging import log
 from congruence.views.mainmenu import CongruenceMainMenu
 from congruence.views.common import CongruenceView, CongruenceTextBox
@@ -34,11 +35,8 @@ class CongruenceFooter(urwid.Pile):
         self.status_line = urwid.Text("", wrap='clip')
         super().__init__([self.key_legend, self.status_line], focus_item=1)
 
-    #  def set_status(self, message, msgtype):
-    #      self.status_line = urwid.AttrMap(urwid.Text(message), msgtype)
-
-    def update_keylegend(self, key_map):
-        text = ''.join([f'{k}:{v[0]}|' for k, v in key_map.items()])
+    def update_keylegend(self, key_actions):
+        text = '|'.join("%s:%s" % (KEYS[k][0], k) for k in key_actions)
         self.key_legend.base_widget.set_text(text)
 
 
@@ -68,12 +66,14 @@ class HelpView(CongruenceTextBox):
         if not help_string:
             help_string = ""
         key_legend = "\nKey map:\n"
-        for k, v in widget.get_keymap().items():
-            if k == ' ':
+        for action in widget.get_actions():
+            key = KEYS[action][0]
+            description = KEYS[action][1]
+            if key == ' ':
                 # Replace ' '  with 'space'
-                key_legend += f"    space: {v[1]}\n"
+                key_legend += f"    space: {description}\n"
             else:
-                key_legend += f"    {k}: {v[1]}\n"
+                key_legend += f"    {key}: {description}\n"
         text = help_string+key_legend
         super().__init__(text)
 
@@ -81,31 +81,22 @@ class HelpView(CongruenceTextBox):
 class CongruenceApp(object):
     """This class represents the app"""
 
-    key_map = {
-        '?': ('show help', 'Show a description of what you are seeing'
-              ' together with the key map for the current view'),
-        'q': ('back', 'Go back to the last view'),
-        'Q': ('exit', 'Exit the program'),
-    }
+    key_actions = ['show help', 'back', 'exit']
 
     def unhandled_input(self, key):
-        try:
-            if self.key_map[key][0] == 'show help':
-                widget = self.get_current_widget()
-                if isinstance(widget, HelpView):
-                    # HelpViews don't need help
-                    return
-                try:
-                    view = HelpView(widget)
-                    self.push_view(view)
-                except AttributeError:
-                    pass
-            elif self.key_map[key][0] == 'back':
-                self.pop_view()
-            elif self.key_map[key][0] == 'exit':
-                self.exit()
-        except KeyError:
-            pass
+        if key not in KEY_ACTIONS:
+            return
+        if KEY_ACTIONS[key] == 'show help':
+            widget = self.get_current_widget()
+            if isinstance(widget, HelpView):
+                # HelpViews don't need help
+                return
+            view = HelpView(widget)
+            self.push_view(view)
+        elif KEY_ACTIONS[key] == 'back':
+            self.pop_view()
+        elif KEY_ACTIONS[key] == 'exit':
+            self.exit()
 
     def __init__(self):
         # Set these class variables so each instance can refer to the app
@@ -128,7 +119,7 @@ class CongruenceApp(object):
             header=urwid.AttrMap(self.header, 'head'),
             footer=self.footer,
         )
-        self.footer.update_keylegend(self.body.key_map)
+        self.footer.update_keylegend(self.body.key_actions)
         self.active = True
 
     def get_full_title(self):
@@ -182,7 +173,7 @@ class CongruenceApp(object):
         self._view_stack.append(self.loop.widget.body)
         self.loop.widget.body = view
         self.header.set_text(('head', self.get_full_title()))
-        self.footer.update_keylegend(view.key_map)
+        self.footer.update_keylegend(view.key_actions)
 
     def pop_view(self):
         """Restore the last view down the list"""
@@ -192,7 +183,7 @@ class CongruenceApp(object):
             self._title_stack.pop()
             self.loop.widget.body = view
             self.header.set_text(('head', self.get_full_title()))
-            self.footer.update_keylegend(view.key_map)
+            self.footer.update_keylegend(view.key_actions)
         else:
             self.exit()
 

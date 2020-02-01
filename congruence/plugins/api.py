@@ -44,14 +44,13 @@ import urwid
 
 class APIView(CongruenceListBox):
 
-    key_map = {
-        'u': ("update", "Update the entire list"),
-        'm': ("load more", "Load more objects"),
-        'M': ("load much more", "Load much more objects"
-              " (five times the regular amount)"),
-        'b': ("cli browser", "Open with CLI browser"),
-        'B': ("gui browser", "Open with GUI browser"),
-    }
+    key_actions = [
+        'update',
+        'load more',
+        'load much more',
+        'cli browser',
+        'gui browser',
+    ]
 
     def __init__(self, properties={}):
         self.title = "API"

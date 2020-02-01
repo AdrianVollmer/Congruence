@@ -14,5 +14,42 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-KEY_DOWN = "j"
-KEY_UP = "k"
+from congruence.args import config
+#  from congruence.logging import log
+
+
+# action: (key, description)
+KEYS = {
+    'move up': ('k', "Move up"),
+    'move down': ('j', "Move down"),
+    'page up': ('[', "Move page up"),
+    'page down': (']', "Move page down"),
+    'search': ('/', "Search the list for some string"),
+    'search next': ('n', "Jump to the next entry in the search result"),
+    'search prev': ('N', "Jump to the previous entry in the search result"),
+    'limit': ('l', "Limit entries matching some string"),
+    'next view': ('enter', "Enter next view"),
+    'show details': ('d', "Show details about the focused item"),
+    'toggle collapse': (' ', "Collapse the tree at the focused item"),
+    'show help': ('?', "Show a description of what you are seeing"
+                  " together with the key map for the current view"),
+    'back': ('q', "Go back to the last view"),
+    'exit': ('Q', "Exit the program"),
+    'list diff': ('D', "Show the diff of the current version and the"
+                  " previous one"),
+    'reply': ('r', "Reply to a comment"),
+    'like': ('L', "Toggle your 'like' of a comment"),
+    'update': ('u', "Update the entire list"),
+    'load more': ('m', "Load more objects"),
+    'load much more': ('M', "Load much more objects"
+                       " (five times the regular amount)"),
+    'cli browser': ('b', "Open with CLI browser"),
+    'gui browser': ('B', "Open with GUI browser"),
+}
+
+if 'KeyMap' in config:
+    for k, v in config['KeyMap'].items():
+        KEYS[k] = (v, KEYS[k][1])
+
+
+KEY_ACTIONS = {v[0]: k for k, v in KEYS.items()}

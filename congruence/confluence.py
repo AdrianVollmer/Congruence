@@ -88,10 +88,7 @@ class CommentView(CongruenceTreeListBox):
     :obj: one object of type Comment of the comment tree
     """
 
-    key_map = {
-        'r': ("reply", "Reply to a comment"),
-        'L': ("like", "Toggle your 'like' of a comment"),
-    }
+    key_actions = ['reply', 'like']
 
     def __init__(self, obj):
         self.title = "Comments"
@@ -163,10 +160,7 @@ class CommentDetails(CongruenceListBox):
 
 
 class PageView(CongruenceTextBox):
-    key_map = {
-        'D': ('list diff', 'Show the diff of the current version and the'
-              ' previous one'),
-    }
+    key_actions = ['list diff']
 
     def __init__(self, obj):
         self.obj = obj

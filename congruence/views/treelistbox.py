@@ -32,16 +32,14 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
     :wrapper: some subclass of CongruenceTreeWidget.
     """
 
-    key_map = {
-        'k': ('move up', 'move up'),
-        'j': ('move down', 'move down'),
-        '[': ('page up', 'move page up'),
-        ']': ('page down', 'move page down'),
-        ' ': ('toggle collapse',
-              "Collapse the tree at the focused item"),
-        'enter': ('next view', 'Enter next view of the focused item'),
-        'd': ('show details', 'Show details about the focused item'),
-    }
+    key_actions = [
+        'move up',
+        'move down',
+        'page up',
+        'page down',
+        'show details',
+        'next view',
+    ]
 
     def __init__(self, data, wrapper):
         self.wrapper = wrapper
@@ -73,21 +71,12 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
 class CongruenceTreeListBoxEntry(urwid.TreeWidget):
     """ Display widget for leaf nodes """
 
-    def __init__(self, node, key_map={}):
+    def __init__(self, node):
         self.node = node
-        self.key_map = key_map
         super().__init__(node)
 
     def get_display_text(self):
         return "TODO"
-
-    def keypress(self, size, key):
-        log.debug("Keypress in TreeListBoxEntry: %s" % key)
-        for k, v in self.key_map.items():
-            if k == key:
-                self.app.push_view(v[0](self.data))
-                return
-        return key
 
 
 class CongruenceCardTreeWidget(CongruenceTreeListBoxEntry):
