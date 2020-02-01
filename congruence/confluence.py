@@ -46,18 +46,18 @@ def get_comments_of_page(url):
     id = re.search('/([^/]*)$', url).groups()[0]
     log.debug("Get comment tree of page %s" % id)
 
-    url = f"rest/api/content/{id}/child/comment?"\
-          + "expand=body.view,content,version,ancestors"\
-          + "&depth=all&limit=9999"
+    url = f'rest/api/content/{id}/child/comment?'\
+          + 'expand=body.view,content,version,ancestors'\
+          + '&depth=all&limit=9999'
 
     items = []
     while True:
         r = make_request(url)
         parsed = json.loads(r.text)
-        items += parsed["results"]
-        links = parsed["_links"]
-        if "next" in links:
-            url = links["next"]
+        items += parsed['results']
+        links = parsed['_links']
+        if 'next' in links:
+            url = links['next']
         else:
             break
 
@@ -71,12 +71,12 @@ def get_comments_of_page(url):
         parent = result
         # Step down the ancestor list
         # ATTENTION: Apparently the order is arbitrary... can break
-        for a in reversed(c["ancestors"]):
-            parent = get_by_id(parent, a["id"])["children"]
+        for a in reversed(c['ancestors']):
+            parent = get_by_id(parent, a['id'])['children']
 
         parent.append({
-            c["id"]: Comment(c),
-            "children": [],
+            c['id']: Comment(c),
+            'children': [],
         })
 
     return result
@@ -99,8 +99,8 @@ class CommentView(CongruenceTreeListBox):
         #  page_id = re.search(r'/([^/]*$)', container).groups()[0]
         url = obj.get_parent_container()
         comments = {
-            "0": {"title": "root"},
-            "children": get_comments_of_page(url),
+            '0': {'title': 'root'},
+            'children': get_comments_of_page(url),
         }
         super().__init__(comments, CommentWidget)
         # set focus
