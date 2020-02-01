@@ -16,6 +16,7 @@
 
 from congruence.logging import log
 from congruence.keys import KEY_ACTIONS
+from congruence.ansiescape import translate_text_for_urwid
 
 import urwid
 
@@ -68,9 +69,15 @@ class CongruenceTextBox(CongruenceView, urwid.ListBox,
         'scroll to top',
     ]
 
-    def __init__(self, text):
+    def __init__(self, text, color=False):
         self.text = text
-        textbox = urwid.Text(self.text)
+        if color:
+            textbox = []
+            for l in self.text.splitlines():
+                textbox += translate_text_for_urwid(l) + ['\n']
+            textbox = urwid.Text(textbox)
+        else:
+            textbox = urwid.Text(self.text)
         super().__init__(urwid.SimpleFocusListWalker([textbox]))
 
     def key_action(self, action, size=None):

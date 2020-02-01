@@ -237,7 +237,7 @@ class DiffView(CongruenceTextBox):
                                 tofile=tofile,
                                 html=True)
 
-        super().__init__(self.diff)
+        super().__init__(self.diff, color=True)
 
     def key_action(self, action, size=None):
         if action == 'cycle next':

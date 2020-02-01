@@ -16,8 +16,22 @@
 
 from congruence.interface import html_to_text
 #  from congruence.logging import log
+from congruence.args import config
 
 from difflib import unified_diff
+from subprocess import Popen, PIPE
+
+
+def pipe_through(text, command):
+    process = Popen(command,
+                    stdin=PIPE,
+                    stdout=PIPE,
+                    stderr=PIPE,
+                    shell=True,
+                    )
+    process.stdin.write(text.encode())
+    (output, err) = process.communicate()
+    return output.decode()
 
 
 def create_diff(v1, v2, fromfile="", tofile="", html=False):
@@ -32,4 +46,13 @@ def create_diff(v1, v2, fromfile="", tofile="", html=False):
         tofile=tofile,
         lineterm="",
     )
-    return '\n'.join(generator)
+
+    diff = '\n'.join(generator)
+
+    if isinstance(config['DiffFilter'], list):
+        for f in config["DiffFilter"]:
+            diff = pipe_through(diff, f)
+    else:
+        diff = pipe_through(diff, config['DiffFilter'])
+
+    return diff
