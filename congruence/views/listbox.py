@@ -15,9 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#  from congruence.args import config
-#  from congruence.palette import PALETTE
-from congruence.logging import log
+#  from congruence.logging import log
 from congruence.views.common import CongruenceView, RememberParentKeyMapMeta
 
 import urwid
@@ -100,9 +98,9 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
         self.set_focus(0, coming_from='below')
 
     def ka_next_view(self, action, size=None):
-            view = self.get_focus()[0].get_next_view()
-            if view:
-                self.app.push_view(view)
+        view = self.get_focus()[0].get_next_view()
+        if view:
+            self.app.push_view(view)
 
     def ka_show_details(self, action, size=None):
         view = self.get_focus()[0].get_details_view()
