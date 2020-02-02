@@ -19,7 +19,7 @@ __help__ = """Confluence Notifications
 This view displays your latest notifications.
 
 """
-from congruence.interface import make_request, convert_date
+from congruence.interface import make_request, convert_date, html_to_text
 from congruence.views.common import CongruenceTextBox
 from congruence.views.listbox import CongruenceListBox,\
         CongruenceListBoxEntry
@@ -54,7 +54,20 @@ class NotificationView(CongruenceListBox):
 
 class NotificationEntry(CongruenceListBoxEntry):
     def get_next_view(self):
-        text = self.obj.get_json()
+        text = self.obj.get_title() + '\n'
+
+        if 'title' in self.obj.ref:
+            text += "Title: %s\n" % self.obj.ref['title']
+        if 'highlightText' in self.obj.metadata:
+            text += ("Highlighted text: %s\n" %
+                     self.obj.metadata['highlightText'])
+
+        text += "Created: %s\n" % convert_date(self.obj._data['created'])
+        if not self.obj._data['created'] == self.obj._data['updated']:
+            text += "Updated: %s\n" % convert_date(self.obj._data['updated'])
+
+        if 'description' in self.obj._data:
+            text += "\n%s\n" % html_to_text(self.obj._data['description'])
         return CongruenceTextBox(text)
 
     def get_details_view(self):
@@ -65,18 +78,18 @@ class NotificationEntry(CongruenceListBoxEntry):
 class NotificationObject(ContentObject):
     def __init__(self, data):
         self._data = data
+        self.metadata = self._data['metadata']
+        self.ref = self._data['reference']
 
     def get_title(self, cols=False):
         log.debug(self._data)
-        metadata = self._data['metadata']
-        ref = self._data['reference']
         try:
-            entity = ref['entity'][0].upper()
+            entity = self.ref['entity'][0].upper()
         except KeyError:
             entity = "?"
-        if metadata:
-            user = metadata['user']
-            action = ref['action']
+        if self.metadata:
+            user = self.metadata['user']
+            action = self.ref['action']
         else:
             user = "?"
             action = "?"
@@ -86,7 +99,7 @@ class NotificationObject(ContentObject):
                 user,
                 action,
                 convert_date(self._data['updated'], 'friendly'),
-                ref['title'],
+                self.ref['title'],
             ]
         return (
             self._data["title"]
