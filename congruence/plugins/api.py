@@ -61,19 +61,45 @@ class APIView(CongruenceListBox):
             self.set_focus(0)
 
     def ka_load_more(self, action, size=None):
-        self.load_more()
+        log.info("Load more ...")
+        self.entries += self.get_feed_entries()
+        self.redraw()
 
     def ka_load_much_more(self, action, size=None):
-        self.load_much_more()
+        log.info("Load much more ...")
+        p = self.properties
+        p["Parameters"]["limit"] *= 5
+        self.entries += self.get_feed_entries()
+        p["Parameters"]["limit"] //= 5
+        self.redraw()
 
     def ka_update(self, action, size=None):
-        self.update()
+        log.info("Update ...")
+        p = self.properties
+        p["Parameters"]["start"] = 0
+        self.entries = self.get_feed_entries()
+        self.redraw()
 
     def ka_cli_browser(self, action, size=None):
-        self.open_cli_browser()
+        node = self.get_focus()[0]
+        id = node.obj.id
+        log.debug("Build HTML view for page with id '%s'" % id)
+        rest_url = f"rest/api/content/{id}?expand=body.storage"
+        r = make_request(rest_url).text
+        content = r.json()
+        content = content["body"]["storage"]["value"]
+
+        content = f"<html><head></head><body>{content}</body></html>"
+        process = Popen(config["CliBrowser"], stdin=PIPE, stderr=PIPE)
+        process.stdin.write(content.encode())
+        process.communicate()
+        self.app.loop.screen.clear()
 
     def ka_gui_browser(self, action, size=None):
-        self.open_gui_browser()
+        node = self.get_focus()[0]
+        id = node.obj.id
+        url = f"pages/viewpage.action?pageId={id}"
+        open_gui_browser(url)
 
     def get_feed_entries(self):
         self.app.alert('Submitting API call...', 'info')
@@ -92,47 +118,6 @@ class APIView(CongruenceListBox):
             self.properties["Parameters"]["start"] += \
                 self.properties["Parameters"]["limit"]
         return result
-
-    def load_more(self):
-        log.info("Load more ...")
-        self.entries += self.get_feed_entries()
-        self.redraw()
-
-    def load_much_more(self):
-        log.info("Load much more ...")
-        p = self.properties
-        p["Parameters"]["limit"] *= 5
-        self.entries += self.get_feed_entries()
-        p["Parameters"]["limit"] //= 5
-        self.redraw()
-
-    def update(self):
-        log.info("Update ...")
-        p = self.properties
-        p["Parameters"]["start"] = 0
-        self.entries = self.get_feed_entries()
-        self.redraw()
-
-    def open_cli_browser(self):
-        node = self.get_focus()[0]
-        id = node.obj.id
-        log.debug("Build HTML view for page with id '%s'" % id)
-        rest_url = f"rest/api/content/{id}?expand=body.storage"
-        r = make_request(rest_url).text
-        content = r.json()
-        content = content["body"]["storage"]["value"]
-
-        content = f"<html><head></head><body>{content}</body></html>"
-        process = Popen(config["CliBrowser"], stdin=PIPE, stderr=PIPE)
-        process.stdin.write(content.encode())
-        process.communicate()
-        self.app.loop.screen.clear()
-
-    def open_gui_browser(self):
-        node = self.get_focus()[0]
-        id = node.obj.id
-        url = f"pages/viewpage.action?pageId={id}"
-        open_gui_browser(url)
 
 
 class CongruenceAPIEntry(CongruenceListBoxEntry):
