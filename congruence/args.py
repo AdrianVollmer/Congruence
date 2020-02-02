@@ -29,11 +29,10 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '-l', '--log-level',
-    type=int,
-    default=None,
+    '-l', '--log',
+    default=False,
+    action='store_true',
     help="enable logging to a file $XDG_DATA_HOME/congruence"
-         " with the given log level (0-4)"
 )
 
 parser.add_argument(

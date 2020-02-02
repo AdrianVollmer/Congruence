@@ -20,41 +20,29 @@ import logging
 from io import StringIO
 
 
+logging.getLogger().setLevel(logging.DEBUG)
+
 FORMAT = (
     '%(levelname).1s %(asctime)-15s '
     + '%(filename)s:%(lineno)d %(message)s'
 )
 
-
-if args.log_level:
-    log_level = [
-        logging.CRITICAL,
-        logging.ERROR,
-        logging.WARN,
-        logging.INFO,
-        logging.DEBUG,
-    ][args.log_level]
-
-    logging.basicConfig(
-        filename=LOG_FILE,
-        filemode='w',
-        level=log_level,
-        format=FORMAT,
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-else:
-    logging.basicConfig(
-        level=logging.CRITICAL,
-        format=FORMAT,
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+logFormatter = logging.Formatter(FORMAT)
 
 log_stream = StringIO()
 stream_handler = logging.StreamHandler(log_stream)
-logFormatter = logging.Formatter(FORMAT)
 stream_handler.setFormatter(logFormatter)
+stream_handler.setLevel(logging.DEBUG)
+
+file_handler = logging.FileHandler(LOG_FILE)
+file_handler.setFormatter(logFormatter)
+file_handler.setLevel(logging.DEBUG)
+
 log = logging.getLogger(__name__)
+
 log.addHandler(stream_handler)
+if args.log:
+    log.addHandler(file_handler)
 
 # Disable annoying debug messages about charsets (probably from requests)
 logger = logging.getLogger('chardet.charsetprober')
