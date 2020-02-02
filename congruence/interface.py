@@ -93,7 +93,7 @@ def make_request(url, params={}, data=None, method="GET", headers={},
                 return response
         else:
             break
-    if not response.status_code == 200:
+    if not response.ok:
         app.alert("Received HTTP code %d" % response.status_code, 'error')
     return response
 
