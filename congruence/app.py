@@ -141,11 +141,21 @@ class CongruenceApp(object):
 
         log.info("Alert (%s): %s" % (msgtype, message))
         self.footer.status_line.set_text((msgtype, message))
-        self.loop.draw_screen()
+        try:
+            self.loop.draw_screen()
+        except AssertionError:
+            # If we are outside the loop (which happens after catching an
+            # exception) then this would cause another exception and lead to
+            # an exit of the program
+            pass
 
     def reset_status(self):
         self.footer.status_line.set_text(('info', ''))
-        self.loop.draw_screen()
+        try:
+            self.loop.draw_screen()
+        except AssertionError:
+            # see alert()
+            pass
 
     def get_input(self, prompt, callback):
         """Get user input in an Edit field in the footer"""
