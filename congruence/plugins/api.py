@@ -85,7 +85,7 @@ class APIView(CongruenceListBox):
         id = node.obj.id
         log.debug("Build HTML view for page with id '%s'" % id)
         rest_url = f"rest/api/content/{id}?expand=body.storage"
-        r = make_request(rest_url).text
+        r = make_request(rest_url)
         content = r.json()
         content = content["body"]["storage"]["value"]
 
