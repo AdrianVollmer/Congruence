@@ -36,6 +36,13 @@ parser.add_argument(
          " with the given log level (0-4)"
 )
 
+parser.add_argument(
+    '-d', '--dump-http',
+    type=str,
+    default=None,
+    help="name of a file in which all HTTP requests and response will"
+         " be dumped (useful for debugging)"
+)
 args = parser.parse_args()
 
 data_home = xdg.BaseDirectory.save_data_path("congruence")

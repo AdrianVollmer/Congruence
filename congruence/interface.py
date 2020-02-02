@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.args import config, cookie_jar, BASE_URL
+from congruence.args import config, cookie_jar, BASE_URL, args
 from congruence.logging import log
 from congruence.app import app
 
@@ -95,6 +95,8 @@ def make_request(url, params={}, data=None, method="GET", headers={},
             break
     if not response.ok:
         app.alert("Received HTTP code %d" % response.status_code, 'error')
+    if args.dump_http:
+        dump_http(response, args.dump_http)
     return response
 
 
@@ -165,6 +167,33 @@ def authenticate_session():
     XSRF = soup.find("meta", {"id": "atlassian-token"})["content"]
     save_session()
     return True
+
+
+def dump_http(response, filename):
+    with open(filename, 'a') as f:
+        now = dt.now()
+        f.write("<<<<<< Request (%s)\n" % now)
+        f.write(response.request.method)
+        f.write(' ')
+        f.write(response.request.url)
+        f.write('\n')
+        for k, v in response.request.headers.items():
+            f.write(f"{k}: {v}\n")
+        if response.request.body:
+            f.write('\n')
+            f.write('\n')
+            f.write(response.request.body)
+        f.write('\n')
+        f.write('\n')
+        f.write(">>>>>> Response\n")
+        for k, v in response.headers.items():
+            f.write(f"{k}: {v}\n")
+        f.write('\n')
+        f.write('\n')
+        if response.text:
+            f.write(response.text)
+        f.write('\n')
+        f.write('\n')
 
 
 def html_to_text(html):
