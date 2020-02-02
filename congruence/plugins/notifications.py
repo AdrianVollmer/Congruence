@@ -29,42 +29,57 @@ from congruence.logging import log
 import json
 
 
-def get_notifications(properties={"limit": 30}):
-    r = make_request("rest/mywork/latest/notification/nested",
-                     params=properties,
-                     )
-    return r.json()
-
-
 class NotificationView(CongruenceListBox):
-    def __init__(self, properties={}):
-        entries = get_notifications()
-        self.app.alert('Received %d items' % len(entries), 'info')
+    key_actions = ['load more']
 
+    def __init__(self, properties={}):
         self.title = "Notifications"
+        self.limit = 20
+
+        if 'Limit' in properties:
+            self.limit = properties["Limit"]
+        self.entries = self.get_notifications()
+
+        super().__init__(self.entries, help_string=__help__)
+
+    def get_notifications(self, before=None):
+        params = {
+            'limit': self.limit,
+        }
+        if before:
+            params['before'] = before
+
+        log.debug(params)
+        r = make_request("rest/mywork/latest/notification",
+                         params=params,
+                         )
+        entries = r.json()
         notifications = []
         for e in entries:
-            for n in e["notifications"]:
-                n["reference"] = e["item"]
-                n = NotificationEntry(NotificationObject(n), cols=True)
-                notifications.append(n)
+            n = NotificationEntry(NotificationObject(e), cols=True)
+            notifications.append(n)
+        self.app.alert('Received %d items' % len(notifications), 'info')
+        return notifications
 
-        super().__init__(notifications, help_string=__help__)
+    def ka_load_more(self, action, size=None):
+        last = self.entries[-1].obj._data['id']
+        self.entries += self.get_notifications(before=last)
+        self.redraw()
 
 
 class NotificationEntry(CongruenceListBoxEntry):
     def get_next_view(self):
         text = self.obj.get_title() + '\n'
 
-        if 'title' in self.obj.ref:
-            text += "Title: %s\n" % self.obj.ref['title']
-        if 'highlightText' in self.obj.metadata:
-            text += ("Highlighted text: %s\n" %
-                     self.obj.metadata['highlightText'])
-
+        if 'title' in self.obj._data:
+            text += "Title: %s\n" % self.obj._data['item']['title']
         text += "Created: %s\n" % convert_date(self.obj._data['created'])
         if not self.obj._data['created'] == self.obj._data['updated']:
             text += "Updated: %s\n" % convert_date(self.obj._data['updated'])
+
+        if 'highlightText' in self.obj.metadata:
+            text += ("\n> %s\n" %
+                     self.obj.metadata['highlightText'])
 
         if 'description' in self.obj._data:
             text += "\n%s\n" % html_to_text(self.obj._data['description'])
@@ -74,22 +89,25 @@ class NotificationEntry(CongruenceListBoxEntry):
         text = self.obj.get_json()
         return CongruenceTextBox(text)
 
+    def search_match(self, search_string):
+        return self.obj.match(search_string)
+
 
 class NotificationObject(ContentObject):
     def __init__(self, data):
         self._data = data
         self.metadata = self._data['metadata']
-        self.ref = self._data['reference']
+        self.title = self._data["title"]
 
+    # TODO get_title should be called get_display_title or something
     def get_title(self, cols=False):
-        log.debug(self._data)
         try:
-            entity = self.ref['entity'][0].upper()
+            entity = self._data['entity'][0].upper()
         except KeyError:
             entity = "?"
         if self.metadata:
             user = self.metadata['user']
-            action = self.ref['action']
+            action = self._data['action']
         else:
             user = "?"
             action = "?"
@@ -99,13 +117,9 @@ class NotificationObject(ContentObject):
                 user,
                 action,
                 convert_date(self._data['updated'], 'friendly'),
-                self.ref['title'],
+                self._data['title'],
             ]
-        return (
-            self._data["title"]
-            + " (" + convert_date(self._data['updated'], 'friendly')
-            + ")"
-        )
+        return self.title
 
     def get_json(self):
         return json.dumps(self._data, indent=2, sort_keys=True)

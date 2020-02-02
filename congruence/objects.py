@@ -93,10 +93,7 @@ class ContentObject(ConfluenceObject):
         return json.dumps(self._data, indent=2, sort_keys=True)
 
     def match(self, search_string):
-        return re.match(
-            search_string,
-            self._data['content']['title']
-        )
+        return re.match(search_string, self.title)
 
     def get_content(self):
         # TODO load content if not in object already
