@@ -18,7 +18,7 @@
 REPLY_MSG = """
 
 ## Lines starting with a double pound sign will be ignored.
-## You can write markdown.
+## You can write markdown. Save only whitespace to abort.
 ## This is the comment you are replying to:
 ##
 """
