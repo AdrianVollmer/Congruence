@@ -20,10 +20,13 @@ This view displays your latest notifications.
 
 """
 from congruence.interface import make_request, convert_date
+from congruence.views.common import CongruenceTextBox
 from congruence.views.listbox import CongruenceListBox,\
         CongruenceListBoxEntry
 from congruence.objects import ContentObject
-#  from congruence.logging import log
+from congruence.logging import log
+
+import json
 
 
 def get_notifications(properties={"limit": 30}):
@@ -43,22 +46,20 @@ class NotificationView(CongruenceListBox):
         for e in entries:
             for n in e["notifications"]:
                 n["reference"] = e["item"]
-                n = NotificationEntry(NotificationObject(n))
+                n = NotificationEntry(NotificationObject(n), cols=True)
                 notifications.append(n)
 
         super().__init__(notifications, help_string=__help__)
 
 
 class NotificationEntry(CongruenceListBoxEntry):
-    def __init__(self, obj):
-        self.obj = obj
-
-        super().__init__(
-            self.obj.get_title(),
-        )
-
     def get_next_view(self):
-        pass
+        text = self.obj.get_json()
+        return CongruenceTextBox(text)
+
+    def get_details_view(self):
+        text = self.obj.get_json()
+        return CongruenceTextBox(text)
 
 
 class NotificationObject(ContentObject):
@@ -66,12 +67,35 @@ class NotificationObject(ContentObject):
         self._data = data
 
     def get_title(self, cols=False):
-        #  log.debug(self._data)
+        log.debug(self._data)
+        metadata = self._data['metadata']
+        ref = self._data['reference']
+        try:
+            entity = ref['entity'][0].upper()
+        except KeyError:
+            entity = "?"
+        if metadata:
+            user = metadata['user']
+            action = ref['action']
+        else:
+            user = "?"
+            action = "?"
+        if cols:
+            return [
+                entity,
+                user,
+                action,
+                convert_date(self._data['updated'], 'friendly'),
+                ref['title'],
+            ]
         return (
             self._data["title"]
             + " (" + convert_date(self._data['updated'], 'friendly')
             + ")"
         )
+
+    def get_json(self):
+        return json.dumps(self._data, indent=2, sort_keys=True)
 
 
 PluginView = NotificationView
