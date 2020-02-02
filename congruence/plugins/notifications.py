@@ -97,7 +97,10 @@ class NotificationObject(ContentObject):
     def __init__(self, data):
         self._data = data
         self.metadata = self._data['metadata']
-        self.title = self._data["title"]
+        try:
+            self.title = self._data['item']['title']
+        except KeyError:
+            self.title = self._data["title"]
 
     # TODO get_title should be called get_display_title or something
     def get_title(self, cols=False):
@@ -117,7 +120,7 @@ class NotificationObject(ContentObject):
                 user,
                 action,
                 convert_date(self._data['updated'], 'friendly'),
-                self._data['title'],
+                self.title,
             ]
         return self.title
 
