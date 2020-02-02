@@ -57,14 +57,14 @@ class ContentObject(ConfluenceObject):
     def __init__(self, data):
         self._data = data
         if 'content' in data:
-            self.url = data["url"]
+            self.url = data['url']
             content = data['content']
         else:
-            self.url = data["_links"]["webui"]
+            self.url = data['_links']['webui']
             content = data
-        self.id = content["id"]
-        self.title = content["title"]
-        #  self.space = data["space"]
+        self.id = content['id']
+        self.title = content['title']
+        #  self.space = data['space']
         self.liked = False  # TODO determine
 
     def get_title(self, cols=False):
@@ -72,15 +72,15 @@ class ContentObject(ConfluenceObject):
             content = self._data['content']
             lastUpdated = content['history']['lastUpdated']
             if 'space' in content:
-                space = content["space"]["key"]
+                space = content['space']['key']
             else:
-                space = "?"
+                space = '?'
             title = [
-                content["type"][0].upper(),
+                content['type'][0].upper(),
                 space,
-                lastUpdated['by']["displayName"],
-                convert_date(lastUpdated["when"], "friendly"),
-                content["title"],
+                lastUpdated['by']['displayName'],
+                convert_date(lastUpdated['when'], 'friendly'),
+                content['title'],
             ]
             return title
         return self.title
@@ -96,7 +96,7 @@ class ContentObject(ConfluenceObject):
 
     def get_content(self):
         # TODO load content if not in object already
-        return self._data["content"]['_expandable']['container']
+        return self._data['content']['_expandable']['container']
 
     #  def get_like_status(self):
 
@@ -104,12 +104,12 @@ class ContentObject(ConfluenceObject):
         id = self.id
         log.debug("Liking %s" % id)
         headers = {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
         }
-        r = make_request(f"rest/likes/1.0/content/{id}/likes",
+        r = make_request(f'rest/likes/1.0/content/{id}/likes',
                          method='POST',
                          headers=headers,
-                         data="")
+                         data='')
         if r.status_code == 200:
             self.liked = True
             return True
@@ -122,7 +122,7 @@ class ContentObject(ConfluenceObject):
     def unlike(self):
         id = self.id
         log.debug("Unliking %s" % id)
-        r = make_request(f"rest/likes/1.0/content/{id}/likes",
+        r = make_request(f'rest/likes/1.0/content/{id}/likes',
                          method='DELETE',
                          #  headers=headers,
                          data="")
@@ -160,18 +160,18 @@ class Comment(ContentObject):
         self.type = 'comment'
         self.short_type = 'C'
         try:
-            self.author = self._data["version"]["by"]["displayName"]
+            self.author = self._data['version']['by']['displayName']
         except KeyError as e:
             log.exception(e)
-            self.author = "unknown"
+            self.author = 'unknown'
 
     def get_title(self, cols=False):
         if cols:
             return super().get_title(cols=True)
-        date = self._data["version"]["when"]
+        date = self._data['version']['when']
         date = convert_date(date)
-        title = "%s, %s" % (
-            self._data["version"]["by"]["displayName"],
+        title = '%s, %s' % (
+            self._data['version']['by']['displayName'],
             date,
         )
         return title
@@ -187,29 +187,27 @@ class Comment(ContentObject):
 
     def get_content(self):
         #  log.debug(self._data)
-        return html_to_text(self._data["body"]["view"]["value"])
+        return html_to_text(self._data['body']['view']['value'])
 
     def get_parent_container(self):
         #  log.debug(self._data)
-        return self._data["content"]["_expandable"]["container"]
+        return self._data['content']['_expandable']['container']
 
     def send_reply(self, text):
-        page_id = self._data["ancestors"][0]["_expandable"]['container']
+        page_id = self._data['ancestors'][0]['_expandable']['container']
         page_id = re.search(r'/([^/]*$)', page_id).groups()[0]
-        comment_id = self._data["ancestors"][0]["id"]
-        url = (f"/rest/tinymce/1/content/{page_id}/"
-               f"comments/{comment_id}/comment")
+        comment_id = self._data['ancestors'][0]['id']
+        url = (f'/rest/tinymce/1/content/{page_id}/'
+               f'comments/{comment_id}/comment')
         params = {'actions': 'true'}
         answer = md_to_html(text, url_encode='html')
         uuid = str(uuid4())
         headers = {
-            "X-Atlassian-Token": "no-check",
-            "X-Requested-With": "XMLHttpRequest"
+            'X-Atlassian-Token': 'no-check',
         }
 
-        data = f"{answer}&watch=false&uuid={uuid}"
-        log.debug(data)
-        r = make_request(url, params, method="POST", data=data,
+        data = f'{answer}&watch=false&uuid={uuid}'
+        r = make_request(url, params, method='POST', data=data,
                          headers=headers, no_token=True)
         if r.status_code == 200:
             return True
@@ -221,7 +219,7 @@ class Attachment(ContentObject):
         super().__init__(data)
         self.type = 'attachment'
         self.short_type = 'A'
-        self.download = data["_links"]["download"]
+        self.download = data['_links']['download']
 
 
 class User(ConfluenceObject):
