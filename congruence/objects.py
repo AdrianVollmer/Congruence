@@ -52,6 +52,10 @@ class ConfluenceObject(ABC):
     def get_title(self, cols=False):
         pass
 
+    @abstractmethod
+    def get_json(self):
+        pass
+
 
 class ContentObject(ConfluenceObject):
     def __init__(self, data):
@@ -239,9 +243,18 @@ class User(ConfluenceObject):
             ]
         return self._data['title']
 
+    def get_json(self):
+        return json.dumps(self._data, indent=2, sort_keys=True)
+
 
 class Space(ConfluenceObject):
     def __init__(self, data):
         self._data = data
         self.key = data['key']
         self.name = data['name']
+
+    def get_title(self):
+        return self.name
+
+    def get_json(self):
+        return json.dumps(self._data, indent=2, sort_keys=True)
