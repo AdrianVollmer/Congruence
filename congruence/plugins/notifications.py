@@ -69,7 +69,7 @@ class NotificationView(CongruenceListBox):
 
 class NotificationEntry(CongruenceListBoxEntry):
     def get_next_view(self):
-        text = self.obj.get_title() + '\n'
+        text = self.obj._data['title'] + '\n'
 
         if 'title' in self.obj._data:
             text += "Title: %s\n" % self.obj._data['item']['title']
