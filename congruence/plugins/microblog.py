@@ -47,7 +47,7 @@ class MicroblogView(CongruenceListBox):
         self.app.alert('Received %d items' % len(self.entries), 'info')
         super().__init__(self.entries, help_string=__help__)
 
-    def ka_load_more(self, action, size=None):
+    def ka_load_more(self, size=None):
         self.entries += self.get_microblog()
         self.redraw()
 

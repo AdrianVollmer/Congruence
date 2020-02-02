@@ -61,7 +61,7 @@ class NotificationView(CongruenceListBox):
         self.app.alert('Received %d items' % len(notifications), 'info')
         return notifications
 
-    def ka_load_more(self, action, size=None):
+    def ka_load_more(self, size=None):
         last = self.entries[-1].obj._data['id']
         self.entries += self.get_notifications(before=last)
         self.redraw()

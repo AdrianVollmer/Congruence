@@ -28,7 +28,6 @@ from congruence.objects import Comment
 import congruence.strings as cs
 #  from congruence.external import open_gui_browser
 
-import json
 import re
 
 import urwid
@@ -114,7 +113,7 @@ class CommentView(CongruenceTreeListBox):
         if node:
             self.set_focus(node)
 
-    def ka_reply(self, action, size=None):
+    def ka_reply(self, size=None):
         obj = self.get_focus()[0].get_value()
         prev_msg = obj.get_content()
         prev_msg = prev_msg.splitlines()
@@ -130,7 +129,7 @@ class CommentView(CongruenceTreeListBox):
                 self.app.alert('Comment failed', 'error')
         # TODO self.update()
 
-    def ka_like(self, action, size=None):
+    def ka_like(self, size=None):
         comment = self.get_focus()[0].get_value()
         if comment.toggle_like():
             if comment.liked:
@@ -175,7 +174,7 @@ class PageView(CongruenceTextBox):
         text = '\n'.join([f'{k}: {v}' for k, v in infos.items()])
         super().__init__(text)
 
-    def ka_list_diff(self, action, size=None):
+    def ka_list_diff(self, size=None):
         try:
             view = DiffView(self.obj.id)
             self.app.push_view(view)
@@ -233,7 +232,7 @@ class DiffView(CongruenceTextBox):
 
         super().__init__(self.diff, color=True)
 
-    def ka_cycle_next(self, action, size=None):
+    def ka_cycle_next(self, size=None):
         try:
             view = DiffView(self.page_id, self.first-1, self.second-1)
             self.app.pop_view()
@@ -241,7 +240,7 @@ class DiffView(CongruenceTextBox):
         except KeyError:
             self.app.alert('No diff available', 'warning')
 
-    def ka_cycle_prev(self, action, size=None):
+    def ka_cycle_prev(self, size=None):
         try:
             view = DiffView(self.page_id, self.first+1, self.second+1)
             self.app.pop_view()

@@ -39,7 +39,7 @@ class CongruenceView(object):
         action = KEY_ACTIONS[key]
         f = getattr(self, 'ka_' + action.replace(' ', '_'), None)
         if callable(f):
-            f(action, size)
+            f(size=size)
             return
         else:
             super().key_action(action, size=size)
@@ -83,20 +83,20 @@ class CongruenceTextBox(CongruenceView, urwid.ListBox,
             textbox = urwid.Text(self.text)
         super().__init__(urwid.SimpleFocusListWalker([textbox]))
 
-    def ka_move_down(self, action, size=None):
+    def ka_move_down(self, size=None):
         urwid.ListBox.keypress(self, size, 'down')
 
-    def ka_move_up(self, action, size=None):
+    def ka_move_up(self, size=None):
         urwid.ListBox.keypress(self, size, 'up')
 
-    def ka_page_down(self, action, size=None):
+    def ka_page_down(self, size=None):
         urwid.ListBox.keypress(self, size, 'page down')
 
-    def ka_page_up(self, action, size=None):
+    def ka_page_up(self, size=None):
         urwid.ListBox.keypress(self, size, 'page up')
 
-    def ka_scroll_to_bottom(self, action, size=None):
+    def ka_scroll_to_bottom(self, size=None):
         self.set_focus(0, coming_from='above')
 
-    def ka_scroll_to_top(self, action, size=None):
+    def ka_scroll_to_top(self, size=None):
         self.set_focus(0, coming_from='below')

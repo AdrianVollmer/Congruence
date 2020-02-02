@@ -46,30 +46,30 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
         topnode = CongruenceParentNode(self.wrapper, data)
         super().__init__(urwid.TreeWalker(topnode))
 
-    def ka_move_down(self, action, size=None):
+    def ka_move_down(self, size=None):
         urwid.ListBox.keypress(self, size, 'down')
 
-    def ka_move_up(self, action, size=None):
+    def ka_move_up(self, size=None):
         urwid.ListBox.keypress(self, size, 'up')
 
-    def ka_page_down(self, action, size=None):
+    def ka_page_down(self, size=None):
         urwid.ListBox.keypress(self, size, 'page down')
 
-    def ka_page_up(self, action, size=None):
+    def ka_page_up(self, size=None):
         urwid.ListBox.keypress(self, size, 'page up')
 
-    def ka_scroll_to_bottom(self, action, size=None):
+    def ka_scroll_to_bottom(self, size=None):
         self.set_focus(0, coming_from='above')
 
-    def ka_scroll_to_top(self, action, size=None):
+    def ka_scroll_to_top(self, size=None):
         self.set_focus(0, coming_from='below')
 
-    def ka_toggle_collapse(self, action, size=None):
+    def ka_toggle_collapse(self, size=None):
         node = self.get_focus()[0]
         node.expanded = not node.expanded
         node.update_expanded_icon()
 
-    def ka_next_view(self, action, size=None):
+    def ka_next_view(self, size=None):
         view = self.get_focus()[0].get_next_view()
         if view:
             self.app.push_view(view)

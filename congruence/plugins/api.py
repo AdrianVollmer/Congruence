@@ -56,16 +56,16 @@ class APIView(CongruenceListBox):
         self.start = 0
         self.entries = []
         super().__init__(self.entries, help_string=__help__)
-        self.update()
+        self.ka_update()
         if self.entries:
             self.set_focus(0)
 
-    def ka_load_more(self, action, size=None):
+    def ka_load_more(self, size=None):
         log.info("Load more ...")
         self.entries += self.get_feed_entries()
         self.redraw()
 
-    def ka_load_much_more(self, action, size=None):
+    def ka_load_much_more(self, size=None):
         log.info("Load much more ...")
         p = self.properties
         p["Parameters"]["limit"] *= 5
@@ -73,14 +73,14 @@ class APIView(CongruenceListBox):
         p["Parameters"]["limit"] //= 5
         self.redraw()
 
-    def ka_update(self, action, size=None):
+    def ka_update(self, size=None):
         log.info("Update ...")
         p = self.properties
         p["Parameters"]["start"] = 0
         self.entries = self.get_feed_entries()
         self.redraw()
 
-    def ka_cli_browser(self, action, size=None):
+    def ka_cli_browser(self, size=None):
         node = self.get_focus()[0]
         id = node.obj.id
         log.debug("Build HTML view for page with id '%s'" % id)
@@ -95,7 +95,7 @@ class APIView(CongruenceListBox):
         process.communicate()
         self.app.loop.screen.clear()
 
-    def ka_gui_browser(self, action, size=None):
+    def ka_gui_browser(self, size=None):
         node = self.get_focus()[0]
         id = node.obj.id
         url = f"pages/viewpage.action?pageId={id}"
