@@ -30,7 +30,7 @@ is indicated by a single letter:
 from congruence.views.common import CongruenceTextBox
 from congruence.views.listbox import CongruenceListBox, \
     CongruenceListBoxEntry
-from congruence.interface import make_api_call, make_request
+from congruence.interface import make_request
 from congruence.external import open_gui_browser
 from congruence.logging import log
 from congruence.args import config
@@ -77,13 +77,14 @@ class APIView(CongruenceListBox):
 
     def get_feed_entries(self):
         self.app.alert('Submitting API call...', 'info')
-        response = make_api_call(
-            "search",
-            parameters=self.properties["Parameters"],
+        r = make_request(
+            "rest/api/search",
+            params=self.properties["Parameters"],
         )
         result = []
+        response = r.json()
         if response:
-            for each in response:
+            for each in response['results']:
                 result.append(CongruenceAPIEntry(determine_type(each)(each),
                                                  cols=True))
             #  result = change_filter(result)

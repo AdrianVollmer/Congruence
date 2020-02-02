@@ -48,17 +48,6 @@ def get_timestamp():
     return timestamp
 
 
-def make_api_call(endpoint, parameters, base="rest/api", headers={}):
-    """This accesses the REST API"""
-    url = f"{base}/{endpoint}"
-    app.alert("Making API Call...", "info")
-    r = make_request(url, params=parameters, headers=headers)
-    result = r.json()
-    if "results" in result:
-        return result['results']
-    return None
-
-
 def make_request(url, params={}, data=None, method="GET", headers={},
                  no_token=False):
     """This function performs the actual HTTP request"""
