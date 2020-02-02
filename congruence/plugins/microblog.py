@@ -27,38 +27,53 @@ from congruence.objects import ContentObject
 import urwid
 
 
-def get_microblog(properties):
-    """Load Microblog entries via HTTP"""
-
-    log.info("Fetch microblog...")
-    response = make_request(
-        "rest/microblog/1.0/microposts/search",
-        params={
-            "offset": "0",
-            "limit": "9999",
-            "replyLimit": "9999"
-        },
-        method='POST',
-        data='thread.topicId:(12 OR 13 OR 14 OR 15 OR 16)',
-        # TODO move ^ to config
-        headers={
-            "Content-Type": "application/json",
-        },
-    )
-    entries = response.json()
-    result = []
-    for e in entries['microposts']:
-        result.append(MicroblogEntry(MicroblogObject(e), is_reply=False))
-    return result
-
-
 class MicroblogView(CongruenceListBox):
+    key_actions = ['load more']
+
     def __init__(self, properties={}):
         self.title = "Microblog"
-        self.properties = properties
-        self.entries = get_microblog(self.properties)
+        if 'limit' in properties['Parameters']:
+            self.limit = properties['Parameters']['limit']
+        else:
+            self.limit = 20
+        if 'replyLimit' in properties['Parameters']:
+            self.replyLimit = properties['Parameters']['replyLimit']
+        else:
+            self.replyLimit = 999
+        self.post_data = properties['Data']
+        self.offset = 0
+
+        self.entries = self.get_microblog()
         self.app.alert('Received %d items' % len(self.entries), 'info')
         super().__init__(self.entries, help_string=__help__)
+
+    def ka_load_more(self, action, size=None):
+        self.entries += self.get_microblog()
+        self.redraw()
+
+    def get_microblog(self):
+        """Load Microblog entries via HTTP"""
+
+        log.info("Fetch microblog...")
+        response = make_request(
+            "rest/microblog/1.0/microposts/search",
+            params={
+                "offset": self.offset,
+                "limit": self.limit,
+                "replyLimit": self.replyLimit,
+            },
+            method='POST',
+            data=self.post_data,
+            headers={
+                "Content-Type": "application/json",
+            },
+        )
+        entries = response.json()
+        result = []
+        for e in entries['microposts']:
+            result.append(MicroblogEntry(MicroblogObject(e), is_reply=False))
+        self.offset += len(result)
+        return result
 
 
 class MicroblogEntry(CardListBoxEntry):
