@@ -141,9 +141,11 @@ class CongruenceApp(object):
 
         log.info("Alert (%s): %s" % (msgtype, message))
         self.footer.status_line.set_text((msgtype, message))
+        self.loop.draw_screen()
 
     def reset_status(self):
         self.footer.status_line.set_text(('info', ''))
+        self.loop.draw_screen()
 
     def get_input(self, prompt, callback):
         """Get user input in an Edit field in the footer"""
