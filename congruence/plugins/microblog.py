@@ -24,8 +24,6 @@ from congruence.interface import make_request, html_to_text, convert_date
 from congruence.logging import log
 from congruence.objects import ContentObject
 
-import json
-
 import urwid
 
 
@@ -47,7 +45,7 @@ def get_microblog(properties):
             "Content-Type": "application/json",
         },
     )
-    entries = json.loads(response.text)
+    entries = response.json()
     result = []
     for e in entries['microposts']:
         result.append(MicroblogEntry(MicroblogObject(e), is_reply=False))

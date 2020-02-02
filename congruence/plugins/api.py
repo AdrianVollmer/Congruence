@@ -37,7 +37,6 @@ from congruence.args import config
 from congruence.confluence import CommentView, PageView
 from congruence.objects import determine_type
 
-import json
 from subprocess import Popen, PIPE
 
 
@@ -118,8 +117,8 @@ class APIView(CongruenceListBox):
         id = node.obj.id
         log.debug("Build HTML view for page with id '%s'" % id)
         rest_url = f"rest/api/content/{id}?expand=body.storage"
-        content = make_request(rest_url).text
-        content = json.loads(content)
+        r = make_request(rest_url).text
+        content = r.json()
         content = content["body"]["storage"]["value"]
 
         content = f"<html><head></head><body>{content}</body></html>"

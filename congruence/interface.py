@@ -53,7 +53,7 @@ def make_api_call(endpoint, parameters, base="rest/api", headers={}):
     url = f"{base}/{endpoint}"
     app.alert("Making API Call...", "info")
     r = make_request(url, params=parameters, headers=headers)
-    result = json.loads(r.text)
+    result = r.json()
     if "results" in result:
         return result['results']
     return None
@@ -106,7 +106,7 @@ def not_authenticated(response):
         and "content-type" in response.headers
         and response.headers["content-type"] == "application/json"
     ):
-        j = json.loads(response.text)
+        j = response.json()
         if not j['data']['authorized']:
             return True
     if (

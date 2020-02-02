@@ -53,7 +53,7 @@ def get_comments_of_page(url):
     items = []
     while True:
         r = make_request(url)
-        parsed = json.loads(r.text)
+        parsed = r.json()
         items += parsed['results']
         links = parsed['_links']
         if 'next' in links:
@@ -199,7 +199,7 @@ class DiffView(CongruenceTextBox):
             params['status'] = 'historical'
             params['version'] = first
         r = make_request(url, params=params)
-        data = json.loads(r.text)
+        data = r.json()
         self.first = data['version']['number']
         self.version1 = data['body']['view']['value']
         tofile = "Version number %d by %s, %s" % (
@@ -217,7 +217,7 @@ class DiffView(CongruenceTextBox):
         params['status'] = 'historical'
 
         r = make_request(url, params=params)
-        data = json.loads(r.text)
+        data = r.json()
         self.version2 = data['body']['view']['value']
         fromfile = "Version number %d by %s, %s" % (
             self.second,

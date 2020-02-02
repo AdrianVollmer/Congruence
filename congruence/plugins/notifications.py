@@ -25,14 +25,12 @@ from congruence.views.listbox import CongruenceListBox,\
 from congruence.objects import ContentObject
 #  from congruence.logging import log
 
-import json
-
 
 def get_notifications(properties={"limit": 30}):
     r = make_request("rest/mywork/latest/notification/nested",
                      params=properties,
                      )
-    return json.loads(r.text)
+    return r.json()
 
 
 class NotificationView(CongruenceListBox):
