@@ -60,6 +60,7 @@ def make_request(url, params={}, data=None, method="GET", headers={},
     attempts = 0
     while attempts < 2:
         log.info(f"Requesting {url}")
+        app.alert(f"Requesting {url}...", 'info')
         if not data and method == "GET":
             response = session.get(url, params=params, headers=headers)
         else:
@@ -86,6 +87,7 @@ def make_request(url, params={}, data=None, method="GET", headers={},
         app.alert("Received HTTP code %d" % response.status_code, 'error')
     if args.dump_http:
         dump_http(response, args.dump_http)
+    app.reset_status()
     return response
 
 
