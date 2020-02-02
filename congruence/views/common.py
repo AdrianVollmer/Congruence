@@ -41,8 +41,7 @@ class CongruenceView(object):
         if callable(f):
             f(size=size)
             return
-        else:
-            super().key_action(action, size=size)
+        return super().keypress(size, key)
 
 
 class RememberParentKeyMapMeta(urwid.widget.WidgetMeta):

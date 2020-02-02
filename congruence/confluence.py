@@ -78,6 +78,7 @@ def get_comments_of_page(url):
             'children': [],
         })
 
+    #  log.debug(result)
     return result
 
 
@@ -90,6 +91,7 @@ class CommentView(CongruenceTreeListBox):
     key_actions = ['reply', 'like']
 
     def __init__(self, obj):
+        self.obj = obj
         self.title = "Comments"
         comment_id = obj.id
         log.debug("Build CommentView for comment with id '%s'" % comment_id)
@@ -137,10 +139,24 @@ class CommentView(CongruenceTreeListBox):
             else:
                 self.app.alert('You unliked this', 'info')
 
+    def ka_show_details(self, size=None):
+        focus = self.get_focus()[0]
+        view = focus.get_details_view()
+        if view:
+            view.title = "Details"
+            self.app.push_view(view)
+        else:
+            self.app.alert("Looks like this item has no details",
+                           "warning")
+
 
 class CommentWidget(CongruenceCardTreeWidget):
     def get_next_view(self):
         pass
+
+    def get_details_view(self):
+        comment_obj = list(self.node.get_value().values())[0]
+        return CommentDetails(comment_obj._data)
 
 
 class CommentDetails(CongruenceListBox):
