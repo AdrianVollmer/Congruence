@@ -126,18 +126,18 @@ class CommentView(CongruenceTreeListBox):
 
         if reply:
             if obj.send_reply(reply):
-                self.app.alert('Comment sent', 'info')
+                self.app.alert("Comment sent", 'info')
             else:
-                self.app.alert('Comment failed', 'error')
+                self.app.alert("Comment failed", 'error')
         # TODO self.update()
 
     def ka_like(self, size=None):
         comment = self.get_focus()[0].get_value()
         if comment.toggle_like():
             if comment.liked:
-                self.app.alert('You liked this', 'info')
+                self.app.alert("You liked this", 'info')
             else:
-                self.app.alert('You unliked this', 'info')
+                self.app.alert("You unliked this", 'info')
 
     def ka_show_details(self, size=None):
         focus = self.get_focus()[0]
@@ -147,7 +147,7 @@ class CommentView(CongruenceTreeListBox):
             self.app.push_view(view)
         else:
             self.app.alert("Looks like this item has no details",
-                           "warning")
+                           'warning')
 
     def ka_cli_browser(self, size=None):
         id = self.obj.id
@@ -155,9 +155,9 @@ class CommentView(CongruenceTreeListBox):
         rest_url = f"rest/api/content/{id}?expand=body.storage"
         r = make_request(rest_url)
         content = r.json()
-        content = content["body"]["storage"]["value"]
+        content = content['body']['storage']['value']
 
-        content = f"<html><head></head><body>{content}</body></html>"
+        content = f'<html><head></head><body>{content}</body></html>'
         open_doc_in_cli_browser(content.encode(), self.app)
 #
     #  def ka_gui_browser(self, size=None):
@@ -288,7 +288,7 @@ class DiffView(CongruenceTextBox):
             self.app.pop_view()
             self.app.push_view(view)
         except KeyError:
-            self.app.alert('No diff available', 'warning')
+            self.app.alert("No diff available", 'warning')
 
     def ka_cycle_prev(self, size=None):
         try:
@@ -296,4 +296,4 @@ class DiffView(CongruenceTextBox):
             self.app.pop_view()
             self.app.push_view(view)
         except KeyError:
-            self.app.alert('No diff available', 'warning')
+            self.app.alert("No diff available", 'warning')
