@@ -31,7 +31,7 @@ def open_cli_browser(url, app):
         else:
             url = f"{BASE_URL}/{url}"
 
-    cmd = config["CliiBrowser"]
+    cmd = config["CliBrowser"]
     if '%s' not in cmd:
         cmd = cmd + " '%s'"
     cmd = cmd % url
