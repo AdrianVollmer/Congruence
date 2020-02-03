@@ -24,7 +24,21 @@ import tempfile
 import urwid
 
 
+def open_doc_in_cli_browser(doc, app):
+    """Opens a document in a CLI browser
+
+    :doc: the document as a string
+    """
+
+    process = Popen(config["CliBrowser"], stdin=PIPE, stderr=PIPE)
+    process.stdin.write(doc)
+    process.communicate()
+    app.loop.screen.clear()
+
+
 def open_cli_browser(url, app):
+    """Opens an URL in a CLI browser"""
+
     if not url.startswith(BASE_URL):
         if url.startswith('/'):
             url = f"{BASE_URL}{url}"

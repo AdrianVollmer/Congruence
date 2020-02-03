@@ -31,13 +31,10 @@ from congruence.views.common import CongruenceTextBox
 from congruence.views.listbox import CongruenceListBox, \
     CongruenceListBoxEntry
 from congruence.interface import make_request
-from congruence.external import open_gui_browser
+from congruence.external import open_gui_browser, open_doc_in_cli_browser
 from congruence.logging import log
-from congruence.args import config
 from congruence.confluence import CommentView, PageView
 from congruence.objects import determine_type
-
-from subprocess import Popen, PIPE
 
 
 class APIView(CongruenceListBox):
@@ -90,10 +87,7 @@ class APIView(CongruenceListBox):
         content = content["body"]["storage"]["value"]
 
         content = f"<html><head></head><body>{content}</body></html>"
-        process = Popen(config["CliBrowser"], stdin=PIPE, stderr=PIPE)
-        process.stdin.write(content.encode())
-        process.communicate()
-        self.app.loop.screen.clear()
+        open_doc_in_cli_browser(content.encode(), self.app)
 
     def ka_gui_browser(self, size=None):
         node = self.get_focus()[0]

@@ -26,7 +26,7 @@ from congruence.tools import create_diff
 from congruence.logging import log
 from congruence.objects import Comment
 import congruence.strings as cs
-#  from congruence.external import open_gui_browser
+from congruence.external import open_gui_browser, open_doc_in_cli_browser
 
 import re
 
@@ -88,7 +88,7 @@ class CommentView(CongruenceTreeListBox):
     :obj: one object of type Comment of the comment tree
     """
 
-    key_actions = ['reply', 'like']
+    key_actions = ['reply', 'like', 'cli browser', 'gui browser']
 
     def __init__(self, obj):
         self.obj = obj
@@ -149,6 +149,22 @@ class CommentView(CongruenceTreeListBox):
             self.app.alert("Looks like this item has no details",
                            "warning")
 
+    def ka_cli_browser(self, size=None):
+        id = self.obj.id
+        log.debug("Build HTML view for page with id '%s'" % id)
+        rest_url = f"rest/api/content/{id}?expand=body.storage"
+        r = make_request(rest_url)
+        content = r.json()
+        content = content["body"]["storage"]["value"]
+
+        content = f"<html><head></head><body>{content}</body></html>"
+        open_doc_in_cli_browser(content.encode(), self.app)
+#
+    #  def ka_gui_browser(self, size=None):
+    #      id = self.obj.id
+    #      url = f"pages/viewpage.action?pageId={id}"
+    #      open_gui_browser(url)
+
 
 class CommentWidget(CongruenceCardTreeWidget):
     def get_next_view(self):
@@ -172,7 +188,7 @@ class CommentDetails(CongruenceListBox):
 
 
 class PageView(CongruenceTextBox):
-    key_actions = ['list diff']
+    key_actions = ['list diff', 'cli browser', 'gui browser']
 
     def __init__(self, obj):
         self.obj = obj
@@ -196,6 +212,22 @@ class PageView(CongruenceTextBox):
             self.app.push_view(view)
         except KeyError:
             self.app.alert('No diff available', 'warning')
+
+    def ka_cli_browser(self, size=None):
+        id = self.obj.id
+        log.debug("Build HTML view for page with id '%s'" % id)
+        rest_url = f"rest/api/content/{id}?expand=body.storage"
+        r = make_request(rest_url)
+        content = r.json()
+        content = content["body"]["storage"]["value"]
+
+        content = f"<html><head></head><body>{content}</body></html>"
+        open_doc_in_cli_browser(content.encode(), self.app)
+
+    def ka_gui_browser(self, size=None):
+        id = self.obj.id
+        url = f"pages/viewpage.action?pageId={id}"
+        open_gui_browser(url)
 
 
 class DiffView(CongruenceTextBox):
