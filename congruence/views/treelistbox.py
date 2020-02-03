@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#  from congruence.logging import log
+from congruence.logging import log
 from congruence.views.common import CongruenceView, RememberParentKeyMapMeta
 
 import urwid
@@ -39,12 +39,16 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
         'page down',
         'show details',
         'next view',
+        'search',
+        'search next',
+        'search prev',
     ]
 
     def __init__(self, data, wrapper):
         self.wrapper = wrapper
-        topnode = CongruenceParentNode(self.wrapper, data)
-        super().__init__(urwid.TreeWalker(topnode))
+        self.topnode = CongruenceParentNode(self.wrapper, data)
+        self.walker = urwid.TreeWalker(self.topnode)
+        super().__init__(self.walker)
 
     def ka_move_down(self, size=None):
         urwid.ListBox.keypress(self, size, 'down')
@@ -73,6 +77,45 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
         view = self.get_focus()[0].get_next_view()
         if view:
             self.app.push_view(view)
+
+    def ka_search(self, size=None):
+        self.search()
+
+    def ka_search_next(self, size=None):
+        self.search_next(1)
+
+    def ka_search_prev(self, size=None):
+        self.search_next(-1)
+
+    def search(self):
+        def search(expr):
+            self._search_results = []
+            node = self.topnode
+            while True:
+                node = self.walker.get_next(node)[1]
+                if not node:
+                    break
+                if node.search_match(expr):
+                    self._search_results.append(node)
+
+            self.app.alert("Found %d results" %
+                           len(self._search_results),
+                           'info')
+            if self._search_results:
+                self._current_search_result = 0
+                pos = self._search_results[self._current_search_result]
+                self.set_focus(pos)
+        self.app.get_input(
+            'Search for:',
+            search,
+        )
+
+    def search_next(self, count=1):
+        if self._search_results:
+            self._current_search_result += count
+            self._current_search_result %= len(self._search_results)
+            pos = self._search_results[self._current_search_result]
+            self.set_focus(pos)
 
 
 class CongruenceTreeListBoxEntry(urwid.TreeWidget):
@@ -171,3 +214,8 @@ class CongruenceParentNode(urwid.ParentNode):
             childclass = CongruenceNode
         return childclass(self.wrapper,
                           childdata, parent=self, key=key, depth=childdepth)
+
+    def search_match(self, expr):
+        obj = self.get_widget().get_value()
+        log.debug(obj)
+        return obj.match(expr)

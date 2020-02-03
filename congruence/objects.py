@@ -214,6 +214,12 @@ class Comment(ContentObject):
             return True
         return False
 
+    def match(self, search_string):
+        return (
+            re.match(search_string, self.get_title())
+            or re.match(search_string, self.get_content())
+        )
+
 
 class Attachment(ContentObject):
     def __init__(self, data):
