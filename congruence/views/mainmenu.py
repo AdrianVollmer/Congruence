@@ -20,10 +20,12 @@ This file contains general 'views' (i.e. urwid widgets) which are
 particular to this app and not to Confluence
 """
 
-__help__ = """About Congruence:
+__help__ = """Congruence - a TUI for Confluence
     Adrian Vollmer, 2020
 
-Main menu
+This is the main menu. Each entry corresponds to one plugin, which can be
+configured in $XDG_CONFIG_HOME/congruence/config.yaml. Each plugin can be
+used multiple times.
 """
 
 from congruence.views.listbox import CongruenceListBox, \
