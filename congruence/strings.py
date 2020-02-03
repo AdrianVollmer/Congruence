@@ -14,6 +14,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""This file contains only user-visible strings"""
+
 
 REPLY_MSG = """
 
@@ -22,3 +24,8 @@ REPLY_MSG = """
 ## This is the comment you are replying to:
 ##
 """
+
+DIFF_EMPTY = (
+    "It's not clear what changed based on what "
+    "Confluence gives us, sorry."
+)

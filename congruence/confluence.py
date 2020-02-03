@@ -278,6 +278,8 @@ class DiffView(CongruenceTextBox):
                                 tofile=tofile,
                                 html=True)
 
+        if not self.diff:
+            self.diff = cs.DIFF_EMPTY
         super().__init__(self.diff, color=True)
 
     def ka_cycle_next(self, size=None):
