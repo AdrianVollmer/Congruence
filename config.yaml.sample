@@ -1,0 +1,61 @@
+## This file needs to be located in $XDG_CONFIG_HOME/congruence. If this
+## environment variable is not set, $HOME/.config/congruence is used.
+## First the mandatory arguments:
+#
+Host: confluence.contoso.local
+Protocol: https
+Username: john_doe
+Password_Command: pass show active_directory
+
+## All following arguments are optional
+#  Proxy: http://localhost:8080
+#  CA: /home/use/docs/My-Root-CA.pem
+DateFormat: "%Y-%m-%d %H:%M"
+
+## In the following commands, a placeholder for the argument (URL, document
+## or whatever) can be specified with %s. If you leave it out, it will
+## just be appended.
+Editor: vim
+CliBrowser: elinks
+GuiBrowser: ff
+## Diffs can be piped through external commands which are installed on your
+## system. For example, if you want some color highlighting, use this:
+#  DiffFilter:
+#      - colordiff
+#      - diff-highlight
+
+## Here you can change the default palette.
+## congruence/palette.py contains a list of all possible values
+#  Palette:
+#      focus:
+#          Foreground: light cyan
+#          Background: black
+
+## Want to change the key map? Do it here.
+## See congruence/keys.py for more information.
+#  KeyMap:
+#      exit: X
+
+## The 'plugins' are what you actually see on the main screen.
+Plugins:
+    -
+        PluginName: API
+## For details on how to use CQL, see:
+## https://developer.atlassian.com/server/confluence/advanced-searching-using-cql/
+        DisplayName: Recent changes
+        Endpoint: search
+        Parameters:
+            cql: lastmodified < endOfYear() and not type = attachment order by lastModified desc
+            limit: 20
+            expand: content.space,content.history.lastUpdated,content.history.previousVersion,space.homepage.history
+            excerpt: none
+    -
+        PluginName: Notifications
+        Limit: 30
+## If your Confluence uses the Microblog plugin:
+    #  -
+    #      PluginName: Microblog
+    #      Data: 'thread.topicId:(12 OR 13 OR 14 OR 15 OR 16)'
+    #      Parameters:
+    #          limit: 20
+    #          replyLimit: 9999
