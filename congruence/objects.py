@@ -195,7 +195,7 @@ class Comment(ContentObject):
         return self._data['content']['_expandable']['container']
 
     def send_reply(self, text):
-        page_id = self._data['ancestors'][0]['_expandable']['container']
+        page_id = self._data['_expandable']['container']
         page_id = re.search(r'/([^/]*$)', page_id).groups()[0]
         comment_id = self._data['id']
         url = (f'/rest/tinymce/1/content/{page_id}/'
