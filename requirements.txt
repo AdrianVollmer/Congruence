@@ -3,6 +3,6 @@ markdown
 pyyaml
 sqlalchemy
 sqlite
-xdg
+pyxdg
 python-dateutil
 requests
