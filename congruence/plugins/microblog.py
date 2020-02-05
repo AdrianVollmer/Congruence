@@ -20,9 +20,11 @@ Here you can see the latest entries of the microblog plugin.
 
 """
 from congruence.views.listbox import CongruenceListBox, CardListBoxEntry
-from congruence.interface import make_request, html_to_text, convert_date
+from congruence.interface import make_request, html_to_text, convert_date,\
+        md_to_html
 from congruence.logging import log
 from congruence.objects import ContentObject
+import congruence.strings as cs
 
 import urwid
 
@@ -122,6 +124,8 @@ class MicroblogObject(ContentObject):
 
 
 class MicroblogReplyView(CongruenceListBox):
+    key_actions = ['reply']
+
     def __init__(self, entries):
         self.title = "Replies"
         self.entries = [MicroblogEntry(MicroblogObject(entries),
@@ -129,6 +133,54 @@ class MicroblogReplyView(CongruenceListBox):
         self.entries += [MicroblogEntry(MicroblogObject(e), is_reply=True)
                          for e in entries["replies"]]
         super().__init__(self.entries, help_string=__help__)
+
+    def ka_reply(self, size=None):
+        obj = self.entries[0].obj
+        author = obj._data['authorFullName']
+        topic_id = obj._data['topic']['id']
+        parent_id = obj._data['id']
+
+        # Get Post ID
+        headers = {
+            'X-Atlassian-Token': 'no-check',
+            'Content-Type':
+                'application/x-www-form-urlencoded; charset=UTF-8',
+        }
+        data = f"topicId={topic_id}"
+        url = f"rest/microblog/1.0/sketch"
+        r = make_request(url, method='POST', data=data,
+                         headers=headers, no_token=True)
+
+        if not r.status_code == 200:
+            self.app.alert("Failed to send sketch", 'error')
+            return
+
+        post_id = r.text
+        log.debug(f"Got Post ID: {post_id}; Parent ID: {parent_id}")
+
+        prev_msg = obj._data['renderedContent']
+        prev_msg = prev_msg.splitlines()
+        prev_msg = '\n'.join([f"## > {line}" for line in prev_msg])
+        prev_msg = "## %s wrote:\n%s" % (author, prev_msg)
+
+        help_text = cs.REPLY_MSG + prev_msg
+        reply = self.app.get_long_input(help_text)
+        reply = md_to_html(reply, url_encode='html')
+
+        headers = {
+            'X-Atlassian-Token': 'no-check',
+            'Content-Type':
+                'application/x-www-form-urlencoded; charset=UTF-8',
+        }
+        data = f"{reply}&parentId={parent_id}&spaceKey=~admin"
+        url = f"rest/microblog/1.0/microposts/{post_id}"
+        r = make_request(url, method='PUT', data=data,
+                         headers=headers, no_token=True)
+
+        if r.status_code == 200:
+            self.app.alert("Reply sent", 'info')
+        else:
+            self.app.alert("Failed to send reply", 'error')
 
 
 class MicroblogReplyDetails(CongruenceListBox):
