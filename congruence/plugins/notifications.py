@@ -24,7 +24,7 @@ from congruence.views.common import CongruenceTextBox
 from congruence.views.listbox import CongruenceListBox,\
         CongruenceListBoxEntry
 from congruence.objects import ContentObject
-from congruence.logging import log
+#  from congruence.logging import log
 
 import json
 
@@ -49,7 +49,6 @@ class NotificationView(CongruenceListBox):
         if before:
             params['before'] = before
 
-        log.debug(params)
         r = make_request("rest/mywork/latest/notification",
                          params=params,
                          )
