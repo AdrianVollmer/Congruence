@@ -124,7 +124,7 @@ class MicroblogObject(ContentObject):
 
 
 class MicroblogReplyView(CongruenceListBox):
-    key_actions = ['reply']
+    key_actions = ['reply', 'like']
 
     def __init__(self, entries):
         self.title = "Replies"
@@ -133,6 +133,22 @@ class MicroblogReplyView(CongruenceListBox):
         self.entries += [MicroblogEntry(MicroblogObject(e), is_reply=True)
                          for e in entries["replies"]]
         super().__init__(self.entries, help_string=__help__)
+
+    def ka_like(self, size=None):
+        obj = self.focus.obj
+        post_id = obj._data['id']
+        headers = {
+            'X-Atlassian-Token': 'no-check',
+        }
+        url = f"rest/microblog/1.0/microposts/{post_id}/like"
+        r = make_request(url, method='POST', headers=headers, no_token=True)
+        if r.status_code == 200:
+            if r.text == 'true':
+                self.app.alert("You liked this", 'info')
+            elif r.text == 'false':
+                self.app.alert("You unliked this", 'info')
+        else:
+            self.app.alert("Like failed", 'error')
 
     def ka_reply(self, size=None):
         obj = self.entries[0].obj
