@@ -20,6 +20,7 @@ Here you can see the latest entries of the microblog plugin.
 
 """
 from congruence.views.listbox import CongruenceListBox, CardListBoxEntry
+from congruence.views.common import CongruenceTextBox
 from congruence.interface import make_request, html_to_text, convert_date,\
         md_to_html
 from congruence.logging import log
@@ -100,9 +101,21 @@ class MicroblogEntry(CardListBoxEntry):
         super().__init__(self.obj)
 
     def get_next_view(self):
-        if self.is_reply:
-            return MicroblogReplyDetails(self.obj._data)
-        return MicroblogReplyView(self.obj._data)
+        if not self.is_reply:
+            return MicroblogReplyView(self.obj._data)
+        d = self.obj._data
+        text = f"Author: {d['authorFullName']}\n"
+        date = convert_date(d["creationDate"])
+        text += f"Date: {date}\n"
+        likes = [u['userFullname'] for u in d['likingUsers']]
+        text += "Likes: " + ', '.join(likes)
+        view = CongruenceTextBox(text)
+        view.title = "Post"
+        return view
+
+    def get_details_view(self):
+        text = self.obj.get_json()
+        return CongruenceTextBox(text)
 
 
 class MicroblogObject(ContentObject):
@@ -110,7 +123,7 @@ class MicroblogObject(ContentObject):
         self._data = data
 
     def get_title(self, cols=False):
-        like_number = len(self._data["likingUsers"])
+        like_number = len(self._data['likingUsers'])
         likes = ""
         if like_number > 0:
             if like_number == 1 and self._data['hasLiked']:
@@ -219,6 +232,18 @@ class MicroblogReplyView(CongruenceListBox):
         post_id = obj._data['id']
         url = f"plugins/micropost/view.action?postId={post_id}"
         open_gui_browser(url)
+
+
+class MicroblogPost(CongruenceTextBox):
+    def __init__(self, data):
+        self.title = "Post"
+        max_len = max([len(k) for k, _ in data.items()])
+        line = [[urwid.Text(k), urwid.Text(str(v))]
+                for k, v in data.items()
+                if not k == "renderedContent"]
+        line = [urwid.Columns([(max_len + 1, k), v])
+                for k, v in line]
+        super().__init__(line)
 
 
 class MicroblogReplyDetails(CongruenceListBox):
