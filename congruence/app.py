@@ -177,8 +177,8 @@ class CongruenceApp(object):
         result = get_editor_input(prompt)
         self.loop.screen.clear()
         result = result.splitlines()
-        result = [line for line in result if not line.startswith('##')]
-        return '\n'.join(result)
+        result = [line.strip() for line in result if not line.startswith('##')]
+        return ('\n'.join(result)).strip()
 
     def push_view(self, view):
         """Open a new view and keep track of the old one"""
