@@ -24,13 +24,14 @@ from congruence.interface import make_request, html_to_text, convert_date,\
         md_to_html
 from congruence.logging import log
 from congruence.objects import ContentObject
+from congruence.external import open_gui_browser
 import congruence.strings as cs
 
 import urwid
 
 
 class MicroblogView(CongruenceListBox):
-    key_actions = ['load more', 'update']
+    key_actions = ['load more', 'update', 'gui browser']
 
     def __init__(self, properties={}):
         self.title = "Microblog"
@@ -82,6 +83,12 @@ class MicroblogView(CongruenceListBox):
         self.offset += len(result)
         return result
 
+    def ka_gui_browser(self, size=None):
+        node = self.get_focus()[0]
+        post_id = node.obj._data['id']
+        url = f"plugins/micropost/view.action?postId={post_id}"
+        open_gui_browser(url)
+
 
 class MicroblogEntry(CardListBoxEntry):
     """Represents microblog entries or replies to one entry as a list of
@@ -130,7 +137,7 @@ class MicroblogObject(ContentObject):
 
 
 class MicroblogReplyView(CongruenceListBox):
-    key_actions = ['reply', 'like']
+    key_actions = ['reply', 'like', 'gui browser']
 
     def __init__(self, entries):
         self.title = "Replies"
@@ -206,6 +213,12 @@ class MicroblogReplyView(CongruenceListBox):
             self.app.alert("Reply sent", 'info')
         else:
             self.app.alert("Failed to send reply", 'error')
+
+    def ka_gui_browser(self, size=None):
+        obj = self.entries[0].obj
+        post_id = obj._data['id']
+        url = f"plugins/micropost/view.action?postId={post_id}"
+        open_gui_browser(url)
 
 
 class MicroblogReplyDetails(CongruenceListBox):
