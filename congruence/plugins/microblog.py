@@ -165,6 +165,9 @@ class MicroblogReplyView(CongruenceListBox):
 
         help_text = cs.REPLY_MSG + prev_msg
         reply = self.app.get_long_input(help_text)
+        if not reply:
+            self.app.alert("Reply empty, aborting", 'warning')
+            return
         reply = md_to_html(reply, url_encode='html')
 
         headers = {
