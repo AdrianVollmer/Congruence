@@ -30,24 +30,29 @@ import urwid
 
 
 class MicroblogView(CongruenceListBox):
-    key_actions = ['load more']
+    key_actions = ['load more', 'update']
 
     def __init__(self, properties={}):
         self.title = "Microblog"
-        if 'limit' in properties['Parameters']:
-            self.limit = properties['Parameters']['limit']
+        self.properties = properties
+        self.ka_update()
+        super().__init__(self.entries, help_string=__help__)
+
+    def ka_update(self, size=None):
+        if 'limit' in self.properties['Parameters']:
+            self.limit = self.properties['Parameters']['limit']
         else:
             self.limit = 20
-        if 'replyLimit' in properties['Parameters']:
-            self.replyLimit = properties['Parameters']['replyLimit']
+        if 'replyLimit' in self.properties['Parameters']:
+            self.replyLimit = self.properties['Parameters']['replyLimit']
         else:
             self.replyLimit = 999
-        self.post_data = properties['Data']
+        self.post_data = self.properties['Data']
         self.offset = 0
 
         self.entries = self.get_microblog()
         self.app.alert('Received %d items' % len(self.entries), 'info')
-        super().__init__(self.entries, help_string=__help__)
+        self.redraw
 
     def ka_load_more(self, size=None):
         self.entries += self.get_microblog()
