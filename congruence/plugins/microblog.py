@@ -98,22 +98,23 @@ class MicroblogObject(ContentObject):
         self._data = data
 
     def get_title(self, cols=False):
-        liked_by = [u["userFullname"] for u in self._data["likingUsers"]]
-        max_likes = 3
-        if len(liked_by) > max_likes:
-            liked_by = " Liked by %s and %d more" % (
-                ", ".join(liked_by[:max_likes]),
-                len(liked_by) - max_likes,
-            )
-        elif len(liked_by) > 0:
-            liked_by = " Liked by " + ", ".join(liked_by[:max_likes])
-        else:
-            liked_by = ""
-        # TODO process 'hasliked'
-        title = "%s (%s)%s" % (
+        like_number = len(self._data["likingUsers"])
+        likes = ""
+        if like_number > 0:
+            if like_number == 1 and self._data['hasLiked']:
+                likes = ' - You liked this'
+            else:
+                likes = " - %d likes" % like_number
+                if self._data['hasLiked']:
+                    likes += ", including you"
+        replies = ""
+        if self._data['replies']:
+            replies = " - %d replies" % len(self._data['replies'])
+        title = "%s (%s)%s%s" % (
             self._data["authorFullName"],
             convert_date(self._data["creationDate"]),
-            liked_by,
+            replies,
+            likes,
         )
         return title
 
