@@ -82,7 +82,9 @@ class NotificationEntry(CongruenceListBoxEntry):
 
         if 'description' in self.obj._data:
             text += "\n%s\n" % html_to_text(self.obj._data['description'])
-        return CongruenceTextBox(text)
+        view = CongruenceTextBox(text)
+        view.title = 'Notification'
+        return view
 
     def get_details_view(self):
         text = self.obj.get_json()
