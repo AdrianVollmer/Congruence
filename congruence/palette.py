@@ -18,14 +18,12 @@ from congruence.args import config
 
 
 PALETTE = [
-    ('body', 'default', 'dark gray'),
+    ('body', 'default', 'default'),
     ('focus', 'black', 'brown'),
     ('head', 'yellow', 'black', 'standout'),
-    ('card-head', 'light gray', 'black'),
-    ('card-focus', 'black', 'brown'),
     ('foot', 'light gray', 'black'),
-    ('title', 'white', 'black', 'bold'),
-    ('flag', 'dark gray', 'light gray'),
+    ('card-head', 'default, bold', 'black'),
+    ('card-focus', 'black', 'brown'),
     ('error', 'dark red', 'default'),
     ('info', 'dark blue', 'default'),
     ('warning', 'yellow', 'default'),
