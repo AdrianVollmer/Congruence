@@ -49,8 +49,17 @@ def get_timestamp():
 
 
 def make_request(url, params={}, data=None, method="GET", headers={},
-                 no_token=False):
-    """This function performs the actual HTTP request"""
+                 no_token=False, auth=False):
+    """This function performs the actual HTTP request
+
+    :params: dict of URL parameters passed to requests
+    :data: string which contains the HTTP body
+    :method: HTTP method to use
+    :headers: dict of headers passed to requests
+    :no_token: set this to True if you need no XSRF token
+    :auth: set this to True if this is to authenticate; this will prevent an
+        infinite loop
+    """
 
     if not url.startswith(BASE_URL):
         if url.startswith('/'):
@@ -79,7 +88,9 @@ def make_request(url, params={}, data=None, method="GET", headers={},
         response.encoding = 'utf-8'
         if not_authenticated(response):
             log.error("Not logged in? Authenticating...")
-            if not authenticate_session():
+            if auth:
+                raise PermissionError("Permission denied")
+            elif not authenticate_session():
                 return response
         else:
             break
@@ -148,6 +159,7 @@ def authenticate_session():
             "index.action": "",
         },
         method="POST",
+        auth=True
     )
     reason = response.headers['X-Seraph-LoginReason']
     if not reason == "OK":
