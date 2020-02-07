@@ -194,10 +194,13 @@ class PageView(CongruenceTextBox):
         self.obj = obj
         self.title = "Page"
         #  text = [urwid.Text(obj.get_json())]
-        update = obj._data['content']['history']['lastUpdated']
+        history = obj._data['content']['history']
+        update = history['lastUpdated']
         infos = {
             'Title': obj.get_title(),
             'Space': obj._data['content']['space']['key'],
+            'Created by': history['createdBy']['displayName'],
+            'Created at': convert_date(history['createdDate']),
             'Last updated by': update['by']['displayName'],
             'Last updated at': convert_date(update['when']),
             'Last change message': update['message'],
