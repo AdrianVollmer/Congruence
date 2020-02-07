@@ -42,11 +42,21 @@ parser.add_argument(
     help="name of a file in which all HTTP requests and response will"
          " be dumped (useful for debugging)"
 )
+
+parser.add_argument(
+    '-c', '--config',
+    type=str,
+    default="",
+    help="specify a configuration file"
+)
+
 args = parser.parse_args()
 
 data_home = xdg.BaseDirectory.save_data_path("congruence")
 config_home = xdg.BaseDirectory.save_config_path("congruence")
 config_file = os.path.join(config_home, "config.yaml")
+if args.config:
+    config_file = args.config
 cache_home = xdg.BaseDirectory.save_cache_path("congruence")
 cookie_jar = os.path.join(cache_home, "cookiejar.dat")
 
