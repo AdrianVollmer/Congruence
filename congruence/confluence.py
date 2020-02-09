@@ -106,8 +106,9 @@ class CommentContextView(CongruenceTreeListBox):
         #  container = obj.get_content()
         #  page_id = re.search(r'/([^/]*$)', container).groups()[0]
         url = obj.get_parent_container()
+        title = obj._data['resultParentContainer']['title']
         comments = {
-            '0': {'title': 'root'},
+            '0': {'title': title},
             'children': get_comments_of_page(url),
         }
         super().__init__(comments, CommentWidget)
