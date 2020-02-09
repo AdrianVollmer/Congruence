@@ -82,7 +82,7 @@ def get_comments_of_page(url):
     return result
 
 
-class CommentView(CongruenceTreeListBox):
+class CommentContextView(CongruenceTreeListBox):
     """Display a comment tree
 
     :obj: one object of type Comment of the comment tree
@@ -100,7 +100,8 @@ class CommentView(CongruenceTreeListBox):
         self.obj = obj
         self.title = "Comments"
         comment_id = obj.id
-        log.debug("Build CommentView for comment with id '%s'" % comment_id)
+        log.debug("Build CommentContextView for comment with id '%s'"
+                  % comment_id)
         #  log.debug(obj._data)
         #  container = obj.get_content()
         #  page_id = re.search(r'/([^/]*$)', container).groups()[0]

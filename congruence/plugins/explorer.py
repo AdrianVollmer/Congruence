@@ -28,7 +28,7 @@ from congruence.views.treelistbox import CongruenceTreeListBox, \
 from congruence.interface import make_request
 #  from congruence.external import open_gui_browser, open_doc_in_cli_browser
 from congruence.logging import log
-from congruence.confluence import CommentView, PageView
+from congruence.confluence import CommentContextView, PageView
 from congruence.objects import Space, Page
 
 import urwid
@@ -128,7 +128,7 @@ class SpaceEntry(CongruenceTreeListBoxEntry):
         if obj.type in ["page", "blogpost"]:
             return PageView(obj)
         elif obj.type == "comment":
-            return CommentView(obj)
+            return CommentContextView(obj)
 
     def get_details_view(self):
         text = self.obj.get_json()

@@ -33,7 +33,7 @@ from congruence.views.listbox import CongruenceListBox, \
 from congruence.interface import make_request
 from congruence.external import open_gui_browser, open_doc_in_cli_browser
 from congruence.logging import log
-from congruence.confluence import CommentView, PageView
+from congruence.confluence import CommentContextView, PageView
 from congruence.objects import determine_type
 
 
@@ -119,7 +119,7 @@ class CongruenceAPIEntry(CongruenceListBoxEntry):
         if self.obj.type in ["page", "blogpost"]:
             return PageView(self.obj)
         elif self.obj.type == "comment":
-            return CommentView(self.obj)
+            return CommentContextView(self.obj)
 
     def get_details_view(self):
         text = self.obj.get_json()
