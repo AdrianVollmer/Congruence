@@ -36,8 +36,8 @@ pages is out of scope for sure.
 Disclaimer: I am not affiliated with Atlassian in any way. At the point of
 writing, I only have one Confluence instance to work with. I also never
 installed a Confluence and I have only a vague idea of what is a plugin and
-what is core functionality. I'm just a regular power user. Tested on
-Confluence 6.15.
+what is core functionality. I'm just a regular power user. This will work
+only with Confluence 6.0 or higher.
 
 Getting started
 ---------------
