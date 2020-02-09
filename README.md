@@ -43,7 +43,7 @@ Getting started
 ---------------
 
 Make sure you have all dependencies installed. The easiest is to just
-execute `pip3 install --user -r requirements.txt`. Alternatively, use your
+execute `pip3 install .`. Alternatively, use your
 favorite virtual environment manager.
 
 Next, copy `config.yaml.sample` to `$XDG_CONFIG_HOME/congruence/config.yaml` (or
