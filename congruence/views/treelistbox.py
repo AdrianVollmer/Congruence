@@ -44,8 +44,9 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
         'search prev',
     ]
 
-    def __init__(self, data, wrapper):
+    def __init__(self, data, wrapper, help_string=None):
         self.wrapper = wrapper
+        self.help_string = help_string
         self.topnode = CongruenceParentNode(self.wrapper, data)
         self.walker = urwid.TreeWalker(self.topnode)
         super().__init__(self.walker)

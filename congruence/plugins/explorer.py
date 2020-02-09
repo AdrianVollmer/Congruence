@@ -16,6 +16,9 @@
 
 
 __help__ = """Confluence Explorer
+
+Expand items with the 'toggle collapse' key. They will dynamically retrieve
+more content.
 """
 
 
@@ -63,7 +66,7 @@ class SpaceView(CongruenceTreeListBox):
             'Space Directory': {'title': 'Space Directory'},
             'children': self.entries,
         }
-        super().__init__(self.entries, SpaceEntry)
+        super().__init__(self.entries, SpaceEntry, help_string=__help__)
 
     def ka_toggle_collapse(self, size=None):
         if self.focus.expanded:
