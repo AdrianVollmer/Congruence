@@ -88,7 +88,13 @@ class CommentView(CongruenceTreeListBox):
     :obj: one object of type Comment of the comment tree
     """
 
-    key_actions = ['reply', 'like', 'cli browser', 'gui browser']
+    key_actions = [
+        'reply',
+        'like',
+        'cli browser',
+        'gui browser',
+        'toggle collapse',
+    ]
 
     def __init__(self, obj):
         self.obj = obj
