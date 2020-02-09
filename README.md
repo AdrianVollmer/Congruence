@@ -29,6 +29,10 @@ browser is just one key press away...
 
 Naturally, Congruence was written entirely in vim.
 
+The goal is primarily to consume content served by Confluence and have
+minimal interactions, such as liking content and posting comments. Editing
+pages is out of scope for sure.
+
 Disclaimer: I am not affiliated with Atlassian in any way. At the point of
 writing, I only have one Confluence instance to work with. I also never
 installed a Confluence and I have only a vague idea of what is a plugin and
