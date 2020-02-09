@@ -86,6 +86,9 @@ class SpaceView(CongruenceTreeListBox):
 
     def ka_cli_browser(self, size=None):
         obj = self.focus.get_value()
+        if isinstance(obj, dict):
+            # it's the root
+            return
         id = obj.id
         log.debug("Build HTML view for page with id '%s'" % id)
         rest_url = f"rest/api/content/{id}?expand=body.storage"
@@ -98,6 +101,9 @@ class SpaceView(CongruenceTreeListBox):
 
     def ka_gui_browser(self, size=None):
         obj = self.focus.get_value()
+        if isinstance(obj, dict):
+            # it's the root
+            return
         try:
             url = obj._data['space']['link'][1]['href']
         except KeyError:
@@ -159,6 +165,9 @@ class SpaceEntry(CongruenceTreeListBoxEntry):
             return CommentContextView(obj)
 
     def get_details_view(self):
+        if isinstance(self.get_value(), dict):
+            # it's the root
+            return
         text = self.get_value().get_json()
         return CongruenceTextBox(text)
 
