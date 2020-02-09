@@ -195,8 +195,13 @@ class CongruenceCardTreeWidget(CongruenceTreeListBoxEntry):
     def update_expanded_icon(self):
         """Update display widget text for parent widgets"""
         # icon is first element in header widget
-        self._w.base_widget.widget_list[0].base_widget.widget_list[0] = [
-            self.unexpanded_icon, self.expanded_icon][self.expanded]
+        try:
+            self._w.base_widget.widget_list[0].base_widget.widget_list[0] = [
+                self.unexpanded_icon, self.expanded_icon][self.expanded]
+        except AttributeError:
+            # it's the root
+            self._w.base_widget.widget_list[0] = [
+                self.unexpanded_icon, self.expanded_icon][self.expanded]
 
 
 class CongruenceNode(urwid.TreeNode):
