@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from congruence.logging import log
+#  from congruence.logging import log
 from congruence.views.common import CongruenceView, RememberParentKeyMapMeta
 
 import urwid
@@ -237,5 +237,4 @@ class CongruenceParentNode(urwid.ParentNode):
 
     def search_match(self, expr):
         obj = self.get_widget().get_value()
-        log.debug(obj)
         return obj.match(expr)
