@@ -21,7 +21,7 @@ from congruence.views.common import CongruenceTextBox
 from congruence.views.treelistbox import CongruenceTreeListBox,\
         CongruenceCardTreeWidget
 from congruence.views.listbox import CongruenceListBox
-from congruence.interface import make_request, convert_date
+from congruence.interface import make_request, convert_date, html_to_text
 from congruence.tools import create_diff
 from congruence.logging import log
 from congruence.objects import Comment
@@ -156,7 +156,8 @@ class CommentView(CongruenceTreeListBox):
                            'warning')
 
     def ka_cli_browser(self, size=None):
-        id = self.obj.id
+        obj = self.focus.get_value()
+        id = obj.id
         log.debug("Build HTML view for page with id '%s'" % id)
         rest_url = f"rest/api/content/{id}?expand=body.storage"
         r = make_request(rest_url)
@@ -165,20 +166,55 @@ class CommentView(CongruenceTreeListBox):
 
         content = f'<html><head></head><body>{content}</body></html>'
         open_doc_in_cli_browser(content.encode(), self.app)
-#
-    #  def ka_gui_browser(self, size=None):
-    #      id = self.obj.id
-    #      url = f"pages/viewpage.action?pageId={id}"
-    #      open_gui_browser(url)
+
+    def ka_gui_browser(self, size=None):
+        obj = self.focus.get_value()
+        url = obj._data['_links']['webui']
+        open_gui_browser(url)
+
+
+class SingleCommentView(CongruenceTextBox):
+    #  key_actions = ['list diff', 'cli browser', 'gui browser']
+
+    def __init__(self, obj):
+        self.obj = obj
+        self.title = "Comment"
+        content = obj._data
+        try:
+            update = content['version']
+            infos = {
+                'Title': obj.get_title(),
+                #  'Space': content['space']['name'],
+                #  'Space key': content['space']['key'],
+                #  'Created by': history['createdBy']['displayName'],
+                #  'Created at': convert_date(history['createdDate']),
+                'Last updated by': update['by']['displayName'],
+                'Last updated at': convert_date(update['when']),
+                'Last change message': update['message'],
+                'Version number': update['number'],
+            }
+            text = '\n'.join([f'{k}: {v}' for k, v in infos.items()])
+            text += '\n\n' + html_to_text(self.obj.get_content())
+        except KeyError as e:
+            self.app.alert("KeyError (%s), displaying raw data" % e, 'error')
+            text = obj.get_json()
+        super().__init__(text)
 
 
 class CommentWidget(CongruenceCardTreeWidget):
-    def get_next_view(self):
-        pass
+    def __init__(self, node):
+        self.obj = list(node.get_value().values())[0]
+        super().__init__(node)
 
     def get_details_view(self):
-        comment_obj = list(self.node.get_value().values())[0]
-        return CommentDetails(comment_obj._data)
+        return CommentDetails(self.obj._data)
+
+    def get_next_view(self):
+        if isinstance(self.obj, dict):
+            # It's the root node
+            return None
+        view = SingleCommentView(self.obj)
+        return view
 
 
 class CommentDetails(CongruenceListBox):
