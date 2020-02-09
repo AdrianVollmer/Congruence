@@ -56,9 +56,8 @@ class ConfluenceObject(ABC):
     def get_title(self, cols=False):
         pass
 
-    @abstractmethod
     def get_json(self):
-        pass
+        return json.dumps(self._data, indent=2, sort_keys=True)
 
 
 class ContentObject(ConfluenceObject):
@@ -93,9 +92,6 @@ class ContentObject(ConfluenceObject):
             ]
             return title
         return self.title
-
-    def get_json(self):
-        return json.dumps(self._data, indent=2, sort_keys=True)
 
     def match(self, search_string):
         return re.search(search_string, self.title)
@@ -251,9 +247,6 @@ class User(ConfluenceObject):
             ]
         return self._data['title']
 
-    def get_json(self):
-        return json.dumps(self._data, indent=2, sort_keys=True)
-
 
 class Space(ConfluenceObject):
     def __init__(self, data):
@@ -275,5 +268,5 @@ class Space(ConfluenceObject):
         else:
             return [self.name]
 
-    def get_json(self):
-        return json.dumps(self._data, indent=2, sort_keys=True)
+    def match(self, search_string):
+        return re.search(search_string, self.name)
