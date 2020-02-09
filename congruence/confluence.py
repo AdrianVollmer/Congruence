@@ -194,19 +194,28 @@ class PageView(CongruenceTextBox):
         self.obj = obj
         self.title = "Page"
         #  text = [urwid.Text(obj.get_json())]
-        history = obj._data['content']['history']
-        update = history['lastUpdated']
-        infos = {
-            'Title': obj.get_title(),
-            'Space': obj._data['content']['space']['key'],
-            'Created by': history['createdBy']['displayName'],
-            'Created at': convert_date(history['createdDate']),
-            'Last updated by': update['by']['displayName'],
-            'Last updated at': convert_date(update['when']),
-            'Last change message': update['message'],
-            'Version number': update['number'],
-        }
-        text = '\n'.join([f'{k}: {v}' for k, v in infos.items()])
+        if 'content' in obj._data:
+            content = obj._data['content']
+        else:
+            content = obj._data
+        try:
+            history = content['history']
+            update = history['lastUpdated']
+            infos = {
+                'Title': obj.get_title(),
+                'Space': content['space']['name'],
+                'Space key': content['space']['key'],
+                'Created by': history['createdBy']['displayName'],
+                'Created at': convert_date(history['createdDate']),
+                'Last updated by': update['by']['displayName'],
+                'Last updated at': convert_date(update['when']),
+                'Last change message': update['message'],
+                'Version number': update['number'],
+            }
+            text = '\n'.join([f'{k}: {v}' for k, v in infos.items()])
+        except KeyError as e:
+            self.app.alert("KeyError (%s), displaying raw data" % e, 'error')
+            text = obj.get_json()
         super().__init__(text)
 
     def ka_list_diff(self, size=None):

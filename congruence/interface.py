@@ -96,6 +96,7 @@ def make_request(url, params={}, data=None, method="GET", headers={},
             break
     if not response.ok:
         app.alert("Received HTTP code %d" % response.status_code, 'error')
+        return response
     if args.dump_http:
         dump_http(response, args.dump_http)
     app.reset_status()

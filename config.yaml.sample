@@ -52,6 +52,8 @@ Plugins:
     -
         PluginName: Notifications
         Limit: 30
+    -
+        PluginName: Explorer
 ## If your Confluence uses the Microblog plugin:
     #  -
     #      PluginName: Microblog

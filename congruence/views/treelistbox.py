@@ -119,24 +119,48 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
 
 
 class CongruenceTreeListBoxEntry(urwid.TreeWidget):
-    """ Display widget for leaf nodes """
+    """Display widget for nodes"""
+
+    indent_cols = 2
 
     def __init__(self, node):
         self.node = node
         super().__init__(node)
 
     def get_display_text(self):
-        return "TODO"
-
-
-class CongruenceCardTreeWidget(CongruenceTreeListBoxEntry):
-    """This class can be used to display a carded TreeWidget"""
-
-    indent_cols = 2
+        return list(self.node.get_value().keys())[0]
 
     def get_value(self):
         node = list(self.get_node().get_value().values())[0]
         return node
+
+    def get_indented_widget(self):
+        widget = self.get_inner_widget()
+        indent_cols = self.get_indent_cols()
+        return urwid.Padding(widget, width=('relative', 100), left=indent_cols)
+
+    def update_expanded_icon(self):
+        """Update display widget text for parent widgets"""
+        self._w.base_widget.widget_list[0] = [
+            self.unexpanded_icon, self.expanded_icon][self.expanded]
+
+    def load_inner_widget(self):
+        """Build a row widget with a text content"""
+
+        self.icon = [self.unexpanded_icon, self.expanded_icon][self.expanded]
+        header = urwid.Text(self.get_display_text())
+        header = urwid.Columns([('fixed', 1, self.icon), header],
+                               dividechars=1)
+        header = urwid.AttrWrap(header, 'body', 'focus')
+        widget = header
+        return widget
+
+    def selectable(self):
+        return True
+
+
+class CongruenceCardTreeWidget(CongruenceTreeListBoxEntry):
+    """This class can be used to display a carded TreeWidget"""
 
     def get_display_header(self):
         node = self.get_value()
@@ -166,11 +190,6 @@ class CongruenceCardTreeWidget(CongruenceTreeListBoxEntry):
         else:
             widget = header
         return widget
-
-    def get_indented_widget(self):
-        widget = self.get_inner_widget()
-        indent_cols = self.get_indent_cols()
-        return urwid.Padding(widget, width=('relative', 100), left=indent_cols)
 
     def update_expanded_icon(self):
         """Update display widget text for parent widgets"""

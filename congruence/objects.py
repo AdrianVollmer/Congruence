@@ -37,14 +37,18 @@ def determine_type(data):
         'comment': Comment,
         'attachment': Attachment,
         'personal': Space,
+        'space': Space,
         'user': User,
+        'content': ContentObject,
     }
-    if 'content' in data:
-        if 'type' in data['content']:
-            return type_map[data['content']['type']]
-    if 'entityType' in data:
-        return type_map[data['entityType']]
-    raise KeyError("Unkown confluence object")
+    try:
+        if 'content' in data:
+            if 'type' in data['content']:
+                return type_map[data['content']['type']]
+        if 'entityType' in data:
+            return type_map[data['entityType']]
+    except KeyError:
+        return ContentObject
 
 
 class ConfluenceObject(ABC):
@@ -68,6 +72,7 @@ class ContentObject(ConfluenceObject):
             content = data
         self.id = content['id']
         self.title = content['title']
+        self.type = getattr(self, 'type', 'unknown')
         #  self.space = data['space']
         self.liked = False  # TODO determine
 
@@ -253,11 +258,22 @@ class User(ConfluenceObject):
 class Space(ConfluenceObject):
     def __init__(self, data):
         self._data = data
-        self.key = data['key']
-        self.name = data['name']
+        self.type = 'space'
+        self.key = self._data['space']['key']
+        self.name = self._data['space']['name']
+        super().__init__()
 
-    def get_title(self):
-        return self.name
+    def get_title(self, cols=False):
+        if cols:
+            return [
+                'S',
+                self.key,
+                self.name,
+                convert_date(self._data['timestamp'], 'friendly'),
+                '',
+            ]
+        else:
+            return [self.name]
 
     def get_json(self):
         return json.dumps(self._data, indent=2, sort_keys=True)
