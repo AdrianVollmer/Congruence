@@ -14,6 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from congruence.__init__ import __version__
 import argparse
 import xdg.BaseDirectory
 import os
@@ -25,7 +26,9 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
-    '-v', '--version', action='version', version='congruence 0.1'
+    '-v', '--version',
+    action='version',
+    version='congruence %s' % __version__,
 )
 
 parser.add_argument(
