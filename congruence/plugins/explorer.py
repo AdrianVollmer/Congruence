@@ -26,7 +26,7 @@ from congruence.views.common import CongruenceTextBox
 from congruence.views.treelistbox import CongruenceTreeListBox, \
     CongruenceTreeListBoxEntry
 from congruence.interface import make_request
-#  from congruence.external import open_gui_browser, open_doc_in_cli_browser
+from congruence.external import open_gui_browser, open_doc_in_cli_browser
 from congruence.logging import log
 from congruence.confluence import CommentContextView, PageView
 from congruence.objects import Space, Page
@@ -38,7 +38,6 @@ class SpaceView(CongruenceTreeListBox):
 
     key_actions = [
         'toggle collapse',
-        'update',
         'cli browser',
         'gui browser',
     ]
@@ -85,6 +84,36 @@ class SpaceView(CongruenceTreeListBox):
                 obj.expanded = True
             urwid.TreeListBox.keypress(self, size, '+')
 
+    def ka_cli_browser(self, size=None):
+        obj = self.focus.get_value()
+        id = obj.id
+        log.debug("Build HTML view for page with id '%s'" % id)
+        rest_url = f"rest/api/content/{id}?expand=body.storage"
+        r = make_request(rest_url)
+        content = r.json()
+        content = content['body']['storage']['value']
+
+        content = f'<html><head></head><body>{content}</body></html>'
+        open_doc_in_cli_browser(content.encode(), self.app)
+
+    def ka_gui_browser(self, size=None):
+        obj = self.focus.get_value()
+        try:
+            url = obj._data['space']['link'][1]['href']
+        except KeyError:
+            url = obj._data['_links']['webui']
+        open_gui_browser(url)
+
+    def ka_show_details(self, size=None):
+        obj = self.focus
+        view = obj.get_details_view()
+        if view:
+            view.title = "Details"
+            self.app.push_view(view)
+        else:
+            self.app.alert("Looks like this item has no details",
+                           'warning')
+
 
 class ExpandableSpace(Space):
     """This class can 'expand', i.e. load a list of pages in its space"""
@@ -105,7 +134,6 @@ class ExpandableSpace(Space):
         while True:
             r = make_request(url, params=params)
             j = r.json()
-            log.debug(j)
             result += j['page']['results']
             size = j['page']['size']
             if len(result) >= size:
@@ -131,7 +159,7 @@ class SpaceEntry(CongruenceTreeListBoxEntry):
             return CommentContextView(obj)
 
     def get_details_view(self):
-        text = self.obj.get_json()
+        text = self.get_value().get_json()
         return CongruenceTextBox(text)
 
     def search_match(self, search_string):
