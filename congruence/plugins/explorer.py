@@ -51,14 +51,20 @@ class SpaceView(CongruenceTreeListBox):
             'query': '',
             'type': 'global',
             'status': 'current',
-            'pageSize': '99',
             'startIndex': '0',
         }
         headers = {
              'Accept': 'application/json',
         }
-        r = make_request(url, params=params, headers=headers)
-        self.spaces = r.json()['spaces']
+        self.spaces = []
+        while True:
+            r = make_request(url, params=params, headers=headers)
+            j = r.json()
+            self.spaces += j['spaces']
+            size = j['totalSize']
+            if len(self.spaces) >= size:
+                break
+            params['startIndex'] = len(self.spaces)
         self.entries = [{s['key']: ExpandableSpace({'space': s}),
                          'children': []}
                         for s in self.spaces]
@@ -95,8 +101,16 @@ class ExpandableSpace(Space):
             'depth': 'root',
             'expand': 'body,version,history.lastUpdated,space',
         }
-        r = make_request(url, params=params)
-        result = r.json()['page']['results']
+        result = []
+        while True:
+            r = make_request(url, params=params)
+            j = r.json()
+            log.debug(j)
+            result += j['page']['results']
+            size = j['page']['size']
+            if len(result) >= size:
+                break
+            params['startIndex'] = len(result)
         result = [ExpandablePage(p) for p in result]
         log.debug("Retrieved %d items" % len(result))
         return result
