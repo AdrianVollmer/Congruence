@@ -111,7 +111,8 @@ class CommentContextView(CongruenceTreeListBox):
             '0': {'title': title},
             'children': get_comments_of_page(url),
         }
-        super().__init__(comments, CommentWidget)
+        help_string = cs.COMMENT_CONTEXT_VIEW_HELP
+        super().__init__(comments, CommentWidget, help_string=help_string)
         # set focus
         node = self._body.focus
         while True:
@@ -200,7 +201,8 @@ class SingleCommentView(CongruenceTextBox):
         except KeyError as e:
             self.app.alert("KeyError (%s), displaying raw data" % e, 'error')
             text = obj.get_json()
-        super().__init__(text)
+        help_string = cs.COMMENT_VIEW_HELP
+        super().__init__(text, help_string=help_string)
 
 
 class CommentWidget(CongruenceCardTreeWidget):
@@ -228,7 +230,8 @@ class CommentDetails(CongruenceListBox):
         line = [[urwid.Text(k), urwid.Text(str(v))] for k, v in data.items()]
         line = [urwid.Columns([(max_len + 1, k), v])
                 for k, v in line]
-        super().__init__(line)
+        help_string = cs.COMMENT_DETAILS_VIEW_HELP
+        super().__init__(line, help_string=help_string)
 
 
 class PageView(CongruenceTextBox):
@@ -260,7 +263,8 @@ class PageView(CongruenceTextBox):
         except KeyError as e:
             self.app.alert("KeyError (%s), displaying raw data" % e, 'error')
             text = obj.get_json()
-        super().__init__(text)
+        help_string = cs.PAGE_VIEW_HELP
+        super().__init__(text, help_string=help_string)
 
     def ka_list_diff(self, size=None):
         try:
@@ -336,7 +340,8 @@ class DiffView(CongruenceTextBox):
 
         if not self.diff:
             self.diff = cs.DIFF_EMPTY
-        super().__init__(self.diff, color=True)
+        help_string = cs.DIFF_VIEW_HELP
+        super().__init__(self.diff, color=True, help_string=help_string)
 
     def ka_cycle_next(self, size=None):
         try:

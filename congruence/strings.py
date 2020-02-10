@@ -29,3 +29,24 @@ DIFF_EMPTY = (
     "It's not clear what changed based on what "
     "Confluence gives us, sorry."
 )
+
+PAGE_VIEW_HELP = (
+    "What you see here is meta info of a page object."
+)
+
+COMMENT_DETAILS_VIEW_HELP = (
+    "What you see here is all properties of a comment object."
+)
+
+COMMENT_VIEW_HELP = (
+    "What you see here are meta info and the content of a comment object."
+)
+
+DIFF_VIEW_HELP = (
+    "The diff view shows you what changed between to versions."
+)
+
+COMMENT_CONTEXT_VIEW_HELP = (
+    "This view shows a tree structure of all comments of a page or blog"
+    " post."
+)

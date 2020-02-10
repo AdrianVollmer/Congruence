@@ -71,7 +71,7 @@ class CongruenceTextBox(CongruenceView, urwid.ListBox,
         'scroll to top',
     ]
 
-    def __init__(self, text, color=False):
+    def __init__(self, text, color=False, help_string=None):
         self.text = text
         if color and text:
             textbox = []
@@ -80,6 +80,7 @@ class CongruenceTextBox(CongruenceView, urwid.ListBox,
             textbox = urwid.Text(textbox)
         else:
             textbox = urwid.Text(self.text)
+        self.help_string = help_string
         super().__init__(urwid.SimpleFocusListWalker([textbox]))
 
     def ka_move_down(self, size=None):

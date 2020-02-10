@@ -149,7 +149,7 @@ class Page(ContentObject):
         self.short_type = 'P'
 
 
-class Blogpost(ContentObject):
+class Blogpost(Page):
     def __init__(self, data):
         super().__init__(data)
         self.type = 'blogpost'
