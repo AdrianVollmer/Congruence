@@ -32,7 +32,7 @@ import urwid
 
 
 class MicroblogView(CongruenceListBox):
-    key_actions = ['load more', 'update', 'gui browser']
+    key_actions = ['load more', 'update', 'gui browser', 'post comment']
 
     def __init__(self, properties={}):
         self.title = "Microblog"
@@ -89,6 +89,38 @@ class MicroblogView(CongruenceListBox):
         post_id = node.obj._data['id']
         url = f"plugins/micropost/view.action?postId={post_id}"
         open_gui_browser(url)
+
+    def ka_post_comment(self, size=None):
+        # TODO refactor to reduce duplicate code
+        # TODO let the user pick
+        topic_id = 16
+
+        post_id = send_sketch(topic_id)
+        if not post_id:
+            self.app.alert("Failed to send sketch", 'error')
+            return
+
+        help_text = cs.REPLY_MSG
+        reply = self.app.get_long_input(help_text)
+        if not reply:
+            self.app.alert("Reply empty, aborting", 'warning')
+            return
+        reply = md_to_html(reply, url_encode='html')
+
+        headers = {
+            'X-Atlassian-Token': 'no-check',
+            'Content-Type':
+                'application/x-www-form-urlencoded; charset=UTF-8',
+        }
+        data = f"{reply}&topicId={topic_id}&spaceKey=~admin"
+        url = f"rest/microblog/1.0/microposts/{post_id}"
+        r = make_request(url, method='PUT', data=data,
+                         headers=headers, no_token=True)
+
+        if r.status_code == 200:
+            self.app.alert("Microblog post sent", 'info')
+        else:
+            self.app.alert("Failed to send microblog post", 'error')
 
 
 class MicroblogEntry(CardListBoxEntry):
@@ -149,6 +181,26 @@ class MicroblogObject(ContentObject):
         return text
 
 
+def send_sketch(topic_id):
+    """Gets a post ID for a new microblog entry"""
+
+    headers = {
+        'X-Atlassian-Token': 'no-check',
+        'Content-Type':
+            'application/x-www-form-urlencoded; charset=UTF-8',
+    }
+    data = f"topicId={topic_id}"
+    url = f"rest/microblog/1.0/sketch"
+    r = make_request(url, method='POST', data=data,
+                     headers=headers, no_token=True)
+
+    if not r.status_code == 200:
+        return
+
+    post_id = r.text
+    return post_id
+
+
 class MicroblogReplyView(CongruenceListBox):
     key_actions = ['reply', 'like', 'gui browser']
 
@@ -182,23 +234,10 @@ class MicroblogReplyView(CongruenceListBox):
         topic_id = obj._data['topic']['id']
         parent_id = obj._data['id']
 
-        # Get Post ID
-        headers = {
-            'X-Atlassian-Token': 'no-check',
-            'Content-Type':
-                'application/x-www-form-urlencoded; charset=UTF-8',
-        }
-        data = f"topicId={topic_id}"
-        url = f"rest/microblog/1.0/sketch"
-        r = make_request(url, method='POST', data=data,
-                         headers=headers, no_token=True)
-
-        if not r.status_code == 200:
+        post_id = send_sketch(topic_id)
+        if not post_id:
             self.app.alert("Failed to send sketch", 'error')
             return
-
-        post_id = r.text
-        log.debug(f"Got Post ID: {post_id}; Parent ID: {parent_id}")
 
         prev_msg = obj._data['renderedContent']
         prev_msg = prev_msg.splitlines()

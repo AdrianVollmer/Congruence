@@ -50,6 +50,7 @@ KEYS = {
     'cli browser': ('b', "Open with CLI browser"),
     'gui browser': ('B', "Open with GUI browser"),
     'show log': ('!', "Show application log"),
+    'post comment': ('P', "Post a new comment to a page"),
 }
 
 if 'KeyMap' in config:
