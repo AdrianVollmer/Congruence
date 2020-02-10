@@ -54,7 +54,10 @@ class MicroblogView(CongruenceListBox):
 
         self.entries = self.get_microblog()
         self.app.alert('Received %d items' % len(self.entries), 'info')
-        self.redraw
+        if hasattr(self, 'walker'):
+            # this check is done because if ka_update is called before
+            # super.__init__ the object is not ready for redrawing yet
+            self.redraw()
 
     def ka_load_more(self, size=None):
         self.entries += self.get_microblog()
