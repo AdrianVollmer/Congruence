@@ -216,10 +216,13 @@ class Comment(ContentObject):
         return False
 
     def match(self, search_string):
-        return (
-            re.search(search_string, self.get_title())
-            or re.search(search_string, self.get_content())
-        )
+        try:
+            return (
+                re.search(search_string, self.get_title())
+                or re.search(search_string, self.get_content())
+            )
+        except KeyError:
+            return re.search(search_string, self.title)
 
 
 class Attachment(ContentObject):
