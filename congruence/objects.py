@@ -177,15 +177,6 @@ class Comment(ContentObject):
             date,
         )
         return title
-        #  return {
-        #      "title": title,
-        #      "username": self._data["version"]["by"]["username"],
-        #      "displayName": self._data["version"]["by"]["displayName"],
-        #      "date": date,
-        #      "url": self._data["_links"]["webui"],
-        #      "versions": str(self._data["version"]["number"]),
-        #      # TODO insert selection of inline comments
-        #  }
 
     def get_content(self):
         #  log.debug(self._data)
