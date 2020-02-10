@@ -170,26 +170,13 @@ class Comment(ContentObject):
     def get_title(self, cols=False):
         if cols:
             return super().get_title(cols=True)
-        date = self._data['version']['when']
-        date = convert_date(date)
-        title = '%s, %s' % (
-            self._data['version']['by']['displayName'],
-            date,
-        )
-        return title
-        #  return {
-        #      "title": title,
-        #      "username": self._data["version"]["by"]["username"],
-        #      "displayName": self._data["version"]["by"]["displayName"],
-        #      "date": date,
-        #      "url": self._data["_links"]["webui"],
-        #      "versions": str(self._data["version"]["number"]),
-        #      # TODO insert selection of inline comments
-        #  }
+        return self._data['title']
 
     def get_content(self):
-        #  log.debug(self._data)
-        return html_to_text(self._data['body']['view']['value'])
+        try:
+            return html_to_text(self._data['body']['view']['value'])
+        except KeyError:
+            return ""
 
     def get_parent_container(self):
         #  log.debug(self._data)
