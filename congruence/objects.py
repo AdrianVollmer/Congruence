@@ -31,6 +31,7 @@ from abc import ABC, abstractmethod
 
 def determine_type(data):
     """Try to determine which type of object it is"""
+
     type_map = {
         'page': Page,
         'blogpost': Blogpost,
@@ -52,16 +53,37 @@ def determine_type(data):
 
 
 class ConfluenceObject(ABC):
+    """Base class for all confluence objects
+
+    Can be a page, a comment, a user, a space, anything.
+
+    """
+
     @abstractmethod
     def get_title(self, cols=False):
+        """Subclasses who implement this must return a string or a list of
+        strings with len=5 if cols=True"""
         pass
 
     def get_json(self):
         return json.dumps(self._data, indent=2, sort_keys=True)
 
+    def get_content(self):
+        return ""
+
 
 class ContentObject(ConfluenceObject):
+    """Base class for content objects
+
+    This is only for pages, blog posts, attachments and comments
+    """
+
     def __init__(self, data):
+        """Constructor
+
+        :data: a json object representing the object
+        """
+
         self._data = data
         if 'content' in data:
             self.url = data['url']

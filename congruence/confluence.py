@@ -164,7 +164,7 @@ class CommentContextView(CongruenceTreeListBox):
 
 
 class SingleCommentView(CongruenceTextBox):
-    #  key_actions = ['list diff', 'cli browser', 'gui browser']
+    """A text box showing metadata of a comment and the actual comment"""
 
     def __init__(self, obj):
         self.obj = obj
@@ -206,6 +206,8 @@ class CommentWidget(CongruenceCardTreeWidget):
 
 
 class PageView(CongruenceTextBox):
+    """A text box showing metadata of a page"""
+
     key_actions = ['list diff', 'cli browser', 'gui browser']
 
     def __init__(self, obj):
