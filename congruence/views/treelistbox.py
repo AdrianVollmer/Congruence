@@ -16,7 +16,8 @@
 
 
 #  from congruence.logging import log
-from congruence.views.common import CongruenceView, RememberParentKeyMapMeta
+from congruence.views.common import CongruenceView, \
+    RememberParentKeyMapMeta, CongruenceTextBox
 
 import urwid
 
@@ -78,6 +79,10 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
         view = self.get_focus()[0].get_next_view()
         if view:
             self.app.push_view(view)
+
+    def ka_show_details(self, size=None):
+        view = self.get_focus()[0].get_details_view()
+        self.app.push_view(view)
 
     def ka_search(self, size=None):
         self.search()
@@ -158,6 +163,15 @@ class CongruenceTreeListBoxEntry(urwid.TreeWidget):
 
     def selectable(self):
         return True
+
+    def get_details_view(self):
+        if isinstance(self.get_value(), dict):
+            # it's the root
+            return
+        text = self.get_value().get_json()
+        view = CongruenceTextBox(text)
+        view.title = "Details"
+        return view
 
 
 class CongruenceCardTreeWidget(CongruenceTreeListBoxEntry):

@@ -16,7 +16,8 @@
 
 
 #  from congruence.logging import log
-from congruence.views.common import CongruenceView, RememberParentKeyMapMeta
+from congruence.views.common import CongruenceView, \
+    RememberParentKeyMapMeta, CongruenceTextBox
 
 import urwid
 
@@ -104,12 +105,7 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
 
     def ka_show_details(self, size=None):
         view = self.get_focus()[0].get_details_view()
-        if view:
-            view.title = "Details"
-            self.app.push_view(view)
-        else:
-            self.app.alert("Looks like this item has no details",
-                           "warning")
+        self.app.push_view(view)
 
     def ka_search(self, size=None):
         self.search()
@@ -199,7 +195,10 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
         return None
 
     def get_details_view(self):
-        return None
+        text = self.obj.get_json()
+        view = CongruenceTextBox(text)
+        view.title = "Details"
+        return view
 
     def search_match(self, search_string):
         """Returns a Boolean whether the search string matches"""
@@ -207,6 +206,7 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
         raise NotImplementedError("search_match in %s" % type(self).__name__)
 
 
+# TODO inherit also from CongruenceListBox
 class CardListBoxEntry(urwid.Pile):
     def __init__(self, obj):
         self.obj = obj
@@ -233,3 +233,9 @@ class CardListBoxEntry(urwid.Pile):
 
     def keypress(self, size, key):
         return key
+
+    def get_details_view(self):
+        text = self.obj.get_json()
+        view = CongruenceTextBox(text)
+        view.title = "Details"
+        return view

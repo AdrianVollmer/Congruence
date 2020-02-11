@@ -110,16 +110,6 @@ class SpaceView(CongruenceTreeListBox):
             url = obj._data['_links']['webui']
         open_gui_browser(url)
 
-    def ka_show_details(self, size=None):
-        obj = self.focus
-        view = obj.get_details_view()
-        if view:
-            view.title = "Details"
-            self.app.push_view(view)
-        else:
-            self.app.alert("Looks like this item has no details",
-                           'warning')
-
 
 class ExpandableSpace(Space):
     """This class can 'expand', i.e. load a list of pages in its space"""
@@ -163,13 +153,6 @@ class SpaceEntry(CongruenceTreeListBoxEntry):
             return PageView(obj)
         elif obj.type == "comment":
             return CommentContextView(obj)
-
-    def get_details_view(self):
-        if isinstance(self.get_value(), dict):
-            # it's the root
-            return
-        text = self.get_value().get_json()
-        return CongruenceTextBox(text)
 
     def search_match(self, search_string):
         return self.obj.match(search_string)

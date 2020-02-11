@@ -20,7 +20,6 @@ This file contains views and functions which are specific to Confluence
 from congruence.views.common import CongruenceTextBox
 from congruence.views.treelistbox import CongruenceTreeListBox,\
         CongruenceCardTreeWidget
-from congruence.views.listbox import CongruenceListBox
 from congruence.interface import make_request, convert_date, html_to_text
 from congruence.tools import create_diff
 from congruence.logging import log
@@ -29,8 +28,6 @@ import congruence.strings as cs
 from congruence.external import open_gui_browser, open_doc_in_cli_browser
 
 import re
-
-import urwid
 
 
 def get_comments_of_page(url):
@@ -148,16 +145,6 @@ class CommentContextView(CongruenceTreeListBox):
             else:
                 self.app.alert("You unliked this", 'info')
 
-    def ka_show_details(self, size=None):
-        focus = self.get_focus()[0]
-        view = focus.get_details_view()
-        if view:
-            view.title = "Details"
-            self.app.push_view(view)
-        else:
-            self.app.alert("Looks like this item has no details",
-                           'warning')
-
     def ka_cli_browser(self, size=None):
         obj = self.focus.get_value()
         id = obj.id
@@ -210,28 +197,12 @@ class CommentWidget(CongruenceCardTreeWidget):
         self.obj = list(node.get_value().values())[0]
         super().__init__(node)
 
-    def get_details_view(self):
-        return CommentDetails(self.obj._data)
-
     def get_next_view(self):
         if isinstance(self.obj, dict):
             # It's the root node
             return None
         view = SingleCommentView(self.obj)
         return view
-
-
-class CommentDetails(CongruenceListBox):
-    def __init__(self, data):
-        self.title = "Details"
-        # Build details view
-        #  del data['content']
-        max_len = max([len(k) for k, _ in data.items()])
-        line = [[urwid.Text(k), urwid.Text(str(v))] for k, v in data.items()]
-        line = [urwid.Columns([(max_len + 1, k), v])
-                for k, v in line]
-        help_string = cs.COMMENT_DETAILS_VIEW_HELP
-        super().__init__(line, help_string=help_string)
 
 
 class PageView(CongruenceTextBox):

@@ -148,10 +148,6 @@ class MicroblogEntry(CardListBoxEntry):
         view.title = "Post"
         return view
 
-    def get_details_view(self):
-        text = self.obj.get_json()
-        return CongruenceTextBox(text)
-
 
 class MicroblogObject(ContentObject):
     def __init__(self, data):

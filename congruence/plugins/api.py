@@ -27,7 +27,6 @@ is indicated by a single letter:
 
 """
 
-from congruence.views.common import CongruenceTextBox
 from congruence.views.listbox import CongruenceListBox, \
     CongruenceListBoxEntry
 from congruence.interface import make_request
@@ -120,10 +119,6 @@ class CongruenceAPIEntry(CongruenceListBoxEntry):
             return PageView(self.obj)
         elif self.obj.type == "comment":
             return CommentContextView(self.obj)
-
-    def get_details_view(self):
-        text = self.obj.get_json()
-        return CongruenceTextBox(text)
 
     def search_match(self, search_string):
         return self.obj.match(search_string)

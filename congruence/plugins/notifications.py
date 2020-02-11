@@ -86,10 +86,6 @@ class NotificationEntry(CongruenceListBoxEntry):
         view.title = 'Notification'
         return view
 
-    def get_details_view(self):
-        text = self.obj.get_json()
-        return CongruenceTextBox(text)
-
     def search_match(self, search_string):
         return self.obj.match(search_string)
 
