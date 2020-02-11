@@ -17,7 +17,8 @@ DateFormat: "%Y-%m-%d %H:%M"
 ## just be appended.
 Editor: vim
 CliBrowser: elinks
-GuiBrowser: ff
+## Other options: 'w3m -T text/html', 'lynx -stdin', ...
+GuiBrowser: firefox
 ## Diffs can be piped through external commands which are installed on your
 ## system. For example, if you want some color highlighting, use this:
 #  DiffFilter:
