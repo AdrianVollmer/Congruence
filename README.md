@@ -43,12 +43,27 @@ Getting started
 ---------------
 
 Make sure you have all dependencies installed. The easiest is to just
-execute `pip3 install .`. Alternatively, use your
-favorite virtual environment manager.
+execute `pip3 install .`. Alternatively, use your favorite virtual
+environment manager.
 
 Next, copy `config.yaml.sample` to `$XDG_CONFIG_HOME/congruence/config.yaml` (or
 `$HOME/.config/congruence/` if `$XDG_CONFIG_HOME` is not defined) and edit it to
 your liking.
+
+When using the app, you can always press '?' to see what's going on and what
+your next options are.
+
+Ideas for the next release
+--------------------------
+
+* Cache metadata
+* Keep track of 'seen'/'unseen' objects
+* New plugin: interactive search
+* Extract links and images of content
+* Global blacklist of users for filtering
+* Show scroll  percentage in title bar
+* Improve search
+* Add a 'versions' view and allow diffs between arbitrary versions
 
 License
 -------
