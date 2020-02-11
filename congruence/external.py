@@ -30,7 +30,7 @@ def open_doc_in_cli_browser(doc, app):
     :doc: the document as a string
     """
 
-    process = Popen(config["CliBrowser"], stdin=PIPE, stderr=PIPE)
+    process = Popen(split(config["CliBrowser"]), stdin=PIPE, stderr=PIPE)
     process.stdin.write(doc)
     process.communicate()
     app.loop.screen.clear()
