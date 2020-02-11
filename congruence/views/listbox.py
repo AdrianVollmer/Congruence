@@ -162,27 +162,38 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
     """Represents one item in a ListBox
 
     :obj: a confluence content object or a string
+    :structure: can be one of 'flat', 'columns' and 'carded' and determines
+        the structure of the ListBox entry.
     """
 
-    def __init__(self, obj, cols=False):
+    def __init__(self, obj, structure='flat'):
         self.obj = obj
-        self.cols = cols
-        if isinstance(obj, str):
+        self.structure = structure
+        if self.structure == 'flat':
             self.cols = False
-            self._inner_widget = urwid.Text(obj)
-        elif cols:
-            self._columns = obj.get_title(cols=cols)
+            if hasattr(obj, 'get_title'):
+                self._inner_widget = urwid.Text(obj.get_title())
+            else:
+                self._inner_widget = urwid.Text(str(obj))
+        elif self.structure == 'columns':
+            self._columns = obj.get_title(cols=True)
             self._inner_widget = urwid.Columns(
                 [(urwid.Text(t, wrap='clip')) for t in self._columns],
                 dividechars=1,
             )
+        elif self.structure == 'carded':
+            self._widget = urwid.Pile([
+                self.render_head(),
+                self.render_content(),
+            ])
         else:
-            self._inner_widget = urwid.Text(obj.get_title())
-        self._widget = urwid.AttrMap(
-            self._inner_widget,
-            attr_map="body",
-            focus_map="focus",
-        )
+            raise KeyError("Invalid structure: %s" % structure)
+        if not structure == 'carded':
+            self._widget = urwid.AttrMap(
+                self._inner_widget,
+                attr_map="body",
+                focus_map="focus",
+            )
         super().__init__(self._widget)
 
     def selectable(self):
@@ -205,17 +216,6 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
 
         raise NotImplementedError("search_match in %s" % type(self).__name__)
 
-
-# TODO inherit also from CongruenceListBox
-class CardListBoxEntry(urwid.Pile):
-    def __init__(self, obj):
-        self.obj = obj
-        widgets = [
-            self.render_head(),
-            self.render_content(),
-        ]
-        super().__init__(widgets)
-
     def render_head(self):
         title = self.obj.get_title()
         return urwid.AttrMap(
@@ -227,15 +227,3 @@ class CardListBoxEntry(urwid.Pile):
     def render_content(self):
         text = self.obj.get_content()
         return urwid.AttrMap(urwid.Text(text), 'body')
-
-    def selectable(self):
-        return True
-
-    def keypress(self, size, key):
-        return key
-
-    def get_details_view(self):
-        text = self.obj.get_json()
-        view = CongruenceTextBox(text)
-        view.title = "Details"
-        return view

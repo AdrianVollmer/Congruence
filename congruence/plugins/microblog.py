@@ -19,7 +19,8 @@ __help__ = """Congruence Microblog
 Here you can see the latest entries of the microblog plugin.
 
 """
-from congruence.views.listbox import CongruenceListBox, CardListBoxEntry
+from congruence.views.listbox import CongruenceListBox, \
+        CongruenceListBoxEntry
 from congruence.views.common import CongruenceTextBox
 from congruence.interface import make_request, html_to_text, convert_date,\
         md_to_html
@@ -126,14 +127,14 @@ class MicroblogView(CongruenceListBox):
             self.app.alert("Failed to send microblog post", 'error')
 
 
-class MicroblogEntry(CardListBoxEntry):
+class MicroblogEntry(CongruenceListBoxEntry):
     """Represents microblog entries or replies to one entry as a list of
     widgets"""
 
     def __init__(self, obj, is_reply=False):
         self.obj = obj
         self.is_reply = is_reply
-        super().__init__(self.obj)
+        super().__init__(self.obj, structure='carded')
 
     def get_next_view(self):
         if not self.is_reply:

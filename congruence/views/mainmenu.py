@@ -34,8 +34,6 @@ from congruence.views.listbox import CongruenceListBox, \
 
 from importlib import import_module
 
-import urwid
-
 
 class CongruenceMainMenu(CongruenceListBox):
 
@@ -54,7 +52,7 @@ class MainMenuEntry(CongruenceListBoxEntry):
         if "DisplayName" in data:
             title = data['DisplayName']
         # this now overwrite self.data
-        return super().__init__(title, urwid.Text)
+        return super().__init__(title, structure='flat')
 
     def get_plugin_class(self, name):
         """This function retrieves the class the plugin"""

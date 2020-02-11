@@ -55,7 +55,7 @@ class NotificationView(CongruenceListBox):
         entries = r.json()
         notifications = []
         for e in entries:
-            n = NotificationEntry(NotificationObject(e), cols=True)
+            n = NotificationEntry(NotificationObject(e), structure='columns')
             notifications.append(n)
         self.app.alert('Received %d items' % len(notifications), 'info')
         return notifications

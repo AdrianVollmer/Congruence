@@ -105,7 +105,7 @@ class APIView(CongruenceListBox):
         if response:
             for each in response['results']:
                 result.append(CongruenceAPIEntry(determine_type(each)(each),
-                                                 cols=True))
+                                                 structure='columns'))
             #  result = change_filter(result)
             self.app.alert('Received %d items' % len(result), 'info')
             self.properties["Parameters"]["start"] += \
