@@ -118,7 +118,15 @@ class CongruenceAPIEntry(CongruenceListBoxEntry):
         if self.obj.type in ["page", "blogpost"]:
             return PageView(self.obj)
         elif self.obj.type == "comment":
-            return CommentContextView(self.obj)
+            parent = self.obj._data['resultParentContainer']
+            page_id = parent['displayUrl']
+            page_id = page_id.split('=')[-1]
+            title = parent['title']
+            return CommentContextView(
+                page_id,
+                title,
+                self.obj.id,
+            )
 
     def search_match(self, search_string):
         return self.obj.match(search_string)

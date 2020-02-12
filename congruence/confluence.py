@@ -27,10 +27,8 @@ from congruence.objects import Comment
 import congruence.strings as cs
 from congruence.external import open_gui_browser, open_doc_in_cli_browser
 
-import re
 
-
-def get_comments_of_page(url):
+def get_comments_of_page(id):
     """Retrieve comments of a page from the Confluence API
 
     :id: the id of the page
@@ -39,7 +37,7 @@ def get_comments_of_page(url):
         for c in children:
             if cid in list(c.keys()):
                 return c
-    id = re.search('/([^/]*)$', url).groups()[0]
+    #  id = re.search('/([^/]*)$', url).groups()[0]
     log.debug("Get comment tree of page %s" % id)
 
     url = f'rest/api/content/{id}/child/comment?'\
@@ -93,30 +91,28 @@ class CommentContextView(CongruenceTreeListBox):
         'toggle collapse',
     ]
 
-    def __init__(self, obj):
-        self.obj = obj
+    def __init__(self, page_id, title, focus_id=None):
         self.title = "Comments"
-        comment_id = obj.id
-        log.debug("Build CommentContextView for comment with id '%s'"
-                  % comment_id)
-        #  log.debug(obj._data)
-        #  container = obj.get_content()
-        #  page_id = re.search(r'/([^/]*$)', container).groups()[0]
-        url = obj.get_parent_container()
-        title = obj._data['resultParentContainer']['title']
+        #  comment_id = obj.id
+        log.debug("Build CommentContextView for comments of page with id '%s'"
+                  % page_id)
+        #  url = obj.get_parent_container()
+        #  title = obj._data['resultParentContainer']['title']
         comments = {
             '0': {'title': title},
-            'children': get_comments_of_page(url),
+            'children': get_comments_of_page(page_id),
         }
         help_string = cs.COMMENT_CONTEXT_VIEW_HELP
         super().__init__(comments, CommentWidget, help_string=help_string)
         # set focus
+        if not focus_id:
+            return
         node = self._body.focus
         while True:
             node = self._body.get_next(node)[1]
             if not node:
                 break
-            if list(node.get_value().keys())[0] == comment_id:
+            if list(node.get_value().keys())[0] == focus_id:
                 break
         if node:
             self.set_focus(node)
