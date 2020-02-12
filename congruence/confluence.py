@@ -93,11 +93,8 @@ class CommentContextView(CongruenceTreeListBox):
 
     def __init__(self, page_id, title, focus_id=None):
         self.title = "Comments"
-        #  comment_id = obj.id
         log.debug("Build CommentContextView for comments of page with id '%s'"
                   % page_id)
-        #  url = obj.get_parent_container()
-        #  title = obj._data['resultParentContainer']['title']
         comments = {
             '0': {'title': title},
             'children': get_comments_of_page(page_id),

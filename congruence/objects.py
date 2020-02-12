@@ -204,10 +204,6 @@ class Comment(ContentObject):
         #  log.debug(self._data)
         return html_to_text(self._data['body']['view']['value'])
 
-    def get_parent_container(self):
-        #  log.debug(self._data)
-        return self._data['content']['_expandable']['container']
-
     def send_reply(self, text):
         page_id = self._data['_expandable']['container']
         page_id = re.search(r'/([^/]*$)', page_id).groups()[0]
