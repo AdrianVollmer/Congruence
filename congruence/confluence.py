@@ -206,6 +206,7 @@ class PageView(CongruenceTextBox):
         'cli browser',
         'gui browser',
         'go to comments',
+        'like',
     ]
 
     def __init__(self, obj):
@@ -265,6 +266,15 @@ class PageView(CongruenceTextBox):
         title = self.obj.title
         view = CommentContextView(page_id, title)
         self.app.push_view(view)
+
+    def ka_like(self, size=None):
+        if self.obj.toggle_like():
+            if self.obj.liked:
+                self.app.alert("You liked this", 'info')
+            else:
+                self.app.alert("You unliked this", 'info')
+        else:
+            self.app.alert("Like failed", 'info')
 
 
 class DiffView(CongruenceTextBox):
