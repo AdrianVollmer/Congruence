@@ -51,6 +51,7 @@ KEYS = {
     'gui browser': ('B', "Open with GUI browser"),
     'show log': ('!', "Show application log"),
     'post comment': ('P', "Post a new comment to a page"),
+    'go to comments': ('C', "Go to the comment section of a page"),
 }
 
 if 'KeyMap' in config:

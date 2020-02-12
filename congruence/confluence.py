@@ -204,7 +204,12 @@ class CommentWidget(CongruenceCardTreeWidget):
 class PageView(CongruenceTextBox):
     """A text box showing metadata of a page"""
 
-    key_actions = ['list diff', 'cli browser', 'gui browser']
+    key_actions = [
+        'list diff',
+        'cli browser',
+        'gui browser',
+        'go to comments',
+    ]
 
     def __init__(self, obj):
         self.obj = obj
@@ -257,6 +262,12 @@ class PageView(CongruenceTextBox):
         id = self.obj.id
         url = f"pages/viewpage.action?pageId={id}"
         open_gui_browser(url)
+
+    def ka_go_to_comments(self, size=None):
+        page_id = self.obj.id
+        title = self.obj.title
+        view = CommentContextView(page_id, title)
+        self.app.push_view(view)
 
 
 class DiffView(CongruenceTextBox):
