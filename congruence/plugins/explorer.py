@@ -148,8 +148,11 @@ class SpaceEntry(CongruenceTreeListBoxEntry):
 
     def get_next_view(self):
         obj = self.get_value()
-        if obj.type in ["page", "blogpost"]:
-            return PageView(obj)
+        try:
+            if obj.type in ["page", "blogpost"]:
+                return PageView(obj)
+        except AttributeError:
+            return None
 
     def search_match(self, search_string):
         return self.obj.match(search_string)
