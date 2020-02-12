@@ -22,13 +22,12 @@ more content.
 """
 
 
-from congruence.views.common import CongruenceTextBox
 from congruence.views.treelistbox import CongruenceTreeListBox, \
     CongruenceTreeListBoxEntry
 from congruence.interface import make_request
 from congruence.external import open_gui_browser, open_doc_in_cli_browser
 from congruence.logging import log
-from congruence.confluence import CommentContextView, PageView
+from congruence.confluence import PageView
 from congruence.objects import Space, Page
 
 import urwid
@@ -151,8 +150,6 @@ class SpaceEntry(CongruenceTreeListBoxEntry):
         obj = self.get_value()
         if obj.type in ["page", "blogpost"]:
             return PageView(obj)
-        elif obj.type == "comment":
-            return CommentContextView(obj)
 
     def search_match(self, search_string):
         return self.obj.match(search_string)
