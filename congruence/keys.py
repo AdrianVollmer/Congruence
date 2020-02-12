@@ -42,7 +42,7 @@ KEYS = {
     'list diff': ('D', "Show the diff of the current version and the"
                   " previous one"),
     'reply': ('r', "Reply to a comment"),
-    'like': ('L', "Toggle your 'like' of a comment"),
+    'like': ('L', "Toggle your 'like' of an object"),
     'update': ('u', "Update the entire list"),
     'load more': ('m', "Load more objects"),
     'load much more': ('M', "Load much more objects"
