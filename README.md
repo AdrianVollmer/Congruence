@@ -14,7 +14,12 @@ takes a minimalist approach to accessing this bloated but quite useful piece
 of software.
 
 Fortunately, on the flip side, Confluence behaves nicely when interfacing
-with other things. There is an API!
+with other things. There is an API! Check it out:
+
+[![asciicast](https://asciinema.org/a/vEGpJpHqyX3S4wMNCbkuJCLRx.svg)](https://asciinema.org/a/vEGpJpHqyX3S4wMNCbkuJCLRx)
+
+(This is from a pulic Confluence. If you see yourself in this asciicast and
+don't like it, contact me.)
 
 I'm a big believer in minimalism and CLI/TUI tools. They always respond
 virtually instantly to user input (safe for communication over the network)
@@ -42,8 +47,10 @@ only with Confluence 6.0 or higher.
 Getting started
 ---------------
 
-Make sure you have all dependencies installed. The easiest is to just
-execute `pip3 install .`. Alternatively, use your favorite virtual
+Make sure you have all dependencies installed, most importantly Python 3.6
+or higher. The easiest is to just execute `pip3 install .`, which will put
+an executable named `congruence` in your `~/.local/bin` directory, which
+must be in your `$PATH`. Alternatively, use your favorite virtual
 environment manager.
 
 Next, copy `config.yaml.sample` to `$XDG_CONFIG_HOME/congruence/config.yaml` (or
@@ -64,6 +71,7 @@ Ideas for the next release
 * Show scroll  percentage in title bar
 * Improve search
 * Add a 'versions' view and allow diffs between arbitrary versions
+* Edit comments
 
 License
 -------
