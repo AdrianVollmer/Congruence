@@ -18,7 +18,7 @@ with other things. There is an API! Check it out:
 
 [![asciicast](https://asciinema.org/a/vEGpJpHqyX3S4wMNCbkuJCLRx.svg)](https://asciinema.org/a/vEGpJpHqyX3S4wMNCbkuJCLRx)
 
-(This is from a pulic Confluence. If you see yourself in this asciicast and
+(This is from a public Confluence. If you see yourself in this asciicast and
 don't like it, contact me.)
 
 I'm a big believer in minimalism and CLI/TUI tools. They always respond
