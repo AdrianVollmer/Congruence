@@ -1,15 +1,14 @@
 ## This file needs to be located in $XDG_CONFIG_HOME/congruence. If this
 ## environment variable is not set, $HOME/.config/congruence is used.
 ## First the mandatory arguments:
-#
 Host: confluence.contoso.local
 Protocol: https
-Username: john_doe
-Password_Command: pass show active_directory
 
 ## All following arguments are optional
 #  Proxy: http://localhost:8080
-#  CA: /home/use/docs/My-Root-CA.pem
+#  CA: /home/jdoe/docs/My-Root-CA.pem
+Username: john_doe
+Password_Command: pass show active_directory
 DateFormat: "%Y-%m-%d %H:%M"
 
 ## In the following commands, a placeholder for the argument (URL, document
@@ -17,8 +16,9 @@ DateFormat: "%Y-%m-%d %H:%M"
 ## just be appended.
 Editor: vim
 CliBrowser: elinks
-## Other options: 'w3m -T text/html', 'lynx -stdin', ...
+## Other options for CliBrowser: 'w3m -T text/html', 'lynx -stdin', ...
 GuiBrowser: firefox
+
 ## Diffs can be piped through external commands which are installed on your
 ## system. For example, if you want some color highlighting, use this:
 #  DiffFilter:

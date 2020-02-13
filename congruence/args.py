@@ -76,8 +76,6 @@ with open(config_file, 'r') as stream:
 MANDATORY_ARGUMENTS = [
     "Host",
     "Protocol",
-    "Username",
-    "Password_Command",
 ]
 for m in MANDATORY_ARGUMENTS:
     if m not in config:
