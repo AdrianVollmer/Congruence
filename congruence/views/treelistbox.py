@@ -82,7 +82,8 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
 
     def ka_show_details(self, size=None):
         view = self.get_focus()[0].get_details_view()
-        self.app.push_view(view)
+        if view:
+            self.app.push_view(view)
 
     def ka_search(self, size=None):
         self.search()
