@@ -209,6 +209,7 @@ class Comment(ContentObject):
             inline_properties = self._data['extensions']['inlineProperties']
             ref = inline_properties['originalSelection']
             if ref:
+                # TODO set in italics
                 comment = f"> {ref}\n\n{comment}"
         except KeyError as e:
             log.exception(e)
