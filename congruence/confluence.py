@@ -66,7 +66,6 @@ def get_comments_of_page(id):
     # Build the structure returned by Confluence into something more useful.
     # Most importantly, it's a flat list of all items with each item
     # possessing a list of its ancestors. We want a nested list.
-    # Also, we only keep track of certain attributes.
     for c in items:
         parent = result
         # Step down the ancestor list
