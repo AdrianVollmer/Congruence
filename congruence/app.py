@@ -158,7 +158,12 @@ class CongruenceApp(object):
             pass
 
     def get_input(self, prompt, callback):
-        """Get user input in an Edit field in the footer"""
+        """Get user input in an Edit field in the footer
+
+        :prompt: a string that is displayed to the user
+        :callback: a function that takes one argument and is called when the
+            user presses 'enter'; the argument is the user's input
+        """
 
         footer = self.view.get_footer().widget_list[1]
 
