@@ -36,7 +36,7 @@ class APIView(ContentList):
 
     def __init__(self, properties={}):
         self.title = "API"
-        super().__init__(help_string=__help__)
+        super().__init__(EntryClass=CongruenceAPIEntry, help_string=__help__)
         self.params = properties['Parameters']
         self.ka_update()
         if self.entries:
