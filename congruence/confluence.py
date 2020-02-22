@@ -144,10 +144,10 @@ class CommentContextView(CongruenceTreeListBox):
         obj = self.focus.get_value()
         id = obj.id
         log.debug("Build HTML view for page with id '%s'" % id)
-        rest_url = f"rest/api/content/{id}?expand=body.storage"
+        rest_url = f"rest/api/content/{id}?expand=body.view"
         r = make_request(rest_url)
         content = r.json()
-        content = content['body']['storage']['value']
+        content = content['body']['view']['value']
 
         content = f'<html><head></head><body>{content}</body></html>'
         open_doc_in_cli_browser(content.encode(), self.app)
@@ -250,10 +250,10 @@ class PageView(CongruenceTextBox):
     def ka_cli_browser(self, size=None):
         id = self.obj.id
         log.debug("Build HTML view for page with id '%s'" % id)
-        rest_url = f"rest/api/content/{id}?expand=body.storage"
+        rest_url = f"rest/api/content/{id}?expand=body.view"
         r = make_request(rest_url)
         content = r.json()
-        content = content["body"]["storage"]["value"]
+        content = content["body"]["view"]["value"]
 
         content = f"<html><head></head><body>{content}</body></html>"
         open_doc_in_cli_browser(content.encode(), self.app)
@@ -394,10 +394,10 @@ class ContentList(CongruenceListBox):
         node = self.get_focus()[0]
         id = node.obj.id
         log.debug("Build HTML view for page with id '%s'" % id)
-        rest_url = f"rest/api/content/{id}?expand=body.storage"
+        rest_url = f"rest/api/content/{id}?expand=body.view"
         r = make_request(rest_url)
         content = r.json()
-        content = content["body"]["storage"]["value"]
+        content = content["body"]["view"]["value"]
 
         content = f"<html><head></head><body>{content}</body></html>"
         open_doc_in_cli_browser(content.encode(), self.app)
