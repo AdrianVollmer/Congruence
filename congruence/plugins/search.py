@@ -34,6 +34,7 @@ class APIView(ContentList):
         super().__init__(EntryClass=SearchResultEntry, help_string=__help__)
         self.title = "Search"
         # TODO filter by space, type, user, date
+        # TODO order by
         self.params = {
             'cql': '',
             'start': 0,
@@ -52,6 +53,7 @@ class APIView(ContentList):
 
     def conf_search(self, query):
         self.params['cql'] = f'siteSearch ~ "{query}"'
+        self.params['start'] = 0
         self.entries = self.get_entries()
         self.redraw()
         if self.entries:
