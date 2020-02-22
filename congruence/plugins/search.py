@@ -24,7 +24,6 @@ Confluence:
 """
 
 from congruence.views.listbox import CongruenceListBoxEntry
-from congruence.logging import log
 from congruence.confluence import CommentContextView, PageView, ContentList
 
 
