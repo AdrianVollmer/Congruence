@@ -14,7 +14,6 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.logging import log
 from congruence.keys import KEY_ACTIONS
 from congruence.ansiescape import translate_text_for_urwid
 
@@ -30,7 +29,6 @@ class CongruenceView(object):
         return True
 
     def keypress(self, size, key):
-        log.debug("Keypress in CongruenceView: %s" % key)
         if (
             key not in KEY_ACTIONS
             or KEY_ACTIONS[key] not in self.key_actions
