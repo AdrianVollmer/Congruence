@@ -198,11 +198,22 @@ class Comment(ContentObject):
             self._data['version']['by']['displayName'],
             date,
         )
+        if self._data['extensions']['location'] == 'inline':
+            title += " (inline comment)"
         return title
 
     def get_content(self):
         #  log.debug(self._data)
-        return html_to_text(self._data['body']['view']['value'])
+        comment = html_to_text(self._data['body']['view']['value'])
+        try:
+            inline_properties = self._data['extensions']['inlineProperties']
+            ref = inline_properties['originalSelection']
+            if ref:
+                comment = f"> {ref}\n\n{comment}"
+        except KeyError as e:
+            log.exception(e)
+            pass
+        return comment
 
     def send_reply(self, text):
         page_id = self._data['_expandable']['container']

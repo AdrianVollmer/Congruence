@@ -42,13 +42,17 @@ def get_comments_of_page(id):
     #  id = re.search('/([^/]*)$', url).groups()[0]
     log.debug("Get comment tree of page %s" % id)
 
-    url = f'rest/api/content/{id}/child/comment?'\
-          + 'expand=body.view,content,version,ancestors'\
-          + '&depth=all&limit=9999'
+    url = f'rest/api/content/{id}/child/comment'
+    params = {
+        'expand': 'body.view,content,version,ancestors,'
+                  'extensions.inlineProperties',
+        'depth': 'all',
+        'limit': 9999,
+    }
 
     items = []
     while True:
-        r = make_request(url)
+        r = make_request(url, params=params)
         parsed = r.json()
         items += parsed['results']
         links = parsed['_links']
