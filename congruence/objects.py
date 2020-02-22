@@ -239,7 +239,10 @@ class Attachment(ContentObject):
         super().__init__(data)
         self.type = 'attachment'
         self.short_type = 'A'
-        self.download = data['_links']['download']
+        try:
+            self.download = data['_links']['download']
+        except KeyError:
+            self.download = ""
 
 
 class User(ConfluenceObject):
