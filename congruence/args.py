@@ -35,7 +35,7 @@ parser.add_argument(
     '-l', '--log',
     default=False,
     action='store_true',
-    help="enable logging to a file $XDG_DATA_HOME/congruence"
+    help="enable logging to a file in $XDG_DATA_HOME/congruence"
 )
 
 parser.add_argument(
