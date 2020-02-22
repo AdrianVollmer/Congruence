@@ -27,90 +27,20 @@ is indicated by a single letter:
 
 """
 
-from congruence.views.listbox import CongruenceListBox, \
-    CongruenceListBoxEntry
-from congruence.interface import make_request
-from congruence.external import open_gui_browser, open_doc_in_cli_browser
-from congruence.logging import log
-from congruence.confluence import CommentContextView, PageView
-from congruence.objects import determine_type
+from congruence.views.listbox import CongruenceListBoxEntry
+#  from congruence.logging import log
+from congruence.confluence import CommentContextView, PageView, ContentList
 
 
-class APIView(CongruenceListBox):
-
-    key_actions = [
-        'update',
-        'load more',
-        'load much more',
-        'cli browser',
-        'gui browser',
-    ]
+class APIView(ContentList):
 
     def __init__(self, properties={}):
         self.title = "API"
-        self.properties = properties
-        self.start = 0
-        self.entries = []
-        super().__init__(self.entries, help_string=__help__)
+        super().__init__(help_string=__help__)
+        self.params = properties['Parameters']
         self.ka_update()
         if self.entries:
             self.set_focus(0)
-
-    def ka_load_more(self, size=None):
-        log.info("Load more ...")
-        self.entries += self.get_feed_entries()
-        self.redraw()
-
-    def ka_load_much_more(self, size=None):
-        log.info("Load much more ...")
-        p = self.properties
-        p["Parameters"]["limit"] *= 5
-        self.entries += self.get_feed_entries()
-        p["Parameters"]["limit"] //= 5
-        self.redraw()
-
-    def ka_update(self, size=None):
-        log.info("Update ...")
-        p = self.properties
-        p["Parameters"]["start"] = 0
-        self.entries = self.get_feed_entries()
-        self.redraw()
-
-    def ka_cli_browser(self, size=None):
-        node = self.get_focus()[0]
-        id = node.obj.id
-        log.debug("Build HTML view for page with id '%s'" % id)
-        rest_url = f"rest/api/content/{id}?expand=body.storage"
-        r = make_request(rest_url)
-        content = r.json()
-        content = content["body"]["storage"]["value"]
-
-        content = f"<html><head></head><body>{content}</body></html>"
-        open_doc_in_cli_browser(content.encode(), self.app)
-
-    def ka_gui_browser(self, size=None):
-        node = self.get_focus()[0]
-        id = node.obj.id
-        url = f"pages/viewpage.action?pageId={id}"
-        open_gui_browser(url)
-
-    def get_feed_entries(self):
-        self.app.alert('Submitting API call...', 'info')
-        r = make_request(
-            "rest/api/search",
-            params=self.properties["Parameters"],
-        )
-        result = []
-        response = r.json()
-        if response:
-            for each in response['results']:
-                result.append(CongruenceAPIEntry(determine_type(each)(each),
-                                                 structure='columns'))
-            #  result = change_filter(result)
-            self.app.alert('Received %d items' % len(result), 'info')
-            self.properties["Parameters"]["start"] += \
-                self.properties["Parameters"]["limit"]
-        return result
 
 
 class CongruenceAPIEntry(CongruenceListBoxEntry):

@@ -18,12 +18,14 @@ This file contains views and functions which are specific to Confluence
 """
 
 from congruence.views.common import CongruenceTextBox
+from congruence.views.listbox import CongruenceListBox, \
+        CongruenceListBoxEntry
 from congruence.views.treelistbox import CongruenceTreeListBox,\
         CongruenceCardTreeWidget
 from congruence.interface import make_request, convert_date, html_to_text
 from congruence.tools import create_diff
 from congruence.logging import log
-from congruence.objects import Comment
+from congruence.objects import Comment, determine_type
 import congruence.strings as cs
 from congruence.external import open_gui_browser, open_doc_in_cli_browser
 
@@ -345,3 +347,80 @@ class DiffView(CongruenceTextBox):
             self.app.push_view(view)
         except KeyError:
             self.app.alert("No diff available", 'warning')
+
+
+class ContentList(CongruenceListBox):
+    """A list box that can display Confluence content objects
+    """
+
+    key_actions = [
+        'update',
+        'load more',
+        'load much more',
+        'cli browser',
+        'gui browser',
+    ]
+
+    def __init__(self, EntryClass=CongruenceListBoxEntry, help_string=""):
+        self.title = "Content"
+        self._entryclass = EntryClass
+        self.params = {
+            'cql': '',
+            'start': 0,
+            'limit': 20,
+        }
+        self.entries = []
+        super().__init__(self.entries, help_string=help_string)
+
+    def ka_load_more(self, size=None):
+        log.info("Load more ...")
+        self.entries += self.get_entries()
+        self.redraw()
+
+    def ka_load_much_more(self, size=None):
+        log.info("Load much more ...")
+        self.params["limit"] *= 5
+        self.entries += self.get_entries()
+        self.params["limit"] //= 5
+        self.redraw()
+
+    def ka_update(self, size=None):
+        log.info("Update ...")
+        self.params["start"] = 0
+        self.entries = self.get_entries()
+        self.redraw()
+
+    def ka_cli_browser(self, size=None):
+        node = self.get_focus()[0]
+        id = node.obj.id
+        log.debug("Build HTML view for page with id '%s'" % id)
+        rest_url = f"rest/api/content/{id}?expand=body.storage"
+        r = make_request(rest_url)
+        content = r.json()
+        content = content["body"]["storage"]["value"]
+
+        content = f"<html><head></head><body>{content}</body></html>"
+        open_doc_in_cli_browser(content.encode(), self.app)
+
+    def ka_gui_browser(self, size=None):
+        node = self.get_focus()[0]
+        id = node.obj.id
+        url = f"pages/viewpage.action?pageId={id}"
+        open_gui_browser(url)
+
+    def get_entries(self):
+        r = make_request(
+            "rest/api/search",
+            params=self.params
+        )
+        result = []
+        response = r.json()
+        if r.ok and response:
+            for each in response['results']:
+                result.append(self._entryclass(determine_type(each)(each),
+                                               structure='columns'))
+            #  result = change_filter(result)
+            self.app.alert('Received %d items' % len(result), 'info')
+            self.params["start"] += \
+                self.params["limit"]
+        return result
