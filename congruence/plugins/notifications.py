@@ -81,7 +81,10 @@ class NotificationEntry(CongruenceListBoxEntry):
                      self.obj.metadata['highlightText'])
 
         if 'description' in self.obj._data:
-            text += "\n%s\n" % html_to_text(self.obj._data['description'])
+            text += "\n%s\n" % html_to_text(
+                self.obj._data['description'],
+                replace_emoticons=True,
+            )
         view = CongruenceTextBox(text)
         view.title = 'Notification'
         return view
