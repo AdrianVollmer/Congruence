@@ -204,7 +204,10 @@ class Comment(ContentObject):
 
     def get_content(self):
         #  log.debug(self._data)
-        comment = html_to_text(self._data['body']['view']['value'])
+        comment = html_to_text(
+            self._data['body']['view']['value'],
+            replace_emoticons=True,
+        )
         try:
             inline_properties = self._data['extensions']['inlineProperties']
             ref = inline_properties['originalSelection']

@@ -200,12 +200,52 @@ def dump_http(response, filename):
         f.write('\n')
 
 
-def html_to_text(html):
+def html_to_text(html, replace_emoticons=False):
+    if replace_emoticons:
+        html = convert_emoticons(html)
     try:
         return html2text.html2text(html).strip()
     except Exception as e:
         log.exception(e)
         return html
+
+
+def convert_emoticons(html):
+    """Replace Confluence emoticon images with regular smileys"""
+
+    emoticon_dict = {
+        'smile': ':)',
+        'sad': ':(',
+        'cheeky': ':P',
+        'laugh': ':D',
+        'wink': ';)',
+        'thumbs-up': '👍',
+        'thumbs-down': '👎',
+        'light-on': '💡',
+        #  'light-off': '',
+        'warning': '❗',
+        'yellow-star': '⭐',
+        #  'red-star': '',
+        #  'green-star': '',
+        #  'blue-star': '',
+        #  'yellow-star': '',
+        'tick': '✔️',
+        'cross': '❌',
+        'information': 'ℹ️',
+        'plus': '➕',
+        'minus': '➖',
+        'question': '❓',
+        'heart': '❤️️',
+        'broken-heart': '💔',
+    }
+    import bs4
+    soup = bs4.BeautifulSoup(html)
+    emoticons = soup.findAll('img', 'emoticon')
+    for e in emoticons:
+        for k, v in emoticon_dict.items():
+            if f'emoticon-{k}' in e['class']:
+                e.replace_with(v)
+    return str(soup)
 
 
 def md_to_html(text, url_encode=None):
