@@ -22,7 +22,7 @@ from congruence.views.listbox import CongruenceListBox, \
         CongruenceListBoxEntry
 from congruence.views.treelistbox import CongruenceTreeListBox,\
         CongruenceCardTreeWidget
-from congruence.interface import make_request, convert_date, html_to_text
+from congruence.interface import make_request, convert_date
 from congruence.tools import create_diff
 from congruence.logging import log
 from congruence.objects import Comment, determine_type
@@ -175,7 +175,7 @@ class SingleCommentView(CongruenceTextBox):
                 'Version number': update['number'],
             }
             text = '\n'.join([f'{k}: {v}' for k, v in infos.items()])
-            text += '\n\n' + html_to_text(self.obj.get_content())
+            text += '\n\n' + self.obj.get_content()
         except KeyError as e:
             self.app.alert("KeyError (%s), displaying raw data" % e, 'error')
             text = obj.get_json()
