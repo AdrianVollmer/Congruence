@@ -238,8 +238,7 @@ def convert_emoticons(html):
         'heart': '❤️️',
         'broken-heart': '💔',
     }
-    import bs4
-    soup = bs4.BeautifulSoup(html)
+    soup = BeautifulSoup(html, features="lxml")
     emoticons = soup.findAll('img', 'emoticon')
     for e in emoticons:
         for k, v in emoticon_dict.items():
