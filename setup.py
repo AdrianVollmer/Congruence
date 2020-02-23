@@ -20,6 +20,7 @@ setup(
         'beautifulsoup4',
         'pyyaml',
         'pyxdg',
+        'pytz',
         'python-dateutil',
         'requests',
     ],
