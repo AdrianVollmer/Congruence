@@ -141,7 +141,7 @@ class MicroblogEntry(CongruenceListBoxEntry):
             return MicroblogReplyView(self.obj._data)
         d = self.obj._data
         text = f"Author: {d['authorFullName']}\n"
-        date = convert_date(d["creationDate"])
+        date = convert_date(d["lastModificationDate"])
         text += f"Date: {date}\n"
         likes = [u['userFullname'] for u in d['likingUsers']]
         text += "Likes: " + ', '.join(likes)
@@ -169,7 +169,7 @@ class MicroblogObject(ContentObject):
             replies = " - %d replies" % len(self._data['replies'])
         title = "%s (%s)%s%s" % (
             self._data["authorFullName"],
-            convert_date(self._data["creationDate"]),
+            convert_date(self._data["lastModificationDate"]),
             replies,
             likes,
         )
