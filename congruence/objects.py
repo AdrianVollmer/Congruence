@@ -183,11 +183,12 @@ class Comment(ContentObject):
         super().__init__(data)
         self.type = 'comment'
         self.short_type = 'C'
-        try:
+        if 'content' in self._data:
+            history = self._data['content']['history']
+            self.author = history['createdBy']['displayName']
+        else:
+            # information can be in a different attribute
             self.author = self._data['version']['by']['displayName']
-        except KeyError as e:
-            log.exception(e)
-            self.author = 'unknown'
 
     def get_title(self, cols=False):
         if cols:
@@ -208,15 +209,12 @@ class Comment(ContentObject):
             self._data['body']['view']['value'],
             replace_emoticons=True,
         )
-        try:
+        if 'inlineProperties' in self._data['extensions']:
             inline_properties = self._data['extensions']['inlineProperties']
             ref = inline_properties['originalSelection']
             if ref:
                 # TODO set in italics
                 comment = f"> {ref}\n\n{comment}"
-        except KeyError as e:
-            log.exception(e)
-            pass
         return comment
 
     def send_reply(self, text):
