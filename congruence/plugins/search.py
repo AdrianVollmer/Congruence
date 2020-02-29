@@ -23,7 +23,7 @@ Confluence:
     * https://confluence.atlassian.com/conf615/confluence-search-syntax-967338169.html # noqa
 """
 
-from congruence.views.listbox import CongruenceListBoxEntry
+from congruence.views.listbox import ColumnListBoxEntry
 from congruence.views.common import key_action
 from congruence.confluence import CommentContextView, PageView, ContentList
 
@@ -60,7 +60,7 @@ class APIView(ContentList):
             self.set_focus(0)
 
 
-class SearchResultEntry(CongruenceListBoxEntry):
+class SearchResultEntry(ColumnListBoxEntry):
     def get_next_view(self):
         if self.obj.type in ["page", "blogpost"]:
             return PageView(self.obj)
