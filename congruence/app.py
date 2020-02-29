@@ -58,13 +58,14 @@ class HelpView(CongruenceTextBox):
     """Builds a view based on the metadata of a widget
 
     :widget: an object of type XYZ
+    :extra_actions: list of key actions to display in the help
     """
     title = "Help"
 
-    def __init__(self, widget):
+    def __init__(self, widget, extra_actions):
         help_string = getattr(widget, "help_string", "") or ""
         key_legend = "\nKey map:\n"
-        for action in widget.get_actions():
+        for action in widget.key_actions + extra_actions:
             key = KEYS[action][0]
             description = KEYS[action][1]
             if key == ' ':
@@ -89,7 +90,7 @@ class CongruenceApp(object):
             if isinstance(widget, HelpView):
                 # HelpViews don't need help
                 return
-            view = HelpView(widget)
+            view = HelpView(widget, self.key_actions)
             self.push_view(view)
         elif KEY_ACTIONS[key] == 'back':
             self.pop_view()

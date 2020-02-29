@@ -17,33 +17,18 @@
 
 #  from congruence.logging import log
 from congruence.views.common import CongruenceView, \
-    RememberParentKeyMapMeta, CongruenceTextBox
+    CongruenceTextBox, CollectKeyActions, key_action
 
 import urwid
 
 
 class CongruenceListBox(CongruenceView, urwid.ListBox,
-                        metaclass=RememberParentKeyMapMeta):
+                        metaclass=CollectKeyActions):
     """Displays a list of CongruenceListBoxEntry objects
 
     :entries: a list of CongruenceListBoxEntry objects
 
     """
-
-    key_actions = [
-        'move up',
-        'move down',
-        'page up',
-        'page down',
-        'search',
-        'search next',
-        'search prev',
-        'limit',
-        'show details',
-        'next view',
-        'scroll to bottom',
-        'scroll to top',
-    ]
 
     def __init__(self, entries, help_string=None):
         self.entries = entries
@@ -81,45 +66,57 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
         self.walker[:] = self.entries
         self.align_columns()
 
-    def ka_move_down(self, size=None):
+    @key_action
+    def move_down(self, size=None):
         urwid.ListBox.keypress(self, size, 'down')
 
-    def ka_move_up(self, size=None):
+    @key_action
+    def move_up(self, size=None):
         urwid.ListBox.keypress(self, size, 'up')
 
-    def ka_page_down(self, size=None):
+    @key_action
+    def page_down(self, size=None):
         urwid.ListBox.keypress(self, size, 'page down')
 
-    def ka_page_up(self, size=None):
+    @key_action
+    def page_up(self, size=None):
         urwid.ListBox.keypress(self, size, 'page up')
 
-    def ka_scroll_to_bottom(self, size=None):
+    @key_action
+    def scroll_to_bottom(self, size=None):
         self.set_focus(0, coming_from='above')
 
-    def ka_scroll_to_top(self, size=None):
+    @key_action
+    def scroll_to_top(self, size=None):
         self.set_focus(0, coming_from='below')
 
-    def ka_next_view(self, size=None):
+    @key_action
+    def next_view(self, size=None):
         view = self.get_focus()[0].get_next_view()
         if view:
             self.app.push_view(view)
 
-    def ka_show_details(self, size=None):
+    @key_action
+    def show_details(self, size=None):
         view = self.get_focus()[0].get_details_view()
         if view:
             self.app.push_view(view)
 
-    def ka_search(self, size=None):
-        self.search()
+    @key_action
+    def search(self, size=None):
+        self._search()
 
-    def ka_search_next(self, size=None):
-        self.search_next(1)
+    @key_action
+    def search_next(self, size=None):
+        self._search_next(1)
 
-    def ka_search_prev(self, size=None):
-        self.search_next(-1)
+    @key_action
+    def search_prev(self, size=None):
+        self._search_next(-1)
 
-    def ka_limit(self, size=None):
-        def limit(expr):
+    @key_action
+    def limit(self, size=None):
+        def limit_inner(expr):
             _search_results = [
                 e for e in self.entries if e.search_match(expr)
             ]
@@ -131,11 +128,11 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
 
         self.app.get_input(
             'Search for:',
-            limit,
+            limit_inner,
         )
 
-    def search(self):
-        def search(expr):
+    def _search(self):
+        def search_inner(expr):
             self._search_results = [
                 e[0] for e in enumerate(self.entries)
                 if e[1].search_match(expr)
@@ -149,10 +146,10 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
                 self.set_focus(pos)
         self.app.get_input(
             'Search for:',
-            search,
+            search_inner,
         )
 
-    def search_next(self, count=1):
+    def _search_next(self, count=1):
         if self._search_results:
             self._current_search_result += count
             self._current_search_result %= len(self._search_results)

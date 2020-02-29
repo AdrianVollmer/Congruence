@@ -38,7 +38,7 @@ class APIView(ContentList):
         self.title = "API"
         super().__init__(EntryClass=CongruenceAPIEntry, help_string=__help__)
         self.params = properties['Parameters']
-        self.ka_update()
+        self.update()
         if self.entries:
             self.set_focus(0)
 

@@ -17,7 +17,7 @@
 This file contains views and functions which are specific to Confluence
 """
 
-from congruence.views.common import CongruenceTextBox
+from congruence.views.common import CongruenceTextBox, key_action
 from congruence.views.listbox import CongruenceListBox, \
         ColumnListBoxEntry
 from congruence.views.treelistbox import CongruenceTreeListBox,\
@@ -89,14 +89,6 @@ class CommentContextView(CongruenceTreeListBox):
     :obj: one object of type Comment of the comment tree
     """
 
-    key_actions = [
-        'reply',
-        'like',
-        'cli browser',
-        'gui browser',
-        'toggle collapse',
-    ]
-
     def __init__(self, page_id, title, focus_id=None):
         self.title = "Comments"
         log.debug("Build CommentContextView for comments of page with id '%s'"
@@ -120,7 +112,8 @@ class CommentContextView(CongruenceTreeListBox):
         if node:
             self.set_focus(node)
 
-    def ka_reply(self, size=None):
+    @key_action
+    def reply(self, size=None):
         obj = self.get_focus()[0].get_value()
         prev_msg = obj.get_content()
         prev_msg = prev_msg.splitlines()
@@ -136,7 +129,8 @@ class CommentContextView(CongruenceTreeListBox):
                 self.app.alert("Comment failed", 'error')
         # TODO self.update()
 
-    def ka_like(self, size=None):
+    @key_action
+    def like(self, size=None):
         comment = self.get_focus()[0].get_value()
         if comment.toggle_like():
             if comment.liked:
@@ -144,12 +138,14 @@ class CommentContextView(CongruenceTreeListBox):
             else:
                 self.app.alert("You unliked this", 'info')
 
-    def ka_cli_browser(self, size=None):
+    @key_action
+    def cli_browser(self, size=None):
         obj = self.focus.get_value()
         id = obj.id
         open_content_in_cli_browser(self.app, id)
 
-    def ka_gui_browser(self, size=None):
+    @key_action
+    def gui_browser(self, size=None):
         obj = self.focus.get_value()
         url = obj.url
         open_gui_browser(url)
@@ -200,14 +196,6 @@ class CommentWidget(CongruenceCardTreeWidget):
 class PageView(CongruenceTextBox):
     """A text box showing metadata of a page"""
 
-    key_actions = [
-        'list diff',
-        'cli browser',
-        'gui browser',
-        'go to comments',
-        'like',
-    ]
-
     def __init__(self, obj):
         self.obj = obj
         self.title = "Page"
@@ -237,29 +225,34 @@ class PageView(CongruenceTextBox):
         help_string = cs.PAGE_VIEW_HELP
         super().__init__(text, help_string=help_string)
 
-    def ka_list_diff(self, size=None):
+    @key_action
+    def list_diff(self, size=None):
         try:
             view = DiffView(self.obj.id)
             self.app.push_view(view)
         except KeyError:
             self.app.alert('No diff available', 'warning')
 
-    def ka_cli_browser(self, size=None):
+    @key_action
+    def cli_browser(self, size=None):
         id = self.obj.id
         open_content_in_cli_browser(self.app, id)
 
-    def ka_gui_browser(self, size=None):
+    @key_action
+    def gui_browser(self, size=None):
         id = self.obj.id
         url = f"pages/viewpage.action?pageId={id}"
         open_gui_browser(url)
 
-    def ka_go_to_comments(self, size=None):
+    @key_action
+    def go_to_comments(self, size=None):
         page_id = self.obj.id
         title = self.obj.title
         view = CommentContextView(page_id, title)
         self.app.push_view(view)
 
-    def ka_like(self, size=None):
+    @key_action
+    def like(self, size=None):
         if self.obj.toggle_like():
             if self.obj.liked:
                 self.app.alert("You liked this", 'info')
@@ -270,8 +263,6 @@ class PageView(CongruenceTextBox):
 
 
 class DiffView(CongruenceTextBox):
-    key_actions = ['cycle next', 'cycle prev']
-
     def __init__(self, page_id, first=None, second=None):
         self.page_id = page_id
         self.title = "Diff"
@@ -322,7 +313,8 @@ class DiffView(CongruenceTextBox):
         help_string = cs.DIFF_VIEW_HELP
         super().__init__(self.diff, color=True, help_string=help_string)
 
-    def ka_cycle_next(self, size=None):
+    @key_action
+    def cycle_next(self, size=None):
         try:
             view = DiffView(self.page_id, self.first-1, self.second-1)
             self.app.pop_view()
@@ -330,7 +322,8 @@ class DiffView(CongruenceTextBox):
         except KeyError:
             self.app.alert("No diff available", 'warning')
 
-    def ka_cycle_prev(self, size=None):
+    @key_action
+    def cycle_prev(self, size=None):
         try:
             view = DiffView(self.page_id, self.first+1, self.second+1)
             self.app.pop_view()
@@ -343,14 +336,6 @@ class ContentList(CongruenceListBox):
     """A list box that can display Confluence content objects
     """
 
-    key_actions = [
-        'update',
-        'load more',
-        'load much more',
-        'cli browser',
-        'gui browser',
-    ]
-
     def __init__(self, EntryClass=ColumnListBoxEntry, help_string=""):
         self.title = "Content"
         self._entryclass = EntryClass
@@ -362,30 +347,35 @@ class ContentList(CongruenceListBox):
         self.entries = []
         super().__init__(self.entries, help_string=help_string)
 
-    def ka_load_more(self, size=None):
+    @key_action
+    def load_more(self, size=None):
         log.info("Load more ...")
         self.entries += self.get_entries()
         self.redraw()
 
-    def ka_load_much_more(self, size=None):
+    @key_action
+    def load_much_more(self, size=None):
         log.info("Load much more ...")
         self.params["limit"] *= 5
         self.entries += self.get_entries()
         self.params["limit"] //= 5
         self.redraw()
 
-    def ka_update(self, size=None):
+    @key_action
+    def update(self, size=None):
         log.info("Update ...")
         self.params["start"] = 0
         self.entries = self.get_entries()
         self.redraw()
 
-    def ka_cli_browser(self, size=None):
+    @key_action
+    def cli_browser(self, size=None):
         node = self.get_focus()[0]
         id = node.obj.id
         open_content_in_cli_browser(self.app, id)
 
-    def ka_gui_browser(self, size=None):
+    @key_action
+    def gui_browser(self, size=None):
         node = self.get_focus()[0]
         id = node.obj.id
         url = f"pages/viewpage.action?pageId={id}"

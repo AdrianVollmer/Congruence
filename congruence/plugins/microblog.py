@@ -21,7 +21,7 @@ Here you can see the latest entries of the microblog plugin.
 """
 from congruence.views.listbox import CongruenceListBox, \
         CardedListBoxEntry
-from congruence.views.common import CongruenceTextBox
+from congruence.views.common import CongruenceTextBox, key_action
 from congruence.interface import make_request, html_to_text, convert_date,\
         md_to_html
 from congruence.logging import log
@@ -33,15 +33,14 @@ import urwid
 
 
 class MicroblogView(CongruenceListBox):
-    key_actions = ['load more', 'update', 'gui browser', 'post comment']
-
     def __init__(self, properties={}):
         self.title = "Microblog"
         self.properties = properties
-        self.ka_update()
+        self.update()
         super().__init__(self.entries, help_string=__help__)
 
-    def ka_update(self, size=None):
+    @key_action
+    def update(self, size=None):
         if 'limit' in self.properties['Parameters']:
             self.limit = self.properties['Parameters']['limit']
         else:
@@ -56,11 +55,12 @@ class MicroblogView(CongruenceListBox):
         self.entries = self.get_microblog()
         self.app.alert('Received %d items' % len(self.entries), 'info')
         if hasattr(self, 'walker'):
-            # this check is done because if ka_update is called before
+            # this check is done because if update is called before
             # super.__init__ the object is not ready for redrawing yet
             self.redraw()
 
-    def ka_load_more(self, size=None):
+    @key_action
+    def load_more(self, size=None):
         self.entries += self.get_microblog()
         self.redraw()
 
@@ -88,13 +88,15 @@ class MicroblogView(CongruenceListBox):
         self.offset += len(result)
         return result
 
-    def ka_gui_browser(self, size=None):
+    @key_action
+    def gui_browser(self, size=None):
         node = self.get_focus()[0]
         post_id = node.obj._data['id']
         url = f"plugins/micropost/view.action?postId={post_id}"
         open_gui_browser(url)
 
-    def ka_post_comment(self, size=None):
+    @key_action
+    def post_comment(self, size=None):
         # TODO refactor to reduce duplicate code
         # TODO let the user pick
         topic_id = 16
@@ -205,8 +207,6 @@ def send_sketch(topic_id):
 
 
 class MicroblogReplyView(CongruenceListBox):
-    key_actions = ['reply', 'like', 'gui browser']
-
     def __init__(self, entries):
         self.title = "Replies"
         self.entries = [MicroblogEntry(MicroblogObject(entries),
@@ -215,7 +215,8 @@ class MicroblogReplyView(CongruenceListBox):
                          for e in entries["replies"]]
         super().__init__(self.entries, help_string=__help__)
 
-    def ka_like(self, size=None):
+    @key_action
+    def like(self, size=None):
         obj = self.focus.obj
         post_id = obj._data['id']
         headers = {
@@ -231,7 +232,8 @@ class MicroblogReplyView(CongruenceListBox):
         else:
             self.app.alert("Like failed", 'error')
 
-    def ka_reply(self, size=None):
+    @key_action
+    def reply(self, size=None):
         obj = self.entries[0].obj
         author = obj._data['authorFullName']
         topic_id = obj._data['topic']['id']
@@ -269,7 +271,8 @@ class MicroblogReplyView(CongruenceListBox):
         else:
             self.app.alert("Failed to send reply", 'error')
 
-    def ka_gui_browser(self, size=None):
+    @key_action
+    def gui_browser(self, size=None):
         obj = self.entries[0].obj
         post_id = obj._data['id']
         url = f"plugins/micropost/view.action?postId={post_id}"

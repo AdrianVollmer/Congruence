@@ -17,13 +17,13 @@
 
 #  from congruence.logging import log
 from congruence.views.common import CongruenceView, \
-    RememberParentKeyMapMeta, CongruenceTextBox
+    CollectKeyActions, CongruenceTextBox, key_action
 
 import urwid
 
 
 class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
-                            metaclass=RememberParentKeyMapMeta):
+                            metaclass=CollectKeyActions):
     """Displays a tree view of 'wrapper' objects
 
     :data: a tree-like dict-structure. Each dictionary needs to have the keys
@@ -33,18 +33,6 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
     :wrapper: some subclass of CongruenceTreeWidget.
     """
 
-    key_actions = [
-        'move up',
-        'move down',
-        'page up',
-        'page down',
-        'show details',
-        'next view',
-        'search',
-        'search next',
-        'search prev',
-    ]
-
     def __init__(self, data, wrapper, help_string=None):
         self.wrapper = wrapper
         self.help_string = help_string
@@ -52,50 +40,62 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
         self.walker = urwid.TreeWalker(self.topnode)
         super().__init__(self.walker)
 
-    def ka_move_down(self, size=None):
+    @key_action
+    def move_down(self, size=None):
         urwid.ListBox.keypress(self, size, 'down')
 
-    def ka_move_up(self, size=None):
+    @key_action
+    def move_up(self, size=None):
         urwid.ListBox.keypress(self, size, 'up')
 
-    def ka_page_down(self, size=None):
+    @key_action
+    def page_down(self, size=None):
         urwid.ListBox.keypress(self, size, 'page down')
 
-    def ka_page_up(self, size=None):
+    @key_action
+    def page_up(self, size=None):
         urwid.ListBox.keypress(self, size, 'page up')
 
-    def ka_scroll_to_bottom(self, size=None):
+    @key_action
+    def scroll_to_bottom(self, size=None):
         self.set_focus(0, coming_from='above')
 
-    def ka_scroll_to_top(self, size=None):
+    @key_action
+    def scroll_to_top(self, size=None):
         self.set_focus(0, coming_from='below')
 
-    def ka_toggle_collapse(self, size=None):
+    @key_action
+    def toggle_collapse(self, size=None):
         node = self.get_focus()[0]
         node.expanded = not node.expanded
         node.update_expanded_icon()
 
-    def ka_next_view(self, size=None):
+    @key_action
+    def next_view(self, size=None):
         view = self.get_focus()[0].get_next_view()
         if view:
             self.app.push_view(view)
 
-    def ka_show_details(self, size=None):
+    @key_action
+    def show_details(self, size=None):
         view = self.get_focus()[0].get_details_view()
         if view:
             self.app.push_view(view)
 
-    def ka_search(self, size=None):
+    @key_action
+    def search(self, size=None):
         self.search()
 
-    def ka_search_next(self, size=None):
+    @key_action
+    def search_next(self, size=None):
         self.search_next(1)
 
-    def ka_search_prev(self, size=None):
+    @key_action
+    def search_prev(self, size=None):
         self.search_next(-1)
 
-    def search(self):
-        def search(expr):
+    def _search(self):
+        def search_inner(expr):
             self._search_results = []
             node = self.topnode
             while True:
@@ -114,10 +114,10 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
                 self.set_focus(pos)
         self.app.get_input(
             'Search for:',
-            search,
+            search_inner,
         )
 
-    def search_next(self, count=1):
+    def _search_next(self, count=1):
         if self._search_results:
             self._current_search_result += count
             self._current_search_result %= len(self._search_results)

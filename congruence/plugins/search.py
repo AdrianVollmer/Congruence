@@ -24,12 +24,11 @@ Confluence:
 """
 
 from congruence.views.listbox import CongruenceListBoxEntry
+from congruence.views.common import key_action
 from congruence.confluence import CommentContextView, PageView, ContentList
 
 
 class APIView(ContentList):
-    key_actions = ['search confluence']
-
     def __init__(self, properties={}):
         super().__init__(EntryClass=SearchResultEntry, help_string=__help__)
         self.title = "Search"
@@ -45,10 +44,11 @@ class APIView(ContentList):
             'includeArchivedSpaces': 'false',
             'src': 'next.ui.search',
         }
-        self.ka_search_confluence()
+        self.search_confluence()
         self.redraw()
 
-    def ka_search_confluence(self, size=None):
+    @key_action
+    def search_confluence(self, size=None):
         self.app.get_input("Search:", self.conf_search)
 
     def conf_search(self, query):

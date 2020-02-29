@@ -20,7 +20,7 @@ This view displays your latest notifications.
 
 """
 from congruence.interface import make_request, convert_date, html_to_text
-from congruence.views.common import CongruenceTextBox
+from congruence.views.common import CongruenceTextBox, key_action
 from congruence.views.listbox import CongruenceListBox,\
         ColumnListBoxEntry
 from congruence.objects import ConfluenceObject
@@ -30,8 +30,6 @@ import json
 
 
 class NotificationView(CongruenceListBox):
-    key_actions = ['load more']
-
     def __init__(self, properties={}):
         self.title = "Notifications"
         self.limit = 20
@@ -60,7 +58,8 @@ class NotificationView(CongruenceListBox):
         self.app.alert('Received %d items' % len(notifications), 'info')
         return notifications
 
-    def ka_load_more(self, size=None):
+    @key_action
+    def load_more(self, size=None):
         last = self.entries[-1].obj._data['id']
         self.entries += self.get_notifications(before=last)
         self.redraw()
