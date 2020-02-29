@@ -85,32 +85,32 @@ class ContentObject(ConfluenceObject):
         """
 
         self._data = data
-        if 'content' in data:
+        content = data['content']
+        try:
             self.url = data['url']
-            content = data['content']
-        else:
-            self.url = data['_links']['webui']
-            content = data
+        except KeyError:
+            self.url = None
         self.id = content['id']
         self.title = content['title']
-        self.type = getattr(self, 'type', 'unknown')
-        #  self.space = data['space']
+        try:
+            self.space = Space(content['space'])
+        except KeyError:
+            self.space = None
+        self.versionby = User(content['history']['lastUpdated']['by'])
+        self.type = content['type']
+
         self.liked = False  # TODO determine
 
     def get_title(self, cols=False):
         if cols:
             content = self._data['content']
             lastUpdated = content['history']['lastUpdated']
-            if 'space' in content:
-                space = content['space']['key']
-            else:
-                space = '?'
             title = [
-                content['type'][0].upper(),
-                space,
-                lastUpdated['by']['displayName'],
+                self.type[0].upper(),
+                self.space.key,
+                self.versionby.display_name,
                 convert_date(lastUpdated['when'], 'friendly'),
-                content['title'],
+                self.title,
             ]
             return title
         return self.title
@@ -167,54 +167,40 @@ class ContentObject(ConfluenceObject):
 class Page(ContentObject):
     def __init__(self, data):
         super().__init__(data)
-        self.type = 'page'
-        self.short_type = 'P'
 
 
 class Blogpost(Page):
     def __init__(self, data):
         super().__init__(data)
-        self.type = 'blogpost'
-        self.short_type = 'B'
 
 
 class Comment(ContentObject):
     def __init__(self, data):
         super().__init__(data)
-        self.type = 'comment'
-        self.short_type = 'C'
-        if 'content' in self._data:
-            history = self._data['content']['history']
-            self.author = history['createdBy']['displayName']
-        else:
-            # information can be in a different attribute
-            self.author = self._data['version']['by']['displayName']
-
-    def get_title(self, cols=False):
-        if cols:
-            return super().get_title(cols=True)
-        date = self._data['version']['when']
+        date = self._data['content']['history']['createdDate']
         date = convert_date(date)
-        title = '%s, %s' % (
-            self._data['version']['by']['displayName'],
+        self.title = '%s, %s' % (
+            self.versionby.display_name,
             date,
         )
-        if self._data['extensions']['location'] == 'inline':
-            title += " (inline comment)"
-        return title
+        self.ref = None
+        try:
+            extensions = self._data['content']['extensions']
+            inline_properties = extensions['inlineProperties']
+            self.ref = inline_properties['originalSelection']
+            self.title += " (inline comment)"
+        except KeyError:
+            pass
 
     def get_content(self):
         #  log.debug(self._data)
         comment = html_to_text(
-            self._data['body']['view']['value'],
+            self._data['content']['body']['view']['value'],
             replace_emoticons=True,
         )
-        if 'inlineProperties' in self._data['extensions']:
-            inline_properties = self._data['extensions']['inlineProperties']
-            ref = inline_properties['originalSelection']
-            if ref:
-                # TODO set in italics
-                comment = f"> {ref}\n\n{comment}"
+        if self.ref:
+            # TODO set in italics
+            comment = f"> {self.ref}\n\n{comment}"
         return comment
 
     def send_reply(self, text):
@@ -250,8 +236,6 @@ class Comment(ContentObject):
 class Attachment(ContentObject):
     def __init__(self, data):
         super().__init__(data)
-        self.type = 'attachment'
-        self.short_type = 'A'
         try:
             self.download = data['_links']['download']
         except KeyError:
@@ -260,9 +244,10 @@ class Attachment(ContentObject):
 
 class User(ConfluenceObject):
     def __init__(self, data):
-        self._data = data
-        self.type = 'user'
         super().__init__()
+        self._data = data
+        self.display_name = self._data['displayName']
+        self.username = self._data['username']
 
     def get_title(self, cols=False):
         if cols:
@@ -278,11 +263,12 @@ class User(ConfluenceObject):
 
 class Space(ConfluenceObject):
     def __init__(self, data):
+        super().__init__()
         self._data = data
         self.type = 'space'
-        self.key = self._data['space']['key']
-        self.name = self._data['space']['name']
-        super().__init__()
+
+        self.key = self._data['key']
+        self.name = self._data['name']
 
     def get_title(self, cols=False):
         if cols:
@@ -294,7 +280,7 @@ class Space(ConfluenceObject):
                 '',
             ]
         else:
-            return [self.name]
+            return self.name
 
     def match(self, search_string):
         return re.search(search_string, self.name)

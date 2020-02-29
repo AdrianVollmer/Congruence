@@ -44,7 +44,7 @@ def get_comments_of_page(id):
 
     url = f'rest/api/content/{id}/child/comment'
     params = {
-        'expand': 'body.view,content,version,ancestors,'
+        'expand': 'body.view,content,history.lastUpdated,version,ancestors,'
                   'extensions.inlineProperties',
         'depth': 'all',
         'limit': 9999,
@@ -73,8 +73,9 @@ def get_comments_of_page(id):
         for a in reversed(c['ancestors']):
             parent = get_by_id(parent, a['id'])['children']
 
+        log.debug(c)
         parent.append({
-            c['id']: Comment(c),
+            c['id']: Comment({'content': c}),
             'children': [],
         })
 
@@ -150,7 +151,7 @@ class CommentContextView(CongruenceTreeListBox):
 
     def ka_gui_browser(self, size=None):
         obj = self.focus.get_value()
-        url = obj._data['_links']['webui']
+        url = obj.url
         open_gui_browser(url)
 
 
