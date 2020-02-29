@@ -181,7 +181,7 @@ class CongruenceCardTreeWidget(CongruenceTreeListBoxEntry):
     def get_display_header(self):
         node = self.get_value()
         try:
-            return node.get_title()
+            return node.get_head()
         except AttributeError:
             return node['title']
 

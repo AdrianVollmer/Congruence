@@ -20,7 +20,7 @@ Here you can see the latest entries of the microblog plugin.
 
 """
 from congruence.views.listbox import CongruenceListBox, \
-        CongruenceListBoxEntry
+        CardedListBoxEntry
 from congruence.views.common import CongruenceTextBox
 from congruence.interface import make_request, html_to_text, convert_date,\
         md_to_html
@@ -127,14 +127,14 @@ class MicroblogView(CongruenceListBox):
             self.app.alert("Failed to send microblog post", 'error')
 
 
-class MicroblogEntry(CongruenceListBoxEntry):
+class MicroblogEntry(CardedListBoxEntry):
     """Represents microblog entries or replies to one entry as a list of
     widgets"""
 
     def __init__(self, obj, is_reply=False):
         self.obj = obj
         self.is_reply = is_reply
-        super().__init__(self.obj, structure='carded')
+        super().__init__(self.obj)
 
     def get_next_view(self):
         if not self.is_reply:
@@ -154,7 +154,7 @@ class MicroblogObject(ContentObject):
     def __init__(self, data):
         self._data = data
 
-    def get_title(self, cols=False):
+    def get_title(self):
         like_number = len(self._data['likingUsers'])
         likes = ""
         if like_number > 0:
@@ -174,6 +174,9 @@ class MicroblogObject(ContentObject):
             likes,
         )
         return title
+
+    def get_head(self):
+        return self.get_title()
 
     def get_content(self):
         text = self._data["renderedContent"]

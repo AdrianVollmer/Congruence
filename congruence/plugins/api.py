@@ -27,7 +27,7 @@ is indicated by a single letter:
 
 """
 
-from congruence.views.listbox import CongruenceListBoxEntry
+from congruence.views.listbox import ColumnListBoxEntry
 from congruence.logging import log
 from congruence.confluence import CommentContextView, PageView, ContentList
 
@@ -43,7 +43,7 @@ class APIView(ContentList):
             self.set_focus(0)
 
 
-class CongruenceAPIEntry(CongruenceListBoxEntry):
+class CongruenceAPIEntry(ColumnListBoxEntry):
     def get_next_view(self):
         log.debug(self.obj.type)
         if self.obj.type in ["page", "blogpost"]:

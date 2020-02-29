@@ -51,7 +51,8 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
         self.walker = urwid.SimpleFocusListWalker(self.entries)
         self._search_results = []
         super().__init__(self.walker)
-        self.align_columns()
+        if self.entries and isinstance(self.entries[0], ColumnListBoxEntry):
+            self.align_columns()
 
     def align_columns(self):
         """Set all column widths to its common maximum"""
@@ -163,39 +164,24 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
     """Represents one item in a ListBox
 
     :obj: a confluence content object or a string
-    :structure: can be one of 'flat', 'columns' and 'carded' and determines
-        the structure of the ListBox entry.
     """
 
-    def __init__(self, obj, structure='flat'):
+    def __init__(self, obj):
         self.obj = obj
-        self.structure = structure
-        if self.structure == 'flat':
-            self.cols = False
-            if hasattr(obj, 'get_title'):
-                self._inner_widget = urwid.Text(obj.get_title())
-            else:
-                self._inner_widget = urwid.Text(str(obj))
-        elif self.structure == 'columns':
-            self._columns = obj.get_title(cols=True)
-            self._inner_widget = urwid.Columns(
-                [(urwid.Text(t, wrap='clip')) for t in self._columns],
-                dividechars=1,
-            )
-        elif self.structure == 'carded':
-            self._widget = urwid.Pile([
-                self.render_head(),
-                self.render_content(),
-            ])
-        else:
-            raise KeyError("Invalid structure: %s" % structure)
-        if not structure == 'carded':
-            self._widget = urwid.AttrMap(
-                self._inner_widget,
-                attr_map="body",
-                focus_map="focus",
-            )
+        self._inner_widget = self.wrap_in_widget()
+
+        self._widget = urwid.AttrMap(
+            self._inner_widget,
+            attr_map="body",
+            focus_map="focus",
+        )
         super().__init__(self._widget)
+
+    def wrap_in_widget(self):
+        try:
+            return urwid.Text(self.obj.get_title())
+        except AttributeError:
+            return urwid.Text(self.obj)
 
     def selectable(self):
         return True
@@ -217,10 +203,17 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
 
         raise NotImplementedError("search_match in %s" % type(self).__name__)
 
+
+class CardedListBoxEntry(CongruenceListBoxEntry):
+    """Represents one item in a ListBox with columns
+
+    :obj: a confluence content object which implements get_head() and
+        get_content()
+    """
     def render_head(self):
-        title = self.obj.get_title()
+        head = self.obj.get_head()
         return urwid.AttrMap(
-            urwid.Text(title),
+            urwid.Text(head),
             'card-head',
             focus_map='card-focus'
         )
@@ -228,3 +221,22 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
     def render_content(self):
         text = self.obj.get_content()
         return urwid.AttrMap(urwid.Text(text), 'body')
+
+    def wrap_in_widget(self):
+        return urwid.Pile([
+            self.render_head(),
+            self.render_content(),
+        ])
+
+
+class ColumnListBoxEntry(CongruenceListBoxEntry):
+    """Represents one item in a ListBox with columns
+
+    :obj: a confluence content object which implements get_columns()
+    """
+    def wrap_in_widget(self):
+        self._columns = self.obj.get_columns()
+        return urwid.Columns(
+            [(urwid.Text(t, wrap='clip')) for t in self._columns],
+            dividechars=1,
+        )

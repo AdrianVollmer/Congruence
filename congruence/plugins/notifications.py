@@ -22,8 +22,8 @@ This view displays your latest notifications.
 from congruence.interface import make_request, convert_date, html_to_text
 from congruence.views.common import CongruenceTextBox
 from congruence.views.listbox import CongruenceListBox,\
-        CongruenceListBoxEntry
-from congruence.objects import ContentObject
+        ColumnListBoxEntry
+from congruence.objects import ConfluenceObject
 #  from congruence.logging import log
 
 import json
@@ -55,7 +55,7 @@ class NotificationView(CongruenceListBox):
         entries = r.json()
         notifications = []
         for e in entries:
-            n = NotificationEntry(NotificationObject(e), structure='columns')
+            n = NotificationEntry(NotificationObject(e))
             notifications.append(n)
         self.app.alert('Received %d items' % len(notifications), 'info')
         return notifications
@@ -66,7 +66,7 @@ class NotificationView(CongruenceListBox):
         self.redraw()
 
 
-class NotificationEntry(CongruenceListBoxEntry):
+class NotificationEntry(ColumnListBoxEntry):
     def get_next_view(self):
         text = self.obj._data['title'] + '\n'
 
@@ -93,7 +93,7 @@ class NotificationEntry(CongruenceListBoxEntry):
         return self.obj.match(search_string)
 
 
-class NotificationObject(ContentObject):
+class NotificationObject(ConfluenceObject):
     def __init__(self, data):
         self._data = data
         self.metadata = self._data['metadata']
@@ -102,8 +102,10 @@ class NotificationObject(ContentObject):
         except KeyError:
             self.title = self._data["title"]
 
-    # TODO get_title should be called get_display_title or something
     def get_title(self, cols=False):
+        return self.title
+
+    def get_columns(self):
         try:
             entity = self._data['entity'][0].upper()
         except KeyError:
@@ -114,15 +116,13 @@ class NotificationObject(ContentObject):
         else:
             user = "?"
             action = "?"
-        if cols:
-            return [
-                entity,
-                user,
-                action,
-                convert_date(self._data['updated'], 'friendly'),
-                self.title,
-            ]
-        return self.title
+        return [
+            entity,
+            user,
+            action,
+            convert_date(self._data['updated'], 'friendly'),
+            self.title,
+        ]
 
     def get_json(self):
         return json.dumps(self._data, indent=2, sort_keys=True)

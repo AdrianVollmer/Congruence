@@ -22,6 +22,7 @@ This file contains classes which represent content objects in Confluence.
 from congruence.interface import convert_date, html_to_text, md_to_html
 from congruence.logging import log
 from congruence.interface import make_request
+from congruence.args import config
 
 import json
 import re
@@ -60,7 +61,7 @@ class ConfluenceObject(ABC):
     """
 
     @abstractmethod
-    def get_title(self, cols=False):
+    def get_title(self):
         """Subclasses who implement this must return a string or a list of
         strings with len=5 if cols=True"""
         pass
@@ -86,33 +87,35 @@ class ContentObject(ConfluenceObject):
 
         self._data = data
         content = data['content']
+        self.type = content['type']
+        self.id = content['id']
+
         try:
             self.url = data['url']
         except KeyError:
             self.url = None
-        self.id = content['id']
-        self.title = content['title']
         try:
             self.space = Space(content['space'])
         except KeyError:
             self.space = None
         self.versionby = User(content['history']['lastUpdated']['by'])
-        self.type = content['type']
 
+        self.title = content['title']
         self.liked = False  # TODO determine
 
-    def get_title(self, cols=False):
-        if cols:
-            content = self._data['content']
-            lastUpdated = content['history']['lastUpdated']
-            title = [
-                self.type[0].upper(),
-                self.space.key,
-                self.versionby.display_name,
-                convert_date(lastUpdated['when'], 'friendly'),
-                self.title,
-            ]
-            return title
+    def get_columns(self):
+        content = self._data['content']
+        lastUpdated = content['history']['lastUpdated']
+        result = [
+            self.type[0].upper(),
+            self.space.key,
+            self.versionby.display_name,
+            convert_date(lastUpdated['when'], 'friendly'),
+            self.title,
+        ]
+        return result
+
+    def get_title(self):
         return self.title
 
     def match(self, search_string):
@@ -177,23 +180,29 @@ class Blogpost(Page):
 class Comment(ContentObject):
     def __init__(self, data):
         super().__init__(data)
+
         date = self._data['content']['history']['createdDate']
         date = convert_date(date)
-        self.title = '%s, %s' % (
-            self.versionby.display_name,
-            date,
-        )
+        username = self.versionby.display_name
+        if self.versionby.username in config["UserBlacklist"]:
+            username = "<blocked user>"
+        self.head = '%s, %s' % (username, date)
         self.ref = None
         try:
             extensions = self._data['content']['extensions']
             inline_properties = extensions['inlineProperties']
             self.ref = inline_properties['originalSelection']
-            self.title += " (inline comment)"
+            self.head += " (inline comment)"
         except KeyError:
             pass
 
+    def get_head(self):
+        return self.head
+
     def get_content(self):
         #  log.debug(self._data)
+        if self.versionby.username in config["UserBlacklist"]:
+            return ""
         comment = html_to_text(
             self._data['content']['body']['view']['value'],
             replace_emoticons=True,
@@ -249,16 +258,17 @@ class User(ConfluenceObject):
         self.display_name = self._data['displayName']
         self.username = self._data['username']
 
-    def get_title(self, cols=False):
-        if cols:
-            return [
-                'U',
-                '',
-                self._data['user']['displayName'],
-                convert_date(self._data['timestamp'], 'friendly'),
-                '',
-            ]
-        return self._data['title']
+    def get_title(self):
+        return self.display_name
+
+    def get_columns(self):
+        return [
+            'U',
+            '',
+            self._data['user']['displayName'],
+            convert_date(self._data['timestamp'], 'friendly'),
+            '',
+        ]
 
 
 class Space(ConfluenceObject):
@@ -270,17 +280,17 @@ class Space(ConfluenceObject):
         self.key = self._data['key']
         self.name = self._data['name']
 
-    def get_title(self, cols=False):
-        if cols:
-            return [
-                'S',
-                self.key,
-                self.name,
-                convert_date(self._data['timestamp'], 'friendly'),
-                '',
-            ]
-        else:
-            return self.name
+    def get_title(self):
+        return self.name
+
+    def get_columns(self):
+        return [
+            'S',
+            self.key,
+            self.name,
+            convert_date(self._data['timestamp'], 'friendly'),
+            '',
+        ]
 
     def match(self, search_string):
         return re.search(search_string, self.name)

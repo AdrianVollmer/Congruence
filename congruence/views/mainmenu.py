@@ -52,7 +52,7 @@ class MainMenuEntry(CongruenceListBoxEntry):
         if "DisplayName" in data:
             title = data['DisplayName']
         # this now overwrite self.data
-        return super().__init__(title, structure='flat')
+        return super().__init__(title)
 
     def get_plugin_class(self, name):
         """This function retrieves the class the plugin"""

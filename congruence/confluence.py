@@ -19,7 +19,7 @@ This file contains views and functions which are specific to Confluence
 
 from congruence.views.common import CongruenceTextBox
 from congruence.views.listbox import CongruenceListBox, \
-        CongruenceListBoxEntry
+        ColumnListBoxEntry
 from congruence.views.treelistbox import CongruenceTreeListBox,\
         CongruenceCardTreeWidget
 from congruence.interface import make_request, convert_date
@@ -351,7 +351,7 @@ class ContentList(CongruenceListBox):
         'gui browser',
     ]
 
-    def __init__(self, EntryClass=CongruenceListBoxEntry, help_string=""):
+    def __init__(self, EntryClass=ColumnListBoxEntry, help_string=""):
         self.title = "Content"
         self._entryclass = EntryClass
         self.params = {
@@ -400,8 +400,7 @@ class ContentList(CongruenceListBox):
         response = r.json()
         if r.ok and response:
             for each in response['results']:
-                result.append(self._entryclass(determine_type(each)(each),
-                                               structure='columns'))
+                result.append(self._entryclass(determine_type(each)(each)))
             #  result = change_filter(result)
             self.app.alert('Received %d items' % len(result), 'info')
             self.params["start"] += \
