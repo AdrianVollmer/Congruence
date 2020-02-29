@@ -111,7 +111,7 @@ class ExpandableSpace(Space):
     """This class can 'expand', i.e. load a list of pages in its space"""
 
     def __init__(self, data):
-        super().__init__(data)
+        super().__init__(data['space'])
         self.expanded = False
 
     def get_children(self):
@@ -131,7 +131,7 @@ class ExpandableSpace(Space):
             if len(result) >= size:
                 break
             params['startIndex'] = len(result)
-        result = [ExpandablePage(p) for p in result]
+        result = [ExpandablePage({'content': p}) for p in result]
         log.debug("Retrieved %d items" % len(result))
         return result
 
@@ -187,7 +187,7 @@ class ExpandablePage(Page):
         }
         r = make_request(url, params=params)
         result = r.json()['results']
-        result = [ExpandablePage(p) for p in result]
+        result = [ExpandablePage({'content': p}) for p in result]
         log.debug("Retrieved %d items" % len(result))
         return result
 
