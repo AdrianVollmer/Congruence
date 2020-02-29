@@ -236,6 +236,7 @@ class ColumnListBoxEntry(CongruenceListBoxEntry):
     """
     def wrap_in_widget(self):
         self._columns = self.obj.get_columns()
+        assert len(self._columns) == 5
         return urwid.Columns(
             [(urwid.Text(t, wrap='clip')) for t in self._columns],
             dividechars=1,
