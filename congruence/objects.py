@@ -108,7 +108,7 @@ class ContentObject(ConfluenceObject):
         lastUpdated = content['history']['lastUpdated']
         result = [
             self.type[0].upper(),
-            self.space.key,
+            self.space.key if self.space else '?',
             self.versionby.display_name,
             convert_date(lastUpdated['when'], 'friendly'),
             self.title,
@@ -183,8 +183,11 @@ class Comment(ContentObject):
 
         date = self._data['content']['history']['createdDate']
         date = convert_date(date)
+        self.blacklisted = False
         username = self.versionby.display_name
-        if self.versionby.username in config["UserBlacklist"]:
+        if ("UserBlacklist" in config and
+                self.versionby.username in config["UserBlacklist"]):
+            self.blacklisted = True
             username = "<blocked user>"
         self.head = '%s, %s' % (username, date)
         self.ref = None
@@ -201,7 +204,7 @@ class Comment(ContentObject):
 
     def get_content(self):
         #  log.debug(self._data)
-        if self.versionby.username in config["UserBlacklist"]:
+        if self.blacklisted:
             return ""
         comment = html_to_text(
             self._data['content']['body']['view']['value'],
