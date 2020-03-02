@@ -1,6 +1,9 @@
+beautifulsoup4
 html2text
-markdown
-pyyaml
+Markdown
+python_dateutil
+pytz
 pyxdg
-python-dateutil
+PyYAML
 requests
+urwid
