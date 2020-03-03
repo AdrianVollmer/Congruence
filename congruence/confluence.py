@@ -45,7 +45,7 @@ def get_comments_of_page(id):
     url = f'rest/api/content/{id}/child/comment'
     params = {
         'expand': 'body.view,content,history.lastUpdated,version,ancestors,'
-                  'extensions.inlineProperties',
+                  'extensions.inlineProperties,version',
         'depth': 'all',
         'limit': 9999,
     }
@@ -156,7 +156,7 @@ class SingleCommentView(CongruenceTextBox):
     def __init__(self, obj):
         self.obj = obj
         self.title = "Comment"
-        content = obj._data
+        content = obj._data['content']
         try:
             update = content['version']
             infos = {
