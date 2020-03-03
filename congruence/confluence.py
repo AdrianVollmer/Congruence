@@ -73,7 +73,6 @@ def get_comments_of_page(id):
         for a in reversed(c['ancestors']):
             parent = get_by_id(parent, a['id'])['children']
 
-        log.debug(c)
         parent.append({
             c['id']: Comment({'content': c}),
             'children': [],
