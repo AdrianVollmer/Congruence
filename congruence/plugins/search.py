@@ -52,6 +52,9 @@ class APIView(ContentList):
         self.app.get_input("Search:", self.conf_search)
 
     def conf_search(self, query):
+        if not query:
+            self.app.alert("Query empty, aborting", 'warning')
+            return
         self.params['cql'] = f'siteSearch ~ "{query}"'
         self.params['start'] = 0
         self.entries = self.get_entries()
