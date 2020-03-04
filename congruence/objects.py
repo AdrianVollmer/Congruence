@@ -257,7 +257,15 @@ class Attachment(ContentObject):
 class User(ConfluenceObject):
     def __init__(self, data):
         super().__init__()
-        self._data = data
+        self.type = 'user'
+
+        if 'user' in data:
+            self._data = data['user']
+            self.date = convert_date(data['timestamp'], 'friendly')
+        else:
+            self._data = data
+            self.date = "?"
+        #  log.debug(self.get_json())
         self.display_name = self._data['displayName']
         self.username = self._data['username']
 
@@ -268,8 +276,8 @@ class User(ConfluenceObject):
         return [
             'U',
             '',
-            self._data['user']['displayName'],
-            convert_date(self._data['timestamp'], 'friendly'),
+            self.display_name,
+            self.date,
             '',
         ]
 
