@@ -23,6 +23,7 @@ from congruence.views.listbox import CongruenceListBox, \
 from congruence.views.treelistbox import CongruenceTreeListBox,\
         CongruenceCardTreeWidget
 from congruence.interface import make_request, convert_date
+from congruence.args import config
 from congruence.tools import create_diff
 from congruence.logging import log
 from congruence.objects import Comment, determine_type
@@ -337,6 +338,7 @@ class ContentList(CongruenceListBox):
 
     def __init__(self, EntryClass=ColumnListBoxEntry, help_string=""):
         self.title = "Content"
+        # TODO use factory for EntryClass
         self._entryclass = EntryClass
         self.params = {
             'cql': '',
@@ -389,7 +391,13 @@ class ContentList(CongruenceListBox):
         response = r.json()
         if r.ok and response:
             for each in response['results']:
-                result.append(self._entryclass(determine_type(each)(each)))
+                obj = determine_type(each)(each)
+                try:
+                    if obj.versionby.username not in config['UserBlacklist']:
+                        result.append(self._entryclass(obj))
+                except AttributeError:
+                    result.append(self._entryclass(obj))
+
             #  result = change_filter(result)
             self.app.alert('Received %d items' % len(result), 'info')
             self.params["start"] += \
