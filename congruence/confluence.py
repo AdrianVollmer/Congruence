@@ -118,7 +118,7 @@ class CommentContextView(CongruenceTreeListBox):
         prev_msg = obj.get_content()
         prev_msg = prev_msg.splitlines()
         prev_msg = '\n'.join([f"## > {line}" for line in prev_msg])
-        prev_msg = "## %s wrote:\n%s" % (obj.author, prev_msg)
+        prev_msg = "## %s wrote:\n%s" % (obj.versionby.display_name, prev_msg)
         help_text = cs.REPLY_MSG + prev_msg
         reply = self.app.get_long_input(help_text)
 
