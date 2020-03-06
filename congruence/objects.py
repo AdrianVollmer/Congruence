@@ -182,6 +182,7 @@ class Comment(ContentObject):
         super().__init__(data)
 
         date = self._data['content']['history']['createdDate']
+        self.url = data['content']['_links']['webui']
         date = convert_date(date)
         self.blacklisted = False
         username = self.versionby.display_name
