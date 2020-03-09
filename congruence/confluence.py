@@ -393,7 +393,7 @@ class ContentList(CongruenceListBox):
             for each in response['results']:
                 obj = determine_type(each)(each)
                 try:
-                    if obj.versionby.username not in config['UserBlacklist']:
+                    if not is_blacklisted_user(obj.versionby.username):
                         result.append(self._entryclass(obj))
                 except AttributeError:
                     result.append(self._entryclass(obj))
@@ -414,3 +414,7 @@ def open_content_in_cli_browser(app, id):
 
     content = f"<html><head></head><body>{content}</body></html>"
     open_doc_in_cli_browser(content.encode(), app)
+
+
+def is_blacklisted_user(username):
+    return username in config["UserBlacklist"]

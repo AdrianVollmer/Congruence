@@ -25,6 +25,7 @@ from congruence.views.common import CongruenceTextBox, key_action
 from congruence.interface import make_request, html_to_text, convert_date,\
         md_to_html
 from congruence.logging import log
+from congruence.confluence import is_blacklisted_user
 from congruence.objects import ContentObject
 from congruence.external import open_gui_browser
 import congruence.strings as cs
@@ -155,6 +156,7 @@ class MicroblogEntry(CardedListBoxEntry):
 class MicroblogObject(ContentObject):
     def __init__(self, data):
         self._data = data
+        self.blacklisted = is_blacklisted_user(self._data['authorName'])
 
     def get_title(self):
         like_number = len(self._data['likingUsers'])
@@ -170,7 +172,8 @@ class MicroblogObject(ContentObject):
         if self._data['replies']:
             replies = " - %d replies" % len(self._data['replies'])
         title = "%s (%s)%s%s" % (
-            self._data["authorFullName"],
+            self._data["authorFullName"] if not self.blacklisted
+                else "<blocked user>",
             convert_date(self._data["lastModificationDate"]),
             replies,
             likes,
@@ -181,6 +184,8 @@ class MicroblogObject(ContentObject):
         return self.get_title()
 
     def get_content(self):
+        if self.blacklisted:
+            return ""
         text = self._data["renderedContent"]
         text = html_to_text(text).strip()
         return text
