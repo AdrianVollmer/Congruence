@@ -217,9 +217,9 @@ class Comment(ContentObject):
         return comment
 
     def send_reply(self, text):
-        page_id = self._data['_expandable']['container']
+        page_id = self._data['content']['_expandable']['container']
+        comment_id = self._data['content']['id']
         page_id = re.search(r'/([^/]*$)', page_id).groups()[0]
-        comment_id = self._data['id']
         url = (f'/rest/tinymce/1/content/{page_id}/'
                f'comments/{comment_id}/comment')
         params = {'actions': 'true'}
@@ -289,8 +289,12 @@ class Space(ConfluenceObject):
         self._data = data
         self.type = 'space'
 
-        self.key = self._data['key']
-        self.name = self._data['name']
+        try:
+            self.key = self._data['key']
+            self.name = self._data['name']
+        except KeyError:
+            self.key = self._data['space']['key']
+            self.name = self._data['space']['name']
 
     def get_title(self):
         return self.name
