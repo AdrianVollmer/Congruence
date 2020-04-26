@@ -171,11 +171,13 @@ class Comment(Content):
             username = "<blocked user>"
         self.head = '%s, %s' % (username, date)
         self.ref = None
+        self.is_inline = False
         try:
             extensions = self._data['extensions']
             inline_properties = extensions['inlineProperties']
             self.ref = inline_properties['originalSelection']
             self.head += " (inline comment)"
+            self.is_inline = True
         except KeyError:
             pass
 
@@ -211,8 +213,15 @@ class Comment(Content):
         return comment
 
     def send_reply(self, text):
+        if self.is_inline:
+            return self.send_inline_reply(text)
+        else:
+            return self.send_comment_reply(text)
+
+    def send_comment_reply(self, text):
         page_id = self._data['_expandable']['container']
         page_id = re.search(r'/([^/]*$)', page_id).groups()[0]
+
         url = (f'/rest/tinymce/1/content/{page_id}/'
                f'comments/{self.id}/comment')
         params = {'actions': 'true'}
@@ -227,6 +236,38 @@ class Comment(Content):
                          headers=headers, no_token=True)
         if r.status_code == 200:
             return True
+        return False
+
+    def send_inline_reply(self, text):
+        page_id = self._data['_expandable']['container']
+        page_id = re.search(r'/([^/]*$)', page_id).groups()[0]
+
+        try:
+            root_id = self._data['ancestors'][0]['_links']['self']
+            root_id = re.search(r'/([^/]*$)', root_id).groups()[0]
+        except IndexError:
+            # It's the root element already
+            root_id = self.id
+
+        url = f"rest/inlinecomments/1.0/comments/{root_id}/replies"
+        params = {
+            'containerId': page_id,
+        }
+        data = {
+            "body": md_to_html(text),
+            "commentId": int(root_id),
+        }
+        headers = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+        r = make_request(url, params, method='POST', data=json.dumps(data),
+                         headers=headers)
+        if r.status_code == 200:
+            return True
+        log.debug(r.request.headers)
+        log.debug(r.request.body)
+        log.debug(r.text)
         return False
 
     def match(self, search_string):
