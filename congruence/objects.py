@@ -83,6 +83,11 @@ class Content(ConfluenceObject):
             self.space = None
         self.versionby = User(self._data['history']['lastUpdated']['by'])
 
+        self.blacklisted = False
+        if ("UserBlacklist" in config and
+                self.versionby.username in config["UserBlacklist"]):
+            self.blacklisted = True
+
         self.liked = False  # TODO determine
 
     def get_title(self):
@@ -157,11 +162,8 @@ class Comment(Content):
         date = self._data['history']['createdDate']
         self.url = data['_links']['webui']
         date = convert_date(date)
-        self.blacklisted = False
         username = self.versionby.display_name
-        if ("UserBlacklist" in config and
-                self.versionby.username in config["UserBlacklist"]):
-            self.blacklisted = True
+        if self.blacklisted:
             username = "<blocked user>"
         self.head = '%s, %s' % (username, date)
         self.ref = None
