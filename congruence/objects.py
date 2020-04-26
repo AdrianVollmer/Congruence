@@ -30,6 +30,13 @@ from uuid import uuid4
 from abc import ABC, abstractmethod
 
 
+def is_blacklisted_user(username):
+    return (
+        "UserBlacklist" in config
+        and username in config["UserBlacklist"]
+    )
+
+
 class ConfluenceObject(ABC):
     """Base class for all Confluence content objects
 
@@ -83,10 +90,7 @@ class Content(ConfluenceObject):
             self.space = None
         self.versionby = User(self._data['history']['lastUpdated']['by'])
 
-        self.blacklisted = False
-        if ("UserBlacklist" in config and
-                self.versionby.username in config["UserBlacklist"]):
-            self.blacklisted = True
+        self.blacklisted = is_blacklisted_user(self.versionby.username)
 
         self.liked = False  # TODO determine
 
@@ -294,6 +298,7 @@ class Generic(ConfluenceObject):
     def __init__(self, data):
         super().__init__(data)
         log.debug(json.dumps(data, indent=2))
+        self.id = None
         try:
             self.title = self._data['title']
         except KeyError:

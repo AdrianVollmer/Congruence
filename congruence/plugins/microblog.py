@@ -25,8 +25,7 @@ from congruence.views.common import CongruenceTextBox, key_action
 from congruence.interface import make_request, html_to_text, convert_date,\
         md_to_html
 from congruence.logging import log
-from congruence.confluence import is_blacklisted_user
-from congruence.objects import Content
+from congruence.objects import Content, is_blacklisted_user
 from congruence.external import open_gui_browser
 import congruence.strings as cs
 

@@ -23,7 +23,6 @@ from congruence.views.listbox import CongruenceListBox, \
 from congruence.views.treelistbox import CongruenceTreeListBox,\
         CongruenceCardTreeWidget
 from congruence.interface import make_request, convert_date
-from congruence.args import config
 from congruence.tools import create_diff
 from congruence.logging import log
 from congruence.objects import Comment, ContentWrapper
@@ -379,6 +378,9 @@ class ContentList(CongruenceListBox):
     def gui_browser(self, size=None):
         node = self.get_focus()[0]
         id = node.obj.content.id
+        if not id:
+            self.app.alert("Object has no ID", 'error')
+            return
         url = f"pages/viewpage.action?pageId={id}"
         open_gui_browser(url)
 
@@ -407,8 +409,14 @@ class ContentList(CongruenceListBox):
 
 def open_content_in_cli_browser(app, id):
     log.debug("Build HTML view for page with id '%s'" % id)
+    if not id:
+        app.alert("Object has no ID", 'error')
+        return
     rest_url = f"rest/api/content/{id}?expand=body.view"
     r = make_request(rest_url)
+    if not r.ok:
+        app.alert("Request failed (%d)" % r.status_code, 'error')
+        return
     content = r.json()
     content = content["body"]["view"]["value"]
 
