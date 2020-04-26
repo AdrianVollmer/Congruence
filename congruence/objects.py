@@ -30,100 +30,75 @@ from uuid import uuid4
 from abc import ABC, abstractmethod
 
 
-def determine_type(data):
-    """Try to determine which type of object it is"""
-
-    type_map = {
-        'page': Page,
-        'blogpost': Blogpost,
-        'comment': Comment,
-        'attachment': Attachment,
-        'personal': Space,
-        'space': Space,
-        'user': User,
-        'content': ContentObject,
-    }
-    try:
-        if 'content' in data:
-            if 'type' in data['content']:
-                return type_map[data['content']['type']]
-        if 'entityType' in data:
-            return type_map[data['entityType']]
-    except KeyError:
-        return ContentObject
-
-
 class ConfluenceObject(ABC):
-    """Base class for all confluence objects
+    """Base class for all Confluence content objects
 
     Can be a page, a comment, a user, a space, anything.
 
     """
 
+    def __init__(self, data):
+        self._data = data
+        #  log.debug(json.dumps(data, indent=2))
+        self.type = self._data['type']
+
     @abstractmethod
     def get_title(self):
-        """Subclasses who implement this must return a string or a list of
-        strings with len=5 if cols=True"""
+        """Subclasses who implement this must return a string"""
+        pass
+
+    @abstractmethod
+    def get_columns(self):
+        """Subclasses who implement this must return a list of length five
+
+        This function is used for representing the object in a list entry.
+        """
         pass
 
     def get_json(self):
         return json.dumps(self._data, indent=2, sort_keys=True)
 
     def get_content(self):
+        """Represents the body of a carded list entry"""
+
         return ""
 
+    def get_head(self):
+        """Represents the head of a carded list entry"""
 
-class ContentObject(ConfluenceObject):
-    """Base class for content objects
+        return self.get_title()
 
-    This is only for pages, blog posts, attachments and comments
-    """
+
+class Content(ConfluenceObject):
+    """Base class for Pages, Blogposts, Comments, Attachments"""
 
     def __init__(self, data):
-        """Constructor
-
-        :data: a json object representing the object
-        """
-
-        self._data = data
-        content = data['content']
-        self.type = content['type']
-        self.id = content['id']
-
+        super().__init__(data)
+        self.title = self._data['title']
+        self.id = self._data['id']
+        self.versionby = User(self._data['history']['lastUpdated']['by'])
         try:
-            self.url = data['url']
-        except KeyError:
-            self.url = None
-        try:
-            self.space = Space(content['space'])
+            self.space = Space(self._data['space'])
         except KeyError:
             self.space = None
-        self.versionby = User(content['history']['lastUpdated']['by'])
+        self.versionby = User(self._data['history']['lastUpdated']['by'])
 
-        self.title = content['title']
         self.liked = False  # TODO determine
 
+    def get_title(self):
+        return self._data['title']
+
     def get_columns(self):
-        content = self._data['content']
+        content = self._data
         lastUpdated = content['history']['lastUpdated']
         result = [
             self.type[0].upper(),
             self.space.key if self.space else '?',
             self.versionby.display_name,
             convert_date(lastUpdated['when'], 'friendly'),
-            self.title,
+            self.get_title(),
         ]
         return result
-
-    def get_title(self):
-        return self.title
-
-    def match(self, search_string):
-        return re.search(search_string, self.title)
-
-    def get_content(self):
-        # TODO load content if not in object already
-        return self._data['content']['_expandable']['container']
 
     #  def get_like_status(self):
 
@@ -167,22 +142,20 @@ class ContentObject(ConfluenceObject):
             return self.like()
 
 
-class Page(ContentObject):
-    def __init__(self, data):
-        super().__init__(data)
+class Page(Content):
+    pass
 
 
 class Blogpost(Page):
+    pass
+
+
+class Comment(Content):
     def __init__(self, data):
         super().__init__(data)
 
-
-class Comment(ContentObject):
-    def __init__(self, data):
-        super().__init__(data)
-
-        date = self._data['content']['history']['createdDate']
-        self.url = data['content']['_links']['webui']
+        date = self._data['history']['createdDate']
+        self.url = data['_links']['webui']
         date = convert_date(date)
         self.blacklisted = False
         username = self.versionby.display_name
@@ -193,12 +166,27 @@ class Comment(ContentObject):
         self.head = '%s, %s' % (username, date)
         self.ref = None
         try:
-            extensions = self._data['content']['extensions']
+            extensions = self._data['extensions']
             inline_properties = extensions['inlineProperties']
             self.ref = inline_properties['originalSelection']
             self.head += " (inline comment)"
         except KeyError:
             pass
+
+    def get_title(self):
+        return self.title
+
+    def get_columns(self):
+        content = self._data
+        lastUpdated = content['history']['lastUpdated']
+        result = [
+            self.type[0].upper(),
+            self.space.key if self.space else '?',
+            self.versionby.display_name,
+            convert_date(lastUpdated['when'], 'friendly'),
+            self.get_title(),
+        ]
+        return result
 
     def get_head(self):
         return self.head
@@ -208,7 +196,7 @@ class Comment(ContentObject):
         if self.blacklisted:
             return ""
         comment = html_to_text(
-            self._data['content']['body']['view']['value'],
+            self._data['body']['view']['value'],
             replace_emoticons=True,
         )
         if self.ref:
@@ -217,11 +205,10 @@ class Comment(ContentObject):
         return comment
 
     def send_reply(self, text):
-        page_id = self._data['content']['_expandable']['container']
-        comment_id = self._data['content']['id']
+        page_id = self._data['_expandable']['container']
         page_id = re.search(r'/([^/]*$)', page_id).groups()[0]
         url = (f'/rest/tinymce/1/content/{page_id}/'
-               f'comments/{comment_id}/comment')
+               f'comments/{self.id}/comment')
         params = {'actions': 'true'}
         answer = md_to_html(text, url_encode='html')
         uuid = str(uuid4())
@@ -246,26 +233,17 @@ class Comment(ContentObject):
             return re.search(search_string, self.title)
 
 
-class Attachment(ContentObject):
-    def __init__(self, data):
-        super().__init__(data)
-        try:
-            self.download = data['_links']['download']
-        except KeyError:
-            self.download = ""
+class Attachment(Content):
+    pass
 
 
 class User(ConfluenceObject):
     def __init__(self, data):
-        super().__init__()
-        self.type = 'user'
+        super().__init__(data)
+        self.type = "user"
 
-        if 'user' in data:
-            self._data = data['user']
-            self.date = convert_date(data['timestamp'], 'friendly')
-        else:
-            self._data = data
-            self.date = "?"
+        self._data = data
+        self.date = '?'
         #  log.debug(self.get_json())
         self.display_name = self._data['displayName']
         self.username = self._data['username']
@@ -275,7 +253,7 @@ class User(ConfluenceObject):
 
     def get_columns(self):
         return [
-            'U',
+            self.type[0].upper(),
             '',
             self.display_name,
             self.date,
@@ -285,9 +263,7 @@ class User(ConfluenceObject):
 
 class Space(ConfluenceObject):
     def __init__(self, data):
-        super().__init__()
-        self._data = data
-        self.type = 'space'
+        super().__init__(data)
 
         try:
             self.key = self._data['key']
@@ -301,7 +277,7 @@ class Space(ConfluenceObject):
 
     def get_columns(self):
         return [
-            'S',
+            self.type[0].upper(),
             self.key,
             self.name,
             convert_date(self._data['timestamp'], 'friendly'),
@@ -310,3 +286,80 @@ class Space(ConfluenceObject):
 
     def match(self, search_string):
         return re.search(search_string, self.name)
+
+
+class Generic(ConfluenceObject):
+    def __init__(self, data):
+        super().__init__(data)
+        log.debug(json.dumps(data, indent=2))
+        try:
+            self.title = self._data['title']
+        except KeyError:
+            self.title = "Generic object"
+
+    def get_title(self):
+        return self.title
+
+    def get_columns(self):
+        return [
+            '?',
+            '?',
+            '?',
+            '?',
+            self.title,
+        ]
+
+
+class ContentWrapper(object):
+    """Class for content wrapper objects
+
+    This is only for pages, blog posts, attachments and comments
+    """
+
+    type_map = {
+        'page': Page,
+        'blogpost': Blogpost,
+        'comment': Comment,
+        'attachment': Attachment,
+        'space': Space,
+        'personal': Space,
+        'user': User,
+    }
+
+    def __init__(self, data):
+        """Constructor
+
+        :data: a json object representing the object
+        """
+
+        self._data = data
+        #  log.debug(json.dumps(data, indent=2))
+        content_data = data[data['entityType']]
+        self.type = content_data['type']
+        try:
+            self.content = self.type_map[self.type](content_data)
+        except KeyError:
+            log.error("Unknown entity type: %s" % self.type)
+            self.content = Generic(content_data)
+
+        self.title = self.content.get_title()
+
+    def get_title(self):
+        return self.content.get_title()
+
+    def get_columns(self):
+        return self.content.get_columns()
+
+    def get_head(self):
+        return self.content.get_head()
+
+    def match(self, search_string):
+        return re.search(search_string, self.title)
+
+    def get_content(self):
+        # TODO load content if not in object already
+        #  return self._data['content']['_expandable']['container']
+        return self.content.get_content()
+
+    def get_json(self):
+        return json.dumps(self._data, indent=2, sort_keys=True)

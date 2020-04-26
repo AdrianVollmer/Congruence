@@ -52,11 +52,11 @@ class CongruenceAPIEntry(ColumnListBoxEntry):
             parent = self.obj._data['resultParentContainer']
             page_id = parent['displayUrl']
             page_id = page_id.split('=')[-1]
-            title = parent['title']
+            #  title = parent['title']
             return CommentContextView(
                 page_id,
-                title,
-                self.obj.id,
+                self.obj.content,
+                self.obj.content.id,
             )
 
     def search_match(self, search_string):

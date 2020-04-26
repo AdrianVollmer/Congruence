@@ -26,7 +26,7 @@ from congruence.interface import make_request, convert_date
 from congruence.args import config
 from congruence.tools import create_diff
 from congruence.logging import log
-from congruence.objects import Comment, determine_type
+from congruence.objects import Comment, ContentWrapper
 import congruence.strings as cs
 from congruence.external import open_gui_browser, open_doc_in_cli_browser
 
@@ -75,7 +75,7 @@ def get_comments_of_page(id):
             parent = get_by_id(parent, a['id'])['children']
 
         parent.append({
-            c['id']: Comment({'content': c}),
+            c['id']: Comment(c),
             'children': [],
         })
 
@@ -89,12 +89,12 @@ class CommentContextView(CongruenceTreeListBox):
     :obj: one object of type Comment of the comment tree
     """
 
-    def __init__(self, page_id, title, focus_id=None):
+    def __init__(self, page_id, obj, focus_id=None):
         self.title = "Comments"
         log.debug("Build CommentContextView for comments of page with id '%s'"
                   % page_id)
         comments = {
-            '0': {'title': title},
+            '0': {'title': obj.title, 'id': obj.id},
             'children': get_comments_of_page(page_id),
         }
         help_string = cs.COMMENT_CONTEXT_VIEW_HELP
@@ -127,6 +127,8 @@ class CommentContextView(CongruenceTreeListBox):
                 self.app.alert("Comment sent", 'info')
             else:
                 self.app.alert("Comment failed", 'error')
+        else:
+            self.app.alert("Reply empty, aborting", 'warning')
         # TODO self.update()
 
     @key_action
@@ -141,7 +143,11 @@ class CommentContextView(CongruenceTreeListBox):
     @key_action
     def cli_browser(self, size=None):
         obj = self.focus.get_value()
-        id = obj.id
+        try:
+            id = obj.id
+        except AttributeError:
+            # The root object is just a dict, not an object
+            id = obj['id']
         open_content_in_cli_browser(self.app, id)
 
     @key_action
@@ -157,15 +163,10 @@ class SingleCommentView(CongruenceTextBox):
     def __init__(self, obj):
         self.obj = obj
         self.title = "Comment"
-        content = obj._data['content']
         try:
-            update = content['version']
+            update = self.obj._data['version']
             infos = {
                 'Title': obj.get_title(),
-                #  'Space': content['space']['name'],
-                #  'Space key': content['space']['key'],
-                #  'Created by': history['createdBy']['displayName'],
-                #  'Created at': convert_date(history['createdDate']),
                 'Last updated by': update['by']['displayName'],
                 'Last updated at': convert_date(update['when']),
                 'Last change message': update['message'],
@@ -235,20 +236,19 @@ class PageView(CongruenceTextBox):
 
     @key_action
     def cli_browser(self, size=None):
-        id = self.obj.id
+        id = self.obj.content.id
         open_content_in_cli_browser(self.app, id)
 
     @key_action
     def gui_browser(self, size=None):
-        id = self.obj.id
+        id = self.obj.content.id
         url = f"pages/viewpage.action?pageId={id}"
         open_gui_browser(url)
 
     @key_action
     def go_to_comments(self, size=None):
-        page_id = self.obj.id
-        title = self.obj.title
-        view = CommentContextView(page_id, title)
+        page_id = self.obj.content.id
+        view = CommentContextView(page_id, self.obj)
         self.app.push_view(view)
 
     @key_action
@@ -372,13 +372,13 @@ class ContentList(CongruenceListBox):
     @key_action
     def cli_browser(self, size=None):
         node = self.get_focus()[0]
-        id = node.obj.id
+        id = node.obj.content.id
         open_content_in_cli_browser(self.app, id)
 
     @key_action
     def gui_browser(self, size=None):
         node = self.get_focus()[0]
-        id = node.obj.id
+        id = node.obj.content.id
         url = f"pages/viewpage.action?pageId={id}"
         open_gui_browser(url)
 
@@ -391,7 +391,7 @@ class ContentList(CongruenceListBox):
         response = r.json()
         if r.ok and response:
             for each in response['results']:
-                obj = determine_type(each)(each)
+                obj = ContentWrapper(each)
                 try:
                     if not is_blacklisted_user(obj.versionby.username):
                         result.append(self._entryclass(obj))

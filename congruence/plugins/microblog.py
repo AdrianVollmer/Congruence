@@ -26,7 +26,7 @@ from congruence.interface import make_request, html_to_text, convert_date,\
         md_to_html
 from congruence.logging import log
 from congruence.confluence import is_blacklisted_user
-from congruence.objects import ContentObject
+from congruence.objects import Content
 from congruence.external import open_gui_browser
 import congruence.strings as cs
 
@@ -153,7 +153,7 @@ class MicroblogEntry(CardedListBoxEntry):
         return view
 
 
-class MicroblogObject(ContentObject):
+class MicroblogObject(Content):
     def __init__(self, data):
         self._data = data
         self.blacklisted = is_blacklisted_user(self._data['authorName'])
