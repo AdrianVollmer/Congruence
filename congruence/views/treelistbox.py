@@ -84,15 +84,15 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
 
     @key_action
     def search(self, size=None):
-        self.search()
+        self._search()
 
     @key_action
     def search_next(self, size=None):
-        self.search_next(1)
+        self._search_next(1)
 
     @key_action
     def search_prev(self, size=None):
-        self.search_next(-1)
+        self._search_next(-1)
 
     def _search(self):
         def search_inner(expr):
