@@ -199,11 +199,8 @@ class PageView(CongruenceTextBox):
     def __init__(self, obj):
         self.obj = obj
         self.title = "Page"
-        #  text = [urwid.Text(obj.get_json())]
-        if 'content' in obj._data:
-            content = obj._data['content']
-        else:
-            content = obj._data
+        content = obj._data['content']
+        # TODO don't access private member
         try:
             history = content['history']
             update = history['lastUpdated']
@@ -228,7 +225,7 @@ class PageView(CongruenceTextBox):
     @key_action
     def list_diff(self, size=None):
         try:
-            view = DiffView(self.obj.id)
+            view = DiffView(self.obj.content.id)
             self.app.push_view(view)
         except KeyError:
             self.app.alert('No diff available', 'warning')
@@ -252,8 +249,8 @@ class PageView(CongruenceTextBox):
 
     @key_action
     def like(self, size=None):
-        if self.obj.toggle_like():
-            if self.obj.liked:
+        if self.obj.content.toggle_like():
+            if self.obj.content.liked:
                 self.app.alert("You liked this", 'info')
             else:
                 self.app.alert("You unliked this", 'info')
