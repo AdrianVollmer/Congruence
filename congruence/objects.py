@@ -311,13 +311,14 @@ class User(ConfluenceObject):
 class Space(ConfluenceObject):
     def __init__(self, data):
         super().__init__(data)
+        self.type = "space"
 
+        self.key = self._data['key']
+        self.name = self._data['name']
         try:
-            self.key = self._data['key']
-            self.name = self._data['name']
+            self.date = convert_date(self._data['timestamp'], 'friendly')
         except KeyError:
-            self.key = self._data['space']['key']
-            self.name = self._data['space']['name']
+            self.date = '?'
 
     def get_title(self):
         return self.name
@@ -327,7 +328,7 @@ class Space(ConfluenceObject):
             self.type[0].upper(),
             self.key,
             self.name,
-            convert_date(self._data['timestamp'], 'friendly'),
+            self.date,
             '',
         ]
 
@@ -338,6 +339,7 @@ class Space(ConfluenceObject):
 class Generic(ConfluenceObject):
     def __init__(self, data):
         super().__init__(data)
+        self.type = '?'
         log.debug(json.dumps(data, indent=2))
         self.id = None
         try:
@@ -372,6 +374,7 @@ class ContentWrapper(object):
         'space': Space,
         'personal': Space,
         'user': User,
+        'known': User,
     }
 
     def __init__(self, data):
