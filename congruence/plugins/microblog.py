@@ -151,6 +151,9 @@ class MicroblogEntry(CardedListBoxEntry):
         view.title = "Post"
         return view
 
+    def search_match(self, search_string):
+        return self.obj.match(search_string)
+
 
 class MicroblogObject(Content):
     def __init__(self, data):

@@ -150,6 +150,12 @@ class Content(ConfluenceObject):
         else:
             return self.like()
 
+    def match(self, search_string):
+        return (
+            re.search(search_string, self.get_title())
+            or re.search(search_string, self.get_content())
+        )
+
 
 class Page(Content):
     pass
@@ -270,15 +276,6 @@ class Comment(Content):
         log.debug(r.text)
         return False
 
-    def match(self, search_string):
-        try:
-            return (
-                re.search(search_string, self.get_title())
-                or re.search(search_string, self.get_content())
-            )
-        except KeyError:
-            return re.search(search_string, self.title)
-
 
 class Attachment(Content):
     pass
@@ -331,9 +328,6 @@ class Space(ConfluenceObject):
             self.date,
             '',
         ]
-
-    def match(self, search_string):
-        return re.search(search_string, self.name)
 
 
 class Generic(ConfluenceObject):
@@ -405,7 +399,7 @@ class ContentWrapper(object):
         return self.content.get_head()
 
     def match(self, search_string):
-        return re.search(search_string, self.title)
+        return self.content.match(search_string)
 
     def get_content(self):
         # TODO load content if not in object already
