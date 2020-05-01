@@ -14,49 +14,68 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__help__ = """Confluence API
+__help__ = """Confluence Search
 
-What you see here are objects returned by the API. The type of each object
-is indicated by a single letter:
+Reading these articles will vastly improve your ability to search
+Confluence:
 
-    * P: Page
-    * C: Comment
-    * B: Blogpost
-    * A: Attachment
-    * U: User
-
+    * https://confluence.atlassian.com/conf615/search-967338147.html
+    * https://confluence.atlassian.com/conf615/confluence-search-syntax-967338169.html # noqa
 """
 
 from congruence.views.listbox import ColumnListBoxEntry
-from congruence.logging import log
+from congruence.views.common import key_action
 from congruence.confluence import CommentContextView, PageView, ContentList
 
 
 class APIView(ContentList):
-
     def __init__(self, properties={}):
-        self.title = "API"
-        super().__init__(EntryClass=CongruenceAPIEntry, help_string=__help__)
-        self.params = properties['Parameters']
-        self.update()
+        super().__init__(EntryClass=SearchResultEntry, help_string=__help__)
+        self.title = "Search"
+        # TODO filter by space, type, user, date
+        # TODO order by
+        self.params = {
+            'cql': '',
+            'start': 0,
+            'limit': 20,
+            'excerpt': 'highlight',
+            'expand': 'content.space,content.history.lastUpdated,'
+                      'content.history.previousVersion,space.homepage.history',
+            'includeArchivedSpaces': 'false',
+            'src': 'next.ui.search',
+        }
+        self.search_confluence()
+        self.redraw()
+
+    @key_action
+    def search_confluence(self, size=None):
+        self.app.get_input("Search:", self.conf_search)
+
+    def conf_search(self, query):
+        if not query:
+            self.app.alert("Query empty, aborting", 'warning')
+            return
+        self.params['cql'] = f'siteSearch ~ "{query}"'
+        self.params['start'] = 0
+        self.entries = self.get_entries()
+        self.redraw()
         if self.entries:
             self.set_focus(0)
 
 
-class CongruenceAPIEntry(ColumnListBoxEntry):
+class SearchResultEntry(ColumnListBoxEntry):
     def get_next_view(self):
-        log.debug(self.obj.type)
         if self.obj.type in ["page", "blogpost"]:
             return PageView(self.obj)
         elif self.obj.type == "comment":
             parent = self.obj._data['resultParentContainer']
             page_id = parent['displayUrl']
             page_id = page_id.split('=')[-1]
-            #  title = parent['title']
+            title = parent['title']
             return CommentContextView(
                 page_id,
-                self.obj.content,
-                self.obj.content.id,
+                title,
+                self.obj.id,
             )
 
     def search_match(self, search_string):

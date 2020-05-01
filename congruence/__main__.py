@@ -19,4 +19,7 @@ from congruence.app import CongruenceApp
 
 
 def main():
-    CongruenceApp().main()
+    try:
+        CongruenceApp().main()
+    except KeyboardInterrupt:
+        pass

@@ -14,63 +14,55 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.logging import log
 from congruence.keys import KEY_ACTIONS
+#  from congruence.logging import log
 from congruence.ansiescape import translate_text_for_urwid
 
 import urwid
 
 
-class CongruenceView(object):
-    def get_actions(self):
-        key_actions = self.key_actions + self.app.key_actions
-        return key_actions
+def key_action(f):
+    f.is_key_action = True
+    return f
 
+
+class CollectKeyActions(urwid.widget.WidgetMeta):
+    """This metaclass creates a list of all key actions
+
+    Key actions must be 'marked with the @key_action decorator. It also
+    appends all key actions of all base classes.
+    """
+    def __new__(meta, name, bases, dct):
+        key_actions = []
+        for key, value in dct.items():
+            if hasattr(value, 'is_key_action'):
+                key_actions.append(key.replace('_', ' '))
+        dct['key_actions'] = key_actions
+        for b in bases:
+            dct['key_actions'] += getattr(b, 'key_actions', [])
+        return super().__new__(meta, name, bases, dct)
+
+
+class CongruenceView(object):
     def selectable(self):
         return True
 
     def keypress(self, size, key):
-        log.debug("Keypress in CongruenceView: %s" % key)
         if (
             key not in KEY_ACTIONS
             or KEY_ACTIONS[key] not in self.key_actions
         ):
             return key
         action = KEY_ACTIONS[key]
-        f = getattr(self, 'ka_' + action.replace(' ', '_'), None)
-        if callable(f):
+        f = getattr(self, action.replace(' ', '_'), None)
+        if callable(f) and f.is_key_action:
             f(size=size)
             return
         return super().keypress(size, key)
 
 
-class RememberParentKeyMapMeta(urwid.widget.WidgetMeta):
-    """This is a metaclass which keeps track of the 'key_actions' class variable
-
-    Subclasses will know what the value of key_actions in its base classes
-    were.
-    """
-
-    def __new__(cls, name, bases, attrs):
-        if 'key_actions' not in attrs:
-            attrs['key_actions'] = []
-        for b in bases:
-            if hasattr(b, "key_actions"):
-                attrs['key_actions'] += b.key_actions
-        return type.__new__(cls, name, bases, attrs)
-
-
 class CongruenceTextBox(CongruenceView, urwid.ListBox,
-                        metaclass=RememberParentKeyMapMeta):
-    key_actions = [
-        'move up',
-        'move down',
-        'page up',
-        'page down',
-        'scroll to bottom',
-        'scroll to top',
-    ]
-
+                        metaclass=CollectKeyActions):
     def __init__(self, text, color=False, help_string=None):
         self.text = text
         if color and text:
@@ -83,20 +75,26 @@ class CongruenceTextBox(CongruenceView, urwid.ListBox,
         self.help_string = help_string
         super().__init__(urwid.SimpleFocusListWalker([textbox]))
 
-    def ka_move_down(self, size=None):
+    @key_action
+    def move_down(self, size=None):
         urwid.ListBox.keypress(self, size, 'down')
 
-    def ka_move_up(self, size=None):
+    @key_action
+    def move_up(self, size=None):
         urwid.ListBox.keypress(self, size, 'up')
 
-    def ka_page_down(self, size=None):
+    @key_action
+    def page_down(self, size=None):
         urwid.ListBox.keypress(self, size, 'page down')
 
-    def ka_page_up(self, size=None):
+    @key_action
+    def page_up(self, size=None):
         urwid.ListBox.keypress(self, size, 'page up')
 
-    def ka_scroll_to_bottom(self, size=None):
+    @key_action
+    def scroll_to_bottom(self, size=None):
         self.set_focus(0, coming_from='above')
 
-    def ka_scroll_to_top(self, size=None):
+    @key_action
+    def scroll_to_top(self, size=None):
         self.set_focus(0, coming_from='below')

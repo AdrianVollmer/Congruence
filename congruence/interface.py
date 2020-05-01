@@ -22,6 +22,7 @@ from urllib.parse import urlencode
 from datetime import datetime as dt, timedelta
 import json
 from requests import Session, utils
+import re
 from shlex import split
 from subprocess import check_output
 import time
@@ -200,12 +201,65 @@ def dump_http(response, filename):
         f.write('\n')
 
 
-def html_to_text(html):
+def html_to_text(
+    html,
+    replace_emoticons=False,
+    fix_creation_links=False,
+):
+    if replace_emoticons:
+        html = convert_emoticons(html)
+    if fix_creation_links:
+        html = remove_creation_links(html)
     try:
         return html2text.html2text(html).strip()
     except Exception as e:
         log.exception(e)
         return html
+
+
+def remove_creation_links(html):
+    soup = BeautifulSoup(html, features="lxml")
+    links = soup.findAll('a', 'createlink')
+    for l in links:
+        l['href'] = re.sub('[0-9]+$', '', l['href'])
+    return str(soup)
+
+
+def convert_emoticons(html):
+    """Replace Confluence emoticon images with regular smileys"""
+
+    emoticon_dict = {
+        'smile': ':)',
+        'sad': ':(',
+        'cheeky': ':P',
+        'laugh': ':D',
+        'wink': ';)',
+        'thumbs-up': '👍',
+        'thumbs-down': '👎',
+        'light-on': '💡',
+        #  'light-off': '',
+        'warning': '❗',
+        'yellow-star': '⭐',
+        #  'red-star': '',
+        #  'green-star': '',
+        #  'blue-star': '',
+        #  'yellow-star': '',
+        'tick': '✔️',
+        'cross': '❌',
+        'information': 'ℹ️',
+        'plus': '➕',
+        'minus': '➖',
+        'question': '❓',
+        'heart': '❤️️',
+        'broken-heart': '💔',
+    }
+    soup = BeautifulSoup(html, features="lxml")
+    emoticons = soup.findAll('img', 'emoticon')
+    for e in emoticons:
+        for k, v in emoticon_dict.items():
+            if f'emoticon-{k}' in e['class']:
+                e.replace_with(v)
+    return str(soup)
 
 
 def md_to_html(text, url_encode=None):

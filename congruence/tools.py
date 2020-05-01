@@ -36,8 +36,8 @@ def pipe_through(text, command):
 
 def create_diff(v1, v2, fromfile="", tofile="", html=False):
     if html:
-        v1 = html_to_text(v1)
-        v2 = html_to_text(v2)
+        v1 = html_to_text(v1, fix_creation_links=True)
+        v2 = html_to_text(v2, fix_creation_links=True)
     #  log.debug(v1)
     generator = unified_diff(
         v1.splitlines(),

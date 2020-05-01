@@ -52,6 +52,7 @@ KEYS = {
     'show log': ('!', "Show application log"),
     'post comment': ('P', "Post a new comment to a page"),
     'go to comments': ('C', "Go to the comment section of a page"),
+    'search confluence': ('s', "Perform a server-side Confluence search"),
 }
 
 if 'KeyMap' in config:

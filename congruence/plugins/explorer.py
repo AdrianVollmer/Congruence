@@ -22,6 +22,7 @@ more content.
 """
 
 
+from congruence.views.common import key_action
 from congruence.views.treelistbox import CongruenceTreeListBox, \
     CongruenceTreeListBoxEntry
 from congruence.interface import make_request
@@ -34,13 +35,6 @@ import urwid
 
 
 class SpaceView(CongruenceTreeListBox):
-
-    key_actions = [
-        'toggle collapse',
-        'cli browser',
-        'gui browser',
-    ]
-
     def __init__(self, properties={}):
         self.title = "Explorer"
         self.properties = properties
@@ -72,7 +66,8 @@ class SpaceView(CongruenceTreeListBox):
         }
         super().__init__(self.entries, SpaceEntry, help_string=__help__)
 
-    def ka_toggle_collapse(self, size=None):
+    @key_action
+    def toggle_collapse(self, size=None):
         if self.focus.expanded:
             urwid.TreeListBox.keypress(self, size, '-')
         else:
@@ -83,7 +78,8 @@ class SpaceView(CongruenceTreeListBox):
                 obj.expanded = True
             urwid.TreeListBox.keypress(self, size, '+')
 
-    def ka_cli_browser(self, size=None):
+    @key_action
+    def cli_browser(self, size=None):
         obj = self.focus.get_value()
         if isinstance(obj, dict):
             # it's the root
@@ -98,7 +94,8 @@ class SpaceView(CongruenceTreeListBox):
         content = f'<html><head></head><body>{content}</body></html>'
         open_doc_in_cli_browser(content.encode(), self.app)
 
-    def ka_gui_browser(self, size=None):
+    @key_action
+    def gui_browser(self, size=None):
         obj = self.focus.get_value()
         if isinstance(obj, dict):
             # it's the root
@@ -114,7 +111,7 @@ class ExpandableSpace(Space):
     """This class can 'expand', i.e. load a list of pages in its space"""
 
     def __init__(self, data):
-        super().__init__(data)
+        super().__init__(data['space'])
         self.expanded = False
 
     def get_children(self):
@@ -134,7 +131,7 @@ class ExpandableSpace(Space):
             if len(result) >= size:
                 break
             params['startIndex'] = len(result)
-        result = [ExpandablePage(p) for p in result]
+        result = [ExpandablePage({'content': p}) for p in result]
         log.debug("Retrieved %d items" % len(result))
         return result
 
@@ -190,7 +187,7 @@ class ExpandablePage(Page):
         }
         r = make_request(url, params=params)
         result = r.json()['results']
-        result = [ExpandablePage(p) for p in result]
+        result = [ExpandablePage({'content': p}) for p in result]
         log.debug("Retrieved %d items" % len(result))
         return result
 

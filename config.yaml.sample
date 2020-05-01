@@ -51,6 +51,8 @@ Plugins:
             expand: content.space,content.history.lastUpdated,content.history.previousVersion,space.homepage.history
             excerpt: none
     -
+        PluginName: Search
+    -
         PluginName: Notifications
         Limit: 30
     -

@@ -65,9 +65,7 @@ Ideas for the next release
 
 * Cache metadata
 * Keep track of 'seen'/'unseen' objects
-* New plugin: interactive search
 * Extract links and images of content
-* Global blacklist of users for filtering
 * Show scroll  percentage in title bar
 * Improve search
 * Add a 'versions' view and allow diffs between arbitrary versions

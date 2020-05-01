@@ -17,13 +17,15 @@
 This file contains views and functions which are specific to Confluence
 """
 
-from congruence.views.common import CongruenceTextBox
+from congruence.views.common import CongruenceTextBox, key_action
+from congruence.views.listbox import CongruenceListBox, \
+        ColumnListBoxEntry
 from congruence.views.treelistbox import CongruenceTreeListBox,\
         CongruenceCardTreeWidget
-from congruence.interface import make_request, convert_date, html_to_text
+from congruence.interface import make_request, convert_date
 from congruence.tools import create_diff
 from congruence.logging import log
-from congruence.objects import Comment
+from congruence.objects import Comment, ContentWrapper
 import congruence.strings as cs
 from congruence.external import open_gui_browser, open_doc_in_cli_browser
 
@@ -40,13 +42,17 @@ def get_comments_of_page(id):
     #  id = re.search('/([^/]*)$', url).groups()[0]
     log.debug("Get comment tree of page %s" % id)
 
-    url = f'rest/api/content/{id}/child/comment?'\
-          + 'expand=body.view,content,version,ancestors'\
-          + '&depth=all&limit=9999'
+    url = f'rest/api/content/{id}/child/comment'
+    params = {
+        'expand': 'body.view,content,history.lastUpdated,version,ancestors,'
+                  'extensions.inlineProperties,version',
+        'depth': 'all',
+        'limit': 9999,
+    }
 
     items = []
     while True:
-        r = make_request(url)
+        r = make_request(url, params=params)
         parsed = r.json()
         items += parsed['results']
         links = parsed['_links']
@@ -60,7 +66,6 @@ def get_comments_of_page(id):
     # Build the structure returned by Confluence into something more useful.
     # Most importantly, it's a flat list of all items with each item
     # possessing a list of its ancestors. We want a nested list.
-    # Also, we only keep track of certain attributes.
     for c in items:
         parent = result
         # Step down the ancestor list
@@ -83,20 +88,12 @@ class CommentContextView(CongruenceTreeListBox):
     :obj: one object of type Comment of the comment tree
     """
 
-    key_actions = [
-        'reply',
-        'like',
-        'cli browser',
-        'gui browser',
-        'toggle collapse',
-    ]
-
-    def __init__(self, page_id, title, focus_id=None):
+    def __init__(self, page_id, obj, focus_id=None):
         self.title = "Comments"
         log.debug("Build CommentContextView for comments of page with id '%s'"
                   % page_id)
         comments = {
-            '0': {'title': title},
+            '0': {'title': obj.title, 'id': obj.id},
             'children': get_comments_of_page(page_id),
         }
         help_string = cs.COMMENT_CONTEXT_VIEW_HELP
@@ -114,12 +111,13 @@ class CommentContextView(CongruenceTreeListBox):
         if node:
             self.set_focus(node)
 
-    def ka_reply(self, size=None):
+    @key_action
+    def reply(self, size=None):
         obj = self.get_focus()[0].get_value()
         prev_msg = obj.get_content()
         prev_msg = prev_msg.splitlines()
         prev_msg = '\n'.join([f"## > {line}" for line in prev_msg])
-        prev_msg = "## %s wrote:\n%s" % (obj.author, prev_msg)
+        prev_msg = "## %s wrote:\n%s" % (obj.versionby.display_name, prev_msg)
         help_text = cs.REPLY_MSG + prev_msg
         reply = self.app.get_long_input(help_text)
 
@@ -128,9 +126,12 @@ class CommentContextView(CongruenceTreeListBox):
                 self.app.alert("Comment sent", 'info')
             else:
                 self.app.alert("Comment failed", 'error')
+        else:
+            self.app.alert("Reply empty, aborting", 'warning')
         # TODO self.update()
 
-    def ka_like(self, size=None):
+    @key_action
+    def like(self, size=None):
         comment = self.get_focus()[0].get_value()
         if comment.toggle_like():
             if comment.liked:
@@ -138,21 +139,20 @@ class CommentContextView(CongruenceTreeListBox):
             else:
                 self.app.alert("You unliked this", 'info')
 
-    def ka_cli_browser(self, size=None):
+    @key_action
+    def cli_browser(self, size=None):
         obj = self.focus.get_value()
-        id = obj.id
-        log.debug("Build HTML view for page with id '%s'" % id)
-        rest_url = f"rest/api/content/{id}?expand=body.storage"
-        r = make_request(rest_url)
-        content = r.json()
-        content = content['body']['storage']['value']
+        try:
+            id = obj.id
+        except AttributeError:
+            # The root object is just a dict, not an object
+            id = obj['id']
+        open_content_in_cli_browser(self.app, id)
 
-        content = f'<html><head></head><body>{content}</body></html>'
-        open_doc_in_cli_browser(content.encode(), self.app)
-
-    def ka_gui_browser(self, size=None):
+    @key_action
+    def gui_browser(self, size=None):
         obj = self.focus.get_value()
-        url = obj._data['_links']['webui']
+        url = obj.url
         open_gui_browser(url)
 
 
@@ -162,22 +162,17 @@ class SingleCommentView(CongruenceTextBox):
     def __init__(self, obj):
         self.obj = obj
         self.title = "Comment"
-        content = obj._data
         try:
-            update = content['version']
+            update = self.obj._data['version']
             infos = {
                 'Title': obj.get_title(),
-                #  'Space': content['space']['name'],
-                #  'Space key': content['space']['key'],
-                #  'Created by': history['createdBy']['displayName'],
-                #  'Created at': convert_date(history['createdDate']),
                 'Last updated by': update['by']['displayName'],
                 'Last updated at': convert_date(update['when']),
                 'Last change message': update['message'],
                 'Version number': update['number'],
             }
             text = '\n'.join([f'{k}: {v}' for k, v in infos.items()])
-            text += '\n\n' + html_to_text(self.obj.get_content())
+            text += '\n\n' + self.obj.get_content()
         except KeyError as e:
             self.app.alert("KeyError (%s), displaying raw data" % e, 'error')
             text = obj.get_json()
@@ -201,22 +196,11 @@ class CommentWidget(CongruenceCardTreeWidget):
 class PageView(CongruenceTextBox):
     """A text box showing metadata of a page"""
 
-    key_actions = [
-        'list diff',
-        'cli browser',
-        'gui browser',
-        'go to comments',
-        'like',
-    ]
-
     def __init__(self, obj):
         self.obj = obj
         self.title = "Page"
-        #  text = [urwid.Text(obj.get_json())]
-        if 'content' in obj._data:
-            content = obj._data['content']
-        else:
-            content = obj._data
+        content = obj._data['content']
+        # TODO don't access private member
         try:
             history = content['history']
             update = history['lastUpdated']
@@ -238,38 +222,35 @@ class PageView(CongruenceTextBox):
         help_string = cs.PAGE_VIEW_HELP
         super().__init__(text, help_string=help_string)
 
-    def ka_list_diff(self, size=None):
+    @key_action
+    def list_diff(self, size=None):
         try:
-            view = DiffView(self.obj.id)
+            view = DiffView(self.obj.content.id)
             self.app.push_view(view)
         except KeyError:
             self.app.alert('No diff available', 'warning')
 
-    def ka_cli_browser(self, size=None):
-        id = self.obj.id
-        log.debug("Build HTML view for page with id '%s'" % id)
-        rest_url = f"rest/api/content/{id}?expand=body.storage"
-        r = make_request(rest_url)
-        content = r.json()
-        content = content["body"]["storage"]["value"]
+    @key_action
+    def cli_browser(self, size=None):
+        id = self.obj.content.id
+        open_content_in_cli_browser(self.app, id)
 
-        content = f"<html><head></head><body>{content}</body></html>"
-        open_doc_in_cli_browser(content.encode(), self.app)
-
-    def ka_gui_browser(self, size=None):
-        id = self.obj.id
+    @key_action
+    def gui_browser(self, size=None):
+        id = self.obj.content.id
         url = f"pages/viewpage.action?pageId={id}"
         open_gui_browser(url)
 
-    def ka_go_to_comments(self, size=None):
-        page_id = self.obj.id
-        title = self.obj.title
-        view = CommentContextView(page_id, title)
+    @key_action
+    def go_to_comments(self, size=None):
+        page_id = self.obj.content.id
+        view = CommentContextView(page_id, self.obj)
         self.app.push_view(view)
 
-    def ka_like(self, size=None):
-        if self.obj.toggle_like():
-            if self.obj.liked:
+    @key_action
+    def like(self, size=None):
+        if self.obj.content.toggle_like():
+            if self.obj.content.liked:
                 self.app.alert("You liked this", 'info')
             else:
                 self.app.alert("You unliked this", 'info')
@@ -278,8 +259,6 @@ class PageView(CongruenceTextBox):
 
 
 class DiffView(CongruenceTextBox):
-    key_actions = ['cycle next', 'cycle prev']
-
     def __init__(self, page_id, first=None, second=None):
         self.page_id = page_id
         self.title = "Diff"
@@ -330,7 +309,8 @@ class DiffView(CongruenceTextBox):
         help_string = cs.DIFF_VIEW_HELP
         super().__init__(self.diff, color=True, help_string=help_string)
 
-    def ka_cycle_next(self, size=None):
+    @key_action
+    def cycle_next(self, size=None):
         try:
             view = DiffView(self.page_id, self.first-1, self.second-1)
             self.app.pop_view()
@@ -338,10 +318,104 @@ class DiffView(CongruenceTextBox):
         except KeyError:
             self.app.alert("No diff available", 'warning')
 
-    def ka_cycle_prev(self, size=None):
+    @key_action
+    def cycle_prev(self, size=None):
         try:
             view = DiffView(self.page_id, self.first+1, self.second+1)
             self.app.pop_view()
             self.app.push_view(view)
         except KeyError:
             self.app.alert("No diff available", 'warning')
+
+
+class ContentList(CongruenceListBox):
+    """A list box that can display Confluence content objects
+    """
+
+    def __init__(self, EntryClass=ColumnListBoxEntry, help_string=""):
+        self.title = "Content"
+        # TODO use factory for EntryClass
+        self._entryclass = EntryClass
+        self.params = {
+            'cql': '',
+            'start': 0,
+            'limit': 20,
+        }
+        self.entries = []
+        super().__init__(self.entries, help_string=help_string)
+
+    @key_action
+    def load_more(self, size=None):
+        log.info("Load more ...")
+        self.entries += self.get_entries()
+        self.redraw()
+
+    @key_action
+    def load_much_more(self, size=None):
+        log.info("Load much more ...")
+        self.params["limit"] *= 5
+        self.entries += self.get_entries()
+        self.params["limit"] //= 5
+        self.redraw()
+
+    @key_action
+    def update(self, size=None):
+        log.info("Update ...")
+        self.params["start"] = 0
+        self.entries = self.get_entries()
+        self.redraw()
+
+    @key_action
+    def cli_browser(self, size=None):
+        node = self.get_focus()[0]
+        id = node.obj.content.id
+        open_content_in_cli_browser(self.app, id)
+
+    @key_action
+    def gui_browser(self, size=None):
+        node = self.get_focus()[0]
+        id = node.obj.content.id
+        if not id:
+            self.app.alert("Object has no ID", 'error')
+            return
+        url = f"pages/viewpage.action?pageId={id}"
+        open_gui_browser(url)
+
+    def get_entries(self):
+        r = make_request(
+            "rest/api/search",
+            params=self.params
+        )
+        result = []
+        response = r.json()
+        if r.ok and response:
+            for each in response['results']:
+                obj = ContentWrapper(each)
+                try:
+                    if not getattr(obj.content, 'blacklisted', False):
+                        result.append(self._entryclass(obj))
+                except AttributeError:
+                    result.append(self._entryclass(obj))
+
+            #  result = change_filter(result)
+            self.app.alert('Received %d items' % len(result), 'info')
+            self.params["start"] += \
+                self.params["limit"]
+        return result
+
+
+def open_content_in_cli_browser(app, id):
+    log.debug("Build HTML view for page with id '%s'" % id)
+    if not id:
+        app.alert("Object has no ID", 'error')
+        return
+    rest_url = f"rest/api/content/{id}?expand=body.view"
+    r = make_request(rest_url)
+    if not r.ok:
+        app.alert("Request failed (%d)" % r.status_code, 'error')
+        return
+    content = r.json()
+    content = content["body"]["view"]["value"]
+
+    content = f"<html><head></head><body>{content}</body></html>"
+    open_doc_in_cli_browser(content.encode(), app)

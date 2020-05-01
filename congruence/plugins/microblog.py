@@ -20,12 +20,12 @@ Here you can see the latest entries of the microblog plugin.
 
 """
 from congruence.views.listbox import CongruenceListBox, \
-        CongruenceListBoxEntry
-from congruence.views.common import CongruenceTextBox
+        CardedListBoxEntry
+from congruence.views.common import CongruenceTextBox, key_action
 from congruence.interface import make_request, html_to_text, convert_date,\
         md_to_html
 from congruence.logging import log
-from congruence.objects import ContentObject
+from congruence.objects import Content, is_blacklisted_user
 from congruence.external import open_gui_browser
 import congruence.strings as cs
 
@@ -33,15 +33,14 @@ import urwid
 
 
 class MicroblogView(CongruenceListBox):
-    key_actions = ['load more', 'update', 'gui browser', 'post comment']
-
     def __init__(self, properties={}):
         self.title = "Microblog"
         self.properties = properties
-        self.ka_update()
+        self.update()
         super().__init__(self.entries, help_string=__help__)
 
-    def ka_update(self, size=None):
+    @key_action
+    def update(self, size=None):
         if 'limit' in self.properties['Parameters']:
             self.limit = self.properties['Parameters']['limit']
         else:
@@ -56,11 +55,12 @@ class MicroblogView(CongruenceListBox):
         self.entries = self.get_microblog()
         self.app.alert('Received %d items' % len(self.entries), 'info')
         if hasattr(self, 'walker'):
-            # this check is done because if ka_update is called before
+            # this check is done because if update is called before
             # super.__init__ the object is not ready for redrawing yet
             self.redraw()
 
-    def ka_load_more(self, size=None):
+    @key_action
+    def load_more(self, size=None):
         self.entries += self.get_microblog()
         self.redraw()
 
@@ -88,13 +88,15 @@ class MicroblogView(CongruenceListBox):
         self.offset += len(result)
         return result
 
-    def ka_gui_browser(self, size=None):
+    @key_action
+    def gui_browser(self, size=None):
         node = self.get_focus()[0]
         post_id = node.obj._data['id']
         url = f"plugins/micropost/view.action?postId={post_id}"
         open_gui_browser(url)
 
-    def ka_post_comment(self, size=None):
+    @key_action
+    def post_comment(self, size=None):
         # TODO refactor to reduce duplicate code
         # TODO let the user pick
         topic_id = 16
@@ -127,21 +129,21 @@ class MicroblogView(CongruenceListBox):
             self.app.alert("Failed to send microblog post", 'error')
 
 
-class MicroblogEntry(CongruenceListBoxEntry):
+class MicroblogEntry(CardedListBoxEntry):
     """Represents microblog entries or replies to one entry as a list of
     widgets"""
 
     def __init__(self, obj, is_reply=False):
         self.obj = obj
         self.is_reply = is_reply
-        super().__init__(self.obj, structure='carded')
+        super().__init__(self.obj)
 
     def get_next_view(self):
         if not self.is_reply:
             return MicroblogReplyView(self.obj._data)
         d = self.obj._data
         text = f"Author: {d['authorFullName']}\n"
-        date = convert_date(d["creationDate"])
+        date = convert_date(d["lastModificationDate"])
         text += f"Date: {date}\n"
         likes = [u['userFullname'] for u in d['likingUsers']]
         text += "Likes: " + ', '.join(likes)
@@ -149,12 +151,16 @@ class MicroblogEntry(CongruenceListBoxEntry):
         view.title = "Post"
         return view
 
+    def search_match(self, search_string):
+        return self.obj.match(search_string)
 
-class MicroblogObject(ContentObject):
+
+class MicroblogObject(Content):
     def __init__(self, data):
         self._data = data
+        self.blacklisted = is_blacklisted_user(self._data['authorName'])
 
-    def get_title(self, cols=False):
+    def get_title(self):
         like_number = len(self._data['likingUsers'])
         likes = ""
         if like_number > 0:
@@ -168,14 +174,20 @@ class MicroblogObject(ContentObject):
         if self._data['replies']:
             replies = " - %d replies" % len(self._data['replies'])
         title = "%s (%s)%s%s" % (
-            self._data["authorFullName"],
-            convert_date(self._data["creationDate"]),
+            self._data["authorFullName"] if not self.blacklisted
+                else "<blocked user>",
+            convert_date(self._data["lastModificationDate"]),
             replies,
             likes,
         )
         return title
 
+    def get_head(self):
+        return self.get_title()
+
     def get_content(self):
+        if self.blacklisted:
+            return ""
         text = self._data["renderedContent"]
         text = html_to_text(text).strip()
         return text
@@ -202,8 +214,6 @@ def send_sketch(topic_id):
 
 
 class MicroblogReplyView(CongruenceListBox):
-    key_actions = ['reply', 'like', 'gui browser']
-
     def __init__(self, entries):
         self.title = "Replies"
         self.entries = [MicroblogEntry(MicroblogObject(entries),
@@ -212,7 +222,8 @@ class MicroblogReplyView(CongruenceListBox):
                          for e in entries["replies"]]
         super().__init__(self.entries, help_string=__help__)
 
-    def ka_like(self, size=None):
+    @key_action
+    def like(self, size=None):
         obj = self.focus.obj
         post_id = obj._data['id']
         headers = {
@@ -228,7 +239,8 @@ class MicroblogReplyView(CongruenceListBox):
         else:
             self.app.alert("Like failed", 'error')
 
-    def ka_reply(self, size=None):
+    @key_action
+    def reply(self, size=None):
         obj = self.entries[0].obj
         author = obj._data['authorFullName']
         topic_id = obj._data['topic']['id']
@@ -266,7 +278,8 @@ class MicroblogReplyView(CongruenceListBox):
         else:
             self.app.alert("Failed to send reply", 'error')
 
-    def ka_gui_browser(self, size=None):
+    @key_action
+    def gui_browser(self, size=None):
         obj = self.entries[0].obj
         post_id = obj._data['id']
         url = f"plugins/micropost/view.action?postId={post_id}"

@@ -17,33 +17,18 @@
 
 #  from congruence.logging import log
 from congruence.views.common import CongruenceView, \
-    RememberParentKeyMapMeta, CongruenceTextBox
+    CongruenceTextBox, CollectKeyActions, key_action
 
 import urwid
 
 
 class CongruenceListBox(CongruenceView, urwid.ListBox,
-                        metaclass=RememberParentKeyMapMeta):
+                        metaclass=CollectKeyActions):
     """Displays a list of CongruenceListBoxEntry objects
 
     :entries: a list of CongruenceListBoxEntry objects
 
     """
-
-    key_actions = [
-        'move up',
-        'move down',
-        'page up',
-        'page down',
-        'search',
-        'search next',
-        'search prev',
-        'limit',
-        'show details',
-        'next view',
-        'scroll to bottom',
-        'scroll to top',
-    ]
 
     def __init__(self, entries, help_string=None):
         self.entries = entries
@@ -51,7 +36,8 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
         self.walker = urwid.SimpleFocusListWalker(self.entries)
         self._search_results = []
         super().__init__(self.walker)
-        self.align_columns()
+        if self.entries and isinstance(self.entries[0], ColumnListBoxEntry):
+            self.align_columns()
 
     def align_columns(self):
         """Set all column widths to its common maximum"""
@@ -80,45 +66,57 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
         self.walker[:] = self.entries
         self.align_columns()
 
-    def ka_move_down(self, size=None):
+    @key_action
+    def move_down(self, size=None):
         urwid.ListBox.keypress(self, size, 'down')
 
-    def ka_move_up(self, size=None):
+    @key_action
+    def move_up(self, size=None):
         urwid.ListBox.keypress(self, size, 'up')
 
-    def ka_page_down(self, size=None):
+    @key_action
+    def page_down(self, size=None):
         urwid.ListBox.keypress(self, size, 'page down')
 
-    def ka_page_up(self, size=None):
+    @key_action
+    def page_up(self, size=None):
         urwid.ListBox.keypress(self, size, 'page up')
 
-    def ka_scroll_to_bottom(self, size=None):
+    @key_action
+    def scroll_to_bottom(self, size=None):
         self.set_focus(0, coming_from='above')
 
-    def ka_scroll_to_top(self, size=None):
+    @key_action
+    def scroll_to_top(self, size=None):
         self.set_focus(0, coming_from='below')
 
-    def ka_next_view(self, size=None):
+    @key_action
+    def next_view(self, size=None):
         view = self.get_focus()[0].get_next_view()
         if view:
             self.app.push_view(view)
 
-    def ka_show_details(self, size=None):
+    @key_action
+    def show_details(self, size=None):
         view = self.get_focus()[0].get_details_view()
         if view:
             self.app.push_view(view)
 
-    def ka_search(self, size=None):
-        self.search()
+    @key_action
+    def search(self, size=None):
+        self._search()
 
-    def ka_search_next(self, size=None):
-        self.search_next(1)
+    @key_action
+    def search_next(self, size=None):
+        self._search_next(1)
 
-    def ka_search_prev(self, size=None):
-        self.search_next(-1)
+    @key_action
+    def search_prev(self, size=None):
+        self._search_next(-1)
 
-    def ka_limit(self, size=None):
-        def limit(expr):
+    @key_action
+    def limit(self, size=None):
+        def limit_inner(expr):
             _search_results = [
                 e for e in self.entries if e.search_match(expr)
             ]
@@ -130,11 +128,11 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
 
         self.app.get_input(
             'Search for:',
-            limit,
+            limit_inner,
         )
 
-    def search(self):
-        def search(expr):
+    def _search(self):
+        def search_inner(expr):
             self._search_results = [
                 e[0] for e in enumerate(self.entries)
                 if e[1].search_match(expr)
@@ -148,10 +146,10 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
                 self.set_focus(pos)
         self.app.get_input(
             'Search for:',
-            search,
+            search_inner,
         )
 
-    def search_next(self, count=1):
+    def _search_next(self, count=1):
         if self._search_results:
             self._current_search_result += count
             self._current_search_result %= len(self._search_results)
@@ -163,39 +161,24 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
     """Represents one item in a ListBox
 
     :obj: a confluence content object or a string
-    :structure: can be one of 'flat', 'columns' and 'carded' and determines
-        the structure of the ListBox entry.
     """
 
-    def __init__(self, obj, structure='flat'):
+    def __init__(self, obj):
         self.obj = obj
-        self.structure = structure
-        if self.structure == 'flat':
-            self.cols = False
-            if hasattr(obj, 'get_title'):
-                self._inner_widget = urwid.Text(obj.get_title())
-            else:
-                self._inner_widget = urwid.Text(str(obj))
-        elif self.structure == 'columns':
-            self._columns = obj.get_title(cols=True)
-            self._inner_widget = urwid.Columns(
-                [(urwid.Text(t, wrap='clip')) for t in self._columns],
-                dividechars=1,
-            )
-        elif self.structure == 'carded':
-            self._widget = urwid.Pile([
-                self.render_head(),
-                self.render_content(),
-            ])
-        else:
-            raise KeyError("Invalid structure: %s" % structure)
-        if not structure == 'carded':
-            self._widget = urwid.AttrMap(
-                self._inner_widget,
-                attr_map="body",
-                focus_map="focus",
-            )
+        self._inner_widget = self.wrap_in_widget()
+
+        self._widget = urwid.AttrMap(
+            self._inner_widget,
+            attr_map="body",
+            focus_map="focus",
+        )
         super().__init__(self._widget)
+
+    def wrap_in_widget(self):
+        try:
+            return urwid.Text(self.obj.get_title())
+        except AttributeError:
+            return urwid.Text(self.obj)
 
     def selectable(self):
         return True
@@ -217,10 +200,17 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
 
         raise NotImplementedError("search_match in %s" % type(self).__name__)
 
+
+class CardedListBoxEntry(CongruenceListBoxEntry):
+    """Represents one item in a ListBox with columns
+
+    :obj: a confluence content object which implements get_head() and
+        get_content()
+    """
     def render_head(self):
-        title = self.obj.get_title()
+        head = self.obj.get_head()
         return urwid.AttrMap(
-            urwid.Text(title),
+            urwid.Text(head),
             'card-head',
             focus_map='card-focus'
         )
@@ -228,3 +218,23 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
     def render_content(self):
         text = self.obj.get_content()
         return urwid.AttrMap(urwid.Text(text), 'body')
+
+    def wrap_in_widget(self):
+        return urwid.Pile([
+            self.render_head(),
+            self.render_content(),
+        ])
+
+
+class ColumnListBoxEntry(CongruenceListBoxEntry):
+    """Represents one item in a ListBox with columns
+
+    :obj: a confluence content object which implements get_columns()
+    """
+    def wrap_in_widget(self):
+        self._columns = self.obj.get_columns()
+        assert len(self._columns) == 5
+        return urwid.Columns(
+            [(urwid.Text(t, wrap='clip')) for t in self._columns],
+            dividechars=1,
+        )
