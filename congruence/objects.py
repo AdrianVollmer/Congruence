@@ -75,6 +75,12 @@ class ConfluenceObject(ABC):
 
         return self.get_title()
 
+    def match(self, search_string):
+        return (
+            re.search(search_string, self.get_title())
+            or re.search(search_string, self.get_content())
+        )
+
 
 class Content(ConfluenceObject):
     """Base class for Pages, Blogposts, Comments, Attachments"""
@@ -209,14 +215,17 @@ class Comment(Content):
         #  log.debug(self._data)
         if self.blacklisted:
             return ""
-        comment = html_to_text(
-            self._data['body']['view']['value'],
-            replace_emoticons=True,
-        )
-        if self.ref:
-            # TODO set in italics
-            comment = f"> {self.ref}\n\n{comment}"
-        return comment
+        try:
+            comment = html_to_text(
+                self._data['body']['view']['value'],
+                replace_emoticons=True,
+            )
+            if self.ref:
+                # TODO set in italics
+                comment = f"> {self.ref}\n\n{comment}"
+            return comment
+        except KeyError:
+            return ""
 
     def send_reply(self, text):
         if self.is_inline:
