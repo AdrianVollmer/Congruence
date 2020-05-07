@@ -57,7 +57,7 @@ class SpaceView(CongruenceTreeListBox):
             if len(self.spaces) >= size:
                 break
             params['startIndex'] = len(self.spaces)
-        self.entries = [{s['key']: ExpandableSpace({'space': s}),
+        self.entries = [{s['key']: ExpandableSpace(s),
                          'children': []}
                         for s in self.spaces]
         self.entries = {
@@ -111,7 +111,7 @@ class ExpandableSpace(Space):
     """This class can 'expand', i.e. load a list of pages in its space"""
 
     def __init__(self, data):
-        super().__init__(data['space'])
+        super().__init__(data)
         self.expanded = False
 
     def get_children(self):
@@ -131,7 +131,7 @@ class ExpandableSpace(Space):
             if len(result) >= size:
                 break
             params['startIndex'] = len(result)
-        result = [ExpandablePage({'content': p}) for p in result]
+        result = [ExpandablePage(p) for p in result]
         log.debug("Retrieved %d items" % len(result))
         return result
 
@@ -187,7 +187,7 @@ class ExpandablePage(Page):
         }
         r = make_request(url, params=params)
         result = r.json()['results']
-        result = [ExpandablePage({'content': p}) for p in result]
+        result = [ExpandablePage(p) for p in result]
         log.debug("Retrieved %d items" % len(result))
         return result
 
