@@ -46,8 +46,7 @@ class ConfluenceObject(ABC):
 
     def __init__(self, data):
         self._data = data
-        #  log.debug(json.dumps(data, indent=2))
-        self.type = self._data['type']
+        log.debug(json.dumps(data, indent=2))
 
     @abstractmethod
     def get_title(self):
