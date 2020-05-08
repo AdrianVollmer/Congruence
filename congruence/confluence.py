@@ -199,7 +199,7 @@ class PageView(CongruenceTextBox):
     def __init__(self, obj):
         self.obj = obj
         self.title = "Page"
-        content = obj._data['content']
+        content = obj._data
         # TODO don't access private member
         try:
             history = content['history']
