@@ -46,7 +46,7 @@ class ConfluenceObject(ABC):
 
     def __init__(self, data):
         self._data = data
-        log.debug(json.dumps(data, indent=2))
+        #  log.debug(json.dumps(data, indent=2))
 
     @abstractmethod
     def get_title(self):
@@ -167,11 +167,15 @@ class Content(ConfluenceObject):
 
 
 class Page(Content):
-    pass
+    def __init__(self, data):
+        super().__init__(data)
+        self.type = 'page'
 
 
 class Blogpost(Page):
-    pass
+    def __init__(self, data):
+        super().__init__(data)
+        self.type = 'blogpost'
 
 
 class Comment(Content):
@@ -284,9 +288,9 @@ class Comment(Content):
                          headers=headers)
         if r.status_code == 200:
             return True
-        log.debug(r.request.headers)
-        log.debug(r.request.body)
-        log.debug(r.text)
+        #  log.debug(r.request.headers)
+        #  log.debug(r.request.body)
+        #  log.debug(r.text)
         return False
 
 
