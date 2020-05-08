@@ -87,6 +87,10 @@ class Content(ConfluenceObject):
     def __init__(self, data):
         super().__init__(data)
         self.title = self._data['title']
+        try:
+            self.type = self._data['type']
+        except KeyError:
+            self.type = '?'
         self.id = self._data['id']
         self.versionby = User(self._data['history']['lastUpdated']['by'])
         try:
@@ -173,6 +177,7 @@ class Blogpost(Page):
 class Comment(Content):
     def __init__(self, data):
         super().__init__(data)
+        self.type = 'comment'
 
         date = self._data['history']['createdDate']
         self.url = data['_links']['webui']
