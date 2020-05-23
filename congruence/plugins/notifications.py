@@ -25,6 +25,7 @@ from congruence.views.listbox import CongruenceListBox,\
         ColumnListBoxEntry
 from congruence.objects import ConfluenceObject
 #  from congruence.logging import log
+from congruence.app import app
 
 import json
 
@@ -55,7 +56,7 @@ class NotificationView(CongruenceListBox):
         for e in entries:
             n = NotificationEntry(NotificationObject(e))
             notifications.append(n)
-        self.app.alert('Received %d items' % len(notifications), 'info')
+        app.alert('Received %d items' % len(notifications), 'info')
         return notifications
 
     @key_action

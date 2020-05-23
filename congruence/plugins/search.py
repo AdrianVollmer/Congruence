@@ -26,6 +26,7 @@ Confluence:
 from congruence.views.listbox import ColumnListBoxEntry
 from congruence.views.common import key_action
 from congruence.confluence import CommentContextView, PageView, ContentList
+from congruence.app import app
 
 
 class APIView(ContentList):
@@ -49,11 +50,11 @@ class APIView(ContentList):
 
     @key_action
     def search_confluence(self, size=None):
-        self.app.get_input("Search:", self.conf_search)
+        app.get_input("Search:", self.conf_search)
 
     def conf_search(self, query):
         if not query:
-            self.app.alert("Query empty, aborting", 'warning')
+            app.alert("Query empty, aborting", 'warning')
             return
         self.params['cql'] = f'siteSearch ~ "{query}"'
         self.params['start'] = 0

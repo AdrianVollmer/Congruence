@@ -15,11 +15,11 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #  from congruence.args import config
-from congruence.app import CongruenceApp
+from congruence.app import app
 
 
 def main():
     try:
-        CongruenceApp().main()
+        app.main()
     except KeyboardInterrupt:
         pass

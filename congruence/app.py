@@ -20,7 +20,7 @@ from congruence.palette import PALETTE
 from congruence.keys import KEYS, KEY_ACTIONS
 from congruence.logging import log, log_stream
 from congruence.views.mainmenu import CongruenceMainMenu
-from congruence.views.common import CongruenceView, CongruenceTextBox
+from congruence.views.common import CongruenceTextBox
 from congruence.external import get_editor_input
 
 import urwid
@@ -104,13 +104,6 @@ class CongruenceApp(object):
             self.push_view(view)
 
     def __init__(self):
-        # Set these class variables so each instance can refer to the app
-        # object to use push_view/pop_view and status messages
-        # TODO: static methods?
-        global app
-        app = self
-        CongruenceView.app = self
-
         # Initialize view stack
         self._view_stack = []
         self._title_stack = []
@@ -227,3 +220,6 @@ class CongruenceApp(object):
             except Exception as e:
                 log.exception(e)
                 self.alert("%s: %s" % (type(e).__name__, str(e)), 'error')
+
+
+app = CongruenceApp()

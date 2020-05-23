@@ -28,6 +28,7 @@ from congruence.logging import log
 from congruence.objects import Comment, ContentWrapper
 import congruence.strings as cs
 from congruence.external import open_gui_browser, open_doc_in_cli_browser
+from congruence.app import app
 
 
 def get_comments_of_page(id):
@@ -119,15 +120,15 @@ class CommentContextView(CongruenceTreeListBox):
         prev_msg = '\n'.join([f"## > {line}" for line in prev_msg])
         prev_msg = "## %s wrote:\n%s" % (obj.versionby.display_name, prev_msg)
         help_text = cs.REPLY_MSG + prev_msg
-        reply = self.app.get_long_input(help_text)
+        reply = app.get_long_input(help_text)
 
         if reply:
             if obj.send_reply(reply):
-                self.app.alert("Comment sent", 'info')
+                app.alert("Comment sent", 'info')
             else:
-                self.app.alert("Comment failed", 'error')
+                app.alert("Comment failed", 'error')
         else:
-            self.app.alert("Reply empty, aborting", 'warning')
+            app.alert("Reply empty, aborting", 'warning')
         # TODO self.update()
 
     @key_action
@@ -135,9 +136,9 @@ class CommentContextView(CongruenceTreeListBox):
         comment = self.get_focus()[0].get_value()
         if comment.toggle_like():
             if comment.liked:
-                self.app.alert("You liked this", 'info')
+                app.alert("You liked this", 'info')
             else:
-                self.app.alert("You unliked this", 'info')
+                app.alert("You unliked this", 'info')
 
     @key_action
     def cli_browser(self, size=None):
@@ -147,7 +148,7 @@ class CommentContextView(CongruenceTreeListBox):
         except AttributeError:
             # The root object is just a dict, not an object
             id = obj['id']
-        open_content_in_cli_browser(self.app, id)
+        open_content_in_cli_browser(app, id)
 
     @key_action
     def gui_browser(self, size=None):
@@ -174,7 +175,7 @@ class SingleCommentView(CongruenceTextBox):
             text = '\n'.join([f'{k}: {v}' for k, v in infos.items()])
             text += '\n\n' + self.obj.get_content()
         except KeyError as e:
-            self.app.alert("KeyError (%s), displaying raw data" % e, 'error')
+            app.alert("KeyError (%s), displaying raw data" % e, 'error')
             text = obj.get_json()
         help_string = cs.COMMENT_VIEW_HELP
         super().__init__(text, help_string=help_string)
@@ -220,7 +221,7 @@ class PageView(CongruenceTextBox):
             }
             text = '\n'.join([f'{k}: {v}' for k, v in infos.items()])
         except KeyError as e:
-            self.app.alert("KeyError (%s), displaying raw data" % e, 'error')
+            app.alert("KeyError (%s), displaying raw data" % e, 'error')
             text = obj.get_json()
         help_string = cs.PAGE_VIEW_HELP
         super().__init__(text, help_string=help_string)
@@ -229,14 +230,14 @@ class PageView(CongruenceTextBox):
     def list_diff(self, size=None):
         try:
             view = DiffView(self.obj.content.id)
-            self.app.push_view(view)
+            app.push_view(view)
         except KeyError:
-            self.app.alert('No diff available', 'warning')
+            app.alert('No diff available', 'warning')
 
     @key_action
     def cli_browser(self, size=None):
         id = self.obj.content.id
-        open_content_in_cli_browser(self.app, id)
+        open_content_in_cli_browser(app, id)
 
     @key_action
     def gui_browser(self, size=None):
@@ -248,17 +249,17 @@ class PageView(CongruenceTextBox):
     def go_to_comments(self, size=None):
         page_id = self.obj.content.id
         view = CommentContextView(page_id, self.obj)
-        self.app.push_view(view)
+        app.push_view(view)
 
     @key_action
     def like(self, size=None):
         if self.obj.content.toggle_like():
             if self.obj.content.liked:
-                self.app.alert("You liked this", 'info')
+                app.alert("You liked this", 'info')
             else:
-                self.app.alert("You unliked this", 'info')
+                app.alert("You unliked this", 'info')
         else:
-            self.app.alert("Like failed", 'info')
+            app.alert("Like failed", 'info')
 
 
 class DiffView(CongruenceTextBox):
@@ -316,19 +317,19 @@ class DiffView(CongruenceTextBox):
     def cycle_next(self, size=None):
         try:
             view = DiffView(self.page_id, self.first-1, self.second-1)
-            self.app.pop_view()
-            self.app.push_view(view)
+            app.pop_view()
+            app.push_view(view)
         except KeyError:
-            self.app.alert("No diff available", 'warning')
+            app.alert("No diff available", 'warning')
 
     @key_action
     def cycle_prev(self, size=None):
         try:
             view = DiffView(self.page_id, self.first+1, self.second+1)
-            self.app.pop_view()
-            self.app.push_view(view)
+            app.pop_view()
+            app.push_view(view)
         except KeyError:
-            self.app.alert("No diff available", 'warning')
+            app.alert("No diff available", 'warning')
 
 
 class ContentList(CongruenceListBox):
@@ -372,14 +373,14 @@ class ContentList(CongruenceListBox):
     def cli_browser(self, size=None):
         node = self.get_focus()[0]
         id = node.obj.content.id
-        open_content_in_cli_browser(self.app, id)
+        open_content_in_cli_browser(app, id)
 
     @key_action
     def gui_browser(self, size=None):
         node = self.get_focus()[0]
         id = node.obj.content.id
         if not id:
-            self.app.alert("Object has no ID", 'error')
+            app.alert("Object has no ID", 'error')
             return
         url = f"pages/viewpage.action?pageId={id}"
         open_gui_browser(url)
@@ -401,7 +402,7 @@ class ContentList(CongruenceListBox):
                     result.append(self._entryclass(obj))
 
             #  result = change_filter(result)
-            self.app.alert('Received %d items' % len(result), 'info')
+            app.alert('Received %d items' % len(result), 'info')
             self.params["start"] += \
                 self.params["limit"]
         return result

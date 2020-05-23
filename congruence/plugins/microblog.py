@@ -27,6 +27,7 @@ from congruence.interface import make_request, html_to_text, convert_date,\
 from congruence.logging import log
 from congruence.objects import Content, is_blacklisted_user
 from congruence.external import open_gui_browser
+from congruence.app import app
 import congruence.strings as cs
 
 import urwid
@@ -53,7 +54,7 @@ class MicroblogView(CongruenceListBox):
         self.offset = 0
 
         self.entries = self.get_microblog()
-        self.app.alert('Received %d items' % len(self.entries), 'info')
+        app.alert('Received %d items' % len(self.entries), 'info')
         if hasattr(self, 'walker'):
             # this check is done because if update is called before
             # super.__init__ the object is not ready for redrawing yet
@@ -103,13 +104,13 @@ class MicroblogView(CongruenceListBox):
 
         post_id = send_sketch(topic_id)
         if not post_id:
-            self.app.alert("Failed to send sketch", 'error')
+            app.alert("Failed to send sketch", 'error')
             return
 
         help_text = cs.REPLY_MSG
-        reply = self.app.get_long_input(help_text)
+        reply = app.get_long_input(help_text)
         if not reply:
-            self.app.alert("Reply empty, aborting", 'warning')
+            app.alert("Reply empty, aborting", 'warning')
             return
         reply = md_to_html(reply, url_encode='html')
 
@@ -124,9 +125,9 @@ class MicroblogView(CongruenceListBox):
                          headers=headers, no_token=True)
 
         if r.status_code == 200:
-            self.app.alert("Microblog post sent", 'info')
+            app.alert("Microblog post sent", 'info')
         else:
-            self.app.alert("Failed to send microblog post", 'error')
+            app.alert("Failed to send microblog post", 'error')
 
 
 class MicroblogEntry(CardedListBoxEntry):
@@ -233,11 +234,11 @@ class MicroblogReplyView(CongruenceListBox):
         r = make_request(url, method='POST', headers=headers, no_token=True)
         if r.status_code == 200:
             if r.text == 'true':
-                self.app.alert("You liked this", 'info')
+                app.alert("You liked this", 'info')
             elif r.text == 'false':
-                self.app.alert("You unliked this", 'info')
+                app.alert("You unliked this", 'info')
         else:
-            self.app.alert("Like failed", 'error')
+            app.alert("Like failed", 'error')
 
     @key_action
     def reply(self, size=None):
@@ -248,7 +249,7 @@ class MicroblogReplyView(CongruenceListBox):
 
         post_id = send_sketch(topic_id)
         if not post_id:
-            self.app.alert("Failed to send sketch", 'error')
+            app.alert("Failed to send sketch", 'error')
             return
 
         prev_msg = obj._data['renderedContent']
@@ -257,9 +258,9 @@ class MicroblogReplyView(CongruenceListBox):
         prev_msg = "## %s wrote:\n%s" % (author, prev_msg)
 
         help_text = cs.REPLY_MSG + prev_msg
-        reply = self.app.get_long_input(help_text)
+        reply = app.get_long_input(help_text)
         if not reply:
-            self.app.alert("Reply empty, aborting", 'warning')
+            app.alert("Reply empty, aborting", 'warning')
             return
         reply = md_to_html(reply, url_encode='html')
 
@@ -274,9 +275,9 @@ class MicroblogReplyView(CongruenceListBox):
                          headers=headers, no_token=True)
 
         if r.status_code == 200:
-            self.app.alert("Reply sent", 'info')
+            app.alert("Reply sent", 'info')
         else:
-            self.app.alert("Failed to send reply", 'error')
+            app.alert("Failed to send reply", 'error')
 
     @key_action
     def gui_browser(self, size=None):

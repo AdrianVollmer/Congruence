@@ -18,6 +18,7 @@
 #  from congruence.logging import log
 from congruence.views.common import CongruenceView, \
     CollectKeyActions, CongruenceTextBox, key_action
+from congruence.app import app
 
 import urwid
 
@@ -74,13 +75,13 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
     def next_view(self, size=None):
         view = self.get_focus()[0].get_next_view()
         if view:
-            self.app.push_view(view)
+            app.push_view(view)
 
     @key_action
     def show_details(self, size=None):
         view = self.get_focus()[0].get_details_view()
         if view:
-            self.app.push_view(view)
+            app.push_view(view)
 
     @key_action
     def search(self, size=None):
@@ -105,14 +106,13 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
                 if node.search_match(expr):
                     self._search_results.append(node)
 
-            self.app.alert("Found %d results" %
-                           len(self._search_results),
-                           'info')
+            app.alert("Found %d results" % len(self._search_results),
+                      'info')
             if self._search_results:
                 self._current_search_result = 0
                 pos = self._search_results[self._current_search_result]
                 self.set_focus(pos)
-        self.app.get_input(
+        app.get_input(
             'Search for:',
             search_inner,
         )
