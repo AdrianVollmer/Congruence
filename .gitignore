@@ -5,3 +5,4 @@ congruence/conftest.py
 pytest.ini
 test-data/
 tests/
+.coverage
