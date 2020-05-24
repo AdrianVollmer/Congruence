@@ -401,7 +401,7 @@ class ContentWrapper(object):
         try:
             self.content = self.type_map[self.type](content_data)
         except KeyError:
-            log.error("Unknown entity type: %s" % self.type)
+            log.warning("Unknown entity type: %s" % self.type)
             self.content = Generic(content_data)
 
         self.title = self.content.get_title()
