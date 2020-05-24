@@ -198,7 +198,7 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
     def search_match(self, search_string):
         """Returns a Boolean whether the search string matches"""
 
-        raise NotImplementedError("search_match in %s" % type(self).__name__)
+        return self.obj.match(search_string)
 
 
 class CardedListBoxEntry(CongruenceListBoxEntry):
