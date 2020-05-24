@@ -22,6 +22,7 @@ from congruence.logging import log, log_stream
 from congruence.views.mainmenu import CongruenceMainMenu
 from congruence.views.common import CongruenceTextBox
 from congruence.external import get_editor_input
+import congruence.environment as env
 
 import urwid
 
@@ -223,3 +224,4 @@ class CongruenceApp(object):
 
 
 app = CongruenceApp()
+env.app = app

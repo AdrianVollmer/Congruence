@@ -18,7 +18,7 @@
 #  from congruence.logging import log
 from congruence.views.common import CongruenceView, \
     CongruenceTextBox, CollectKeyActions, key_action
-import congruence.app as CA  # avoiding circular imports
+import congruence.environment as env
 
 import urwid
 
@@ -95,13 +95,13 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
     def next_view(self, size=None):
         view = self.get_focus()[0].get_next_view()
         if view:
-            CA.app.push_view(view)
+            env.app.push_view(view)
 
     @key_action
     def show_details(self, size=None):
         view = self.get_focus()[0].get_details_view()
         if view:
-            CA.app.push_view(view)
+            env.app.push_view(view)
 
     @key_action
     def search(self, size=None):
@@ -123,11 +123,11 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
             ]
             self.walker[:] = _search_results
             if expr == '.':
-                CA.app.reset_status()
+                env.app.reset_status()
             else:
-                CA.app.alert("To view all items, limit to '.'.", 'info')
+                env.app.alert("To view all items, limit to '.'.", 'info')
 
-        CA.app.get_input(
+        env.app.get_input(
             'Search for:',
             limit_inner,
         )
@@ -138,13 +138,13 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
                 e[0] for e in enumerate(self.entries)
                 if e[1].search_match(expr)
             ]
-            CA.app.alert("Found %d results" % len(self._search_results),
-                         'info')
+            env.app.alert("Found %d results" % len(self._search_results),
+                          'info')
             if self._search_results:
                 self._current_search_result = 0
                 pos = self._search_results[self._current_search_result]
                 self.set_focus(pos)
-        CA.app.get_input(
+        env.app.get_input(
             'Search for:',
             search_inner,
         )

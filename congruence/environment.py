@@ -14,10 +14,10 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Contains variables that need to be available to almost all modules.
 
-def main():
-    try:
-        from congruence.app import app
-        app.main()
-    except KeyboardInterrupt:
-        pass
+This avoids the problem of circular dependencies.
+"""
+
+app = None

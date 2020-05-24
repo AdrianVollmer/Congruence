@@ -16,7 +16,7 @@
 
 from congruence.args import config, cookie_jar, BASE_URL, args
 from congruence.logging import log
-from congruence.app import app
+import congruence.environment as env
 
 from urllib.parse import urlencode
 from datetime import datetime as dt, timedelta
@@ -70,7 +70,7 @@ def make_request(url, params={}, data=None, method="GET", headers={},
     attempts = 0
     while attempts < 2:
         log.info(f"Requesting {url}")
-        app.alert(f"Requesting {url}...", 'info')
+        env.app.alert(f"Requesting {url}...", 'info')
         if not data and method == "GET":
             response = session.get(url, params=params, headers=headers)
         else:
@@ -96,11 +96,11 @@ def make_request(url, params={}, data=None, method="GET", headers={},
         else:
             break
     if not response.ok:
-        app.alert("Received HTTP code %d" % response.status_code, 'error')
+        env.app.alert("Received HTTP code %d" % response.status_code, 'error')
         return response
     if args.dump_http:
         dump_http(response, args.dump_http)
-    app.reset_status()
+    env.app.reset_status()
     return response
 
 
@@ -165,7 +165,7 @@ def authenticate_session():
     )
     reason = response.headers['X-Seraph-LoginReason']
     if not reason == "OK":
-        app.alert("Error while autenticating: %s" % reason, "error")
+        env.app.alert("Error while autenticating: %s" % reason, "error")
         return False
     soup = BeautifulSoup(response.text, features="lxml")
     global XSRF
