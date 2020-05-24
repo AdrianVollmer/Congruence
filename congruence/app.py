@@ -207,15 +207,14 @@ class CongruenceApp(object):
         self.active = False
         raise urwid.ExitMainLoop()
 
-    def main(self):
+    def main(self, dummy=False):
         """Run the program."""
 
         self.loop = urwid.MainLoop(
             self.view,
-            PALETTE,
+            palette=PALETTE,
             unhandled_input=self.unhandled_input)
-        #  self.loop.run()
-        while self.active:
+        while self.active and not dummy:
             try:
                 self.loop.run()
             except Exception as e:
