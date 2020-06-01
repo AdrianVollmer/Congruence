@@ -6,3 +6,4 @@ pytest.ini
 test-data/
 tests/
 .coverage
+.tox
