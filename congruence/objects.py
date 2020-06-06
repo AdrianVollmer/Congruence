@@ -166,6 +166,34 @@ class Content(ConfluenceObject):
         )
 
 
+def post_comment(text, page_id, comment_id=None):
+    """Post a comment to a page or as a reply to another comment
+
+    :page_id: ID of the page
+    :comment_id: ID of the comment you want to reply to; None for
+        top level comment
+    """
+
+    if comment_id:
+        url = (f'/rest/tinymce/1/content/{page_id}/'
+               f'comments/{comment_id}/comment')
+    else:
+        url = f'/rest/tinymce/1/content/{page_id}/comment'
+    params = {'actions': 'true'}
+    answer = md_to_html(text, url_encode='html')
+    uuid = str(uuid4())
+    headers = {
+        'X-Atlassian-Token': 'no-check',
+    }
+
+    data = f'{answer}&watch=false&uuid={uuid}'
+    r = make_request(url, params, method='POST', data=data,
+                     headers=headers, no_token=True)
+    if r.status_code == 200:
+        return True
+    return False
+
+
 class Page(Content):
     def __init__(self, data):
         super().__init__(data)
@@ -182,6 +210,8 @@ class Comment(Content):
     def __init__(self, data):
         super().__init__(data)
         self.type = 'comment'
+        page_id = self._data['_expandable']['container']
+        page_id = re.search(r'/([^/]*$)', page_id).groups()[0]
 
         date = self._data['history']['createdDate']
         self.url = data['_links']['webui']
@@ -237,34 +267,14 @@ class Comment(Content):
 
     def send_reply(self, text):
         if self.is_inline:
-            return self.send_inline_reply(text)
+            self.send_inline_reply(text)
         else:
-            return self.send_comment_reply(text)
+            self.send_comment_reply(text)
 
     def send_comment_reply(self, text):
-        page_id = self._data['_expandable']['container']
-        page_id = re.search(r'/([^/]*$)', page_id).groups()[0]
-
-        url = (f'/rest/tinymce/1/content/{page_id}/'
-               f'comments/{self.id}/comment')
-        params = {'actions': 'true'}
-        answer = md_to_html(text, url_encode='html')
-        uuid = str(uuid4())
-        headers = {
-            'X-Atlassian-Token': 'no-check',
-        }
-
-        data = f'{answer}&watch=false&uuid={uuid}'
-        r = make_request(url, params, method='POST', data=data,
-                         headers=headers, no_token=True)
-        if r.status_code == 200:
-            return True
-        return False
+        post_comment(text, self.page_id, self.id)
 
     def send_inline_reply(self, text):
-        page_id = self._data['_expandable']['container']
-        page_id = re.search(r'/([^/]*$)', page_id).groups()[0]
-
         try:
             root_id = self._data['ancestors'][0]['_links']['self']
             root_id = re.search(r'/([^/]*$)', root_id).groups()[0]
@@ -274,7 +284,7 @@ class Comment(Content):
 
         url = f"rest/inlinecomments/1.0/comments/{root_id}/replies"
         params = {
-            'containerId': page_id,
+            'containerId': self.page_id,
         }
         data = {
             "body": md_to_html(text),
@@ -286,12 +296,11 @@ class Comment(Content):
         }
         r = make_request(url, params, method='POST', data=json.dumps(data),
                          headers=headers)
-        if r.status_code == 200:
-            return True
+        if r.status_code != 200:
+            raise RuntimeError("Sending reply failed")
         #  log.debug(r.request.headers)
         #  log.debug(r.request.body)
         #  log.debug(r.text)
-        return False
 
 
 class Attachment(Content):

@@ -25,7 +25,7 @@ from congruence.views.treelistbox import CongruenceTreeListBox,\
 from congruence.interface import make_request, convert_date
 from congruence.tools import create_diff
 from congruence.logging import log
-from congruence.objects import Comment, ContentWrapper
+from congruence.objects import Comment, ContentWrapper, post_comment
 import congruence.strings as cs
 from congruence.external import open_gui_browser, open_doc_in_cli_browser
 import congruence.environment as env
@@ -91,6 +91,8 @@ class CommentContextView(CongruenceTreeListBox):
 
     def __init__(self, page_id, obj, focus_id=None):
         self.title = "Comments"
+        self.page = obj
+        self.page_id = page_id
         log.debug("Build CommentContextView for comments of page with id '%s'"
                   % page_id)
         comments = {
@@ -115,20 +117,34 @@ class CommentContextView(CongruenceTreeListBox):
     @key_action
     def reply(self, size=None):
         obj = self.get_focus()[0].get_value()
-        prev_msg = obj.get_content()
-        prev_msg = prev_msg.splitlines()
-        prev_msg = '\n'.join([f"## > {line}" for line in prev_msg])
-        prev_msg = "## %s wrote:\n%s" % (obj.versionby.display_name, prev_msg)
-        help_text = cs.REPLY_MSG + prev_msg
+        try:
+            prev_msg = obj.get_content()
+        except AttributeError:
+            # It's the root object and thus we send a root comment
+            prev_msg = ''
+            obj = None
+            help_text = ""
+        else:
+            prev_msg = prev_msg.splitlines()
+            prev_msg = '\n'.join([f"## > {line}" for line in prev_msg])
+            prev_msg = "## %s wrote:\n%s" % (obj.versionby.display_name,
+                                             prev_msg)
+            help_text = cs.REPLY_MSG + prev_msg
         reply = env.app.get_long_input(help_text)
 
-        if reply:
-            if obj.send_reply(reply):
-                env.app.alert("Comment sent", 'info')
-            else:
-                env.app.alert("Comment failed", 'error')
-        else:
+        if not reply:
             env.app.alert("Reply empty, aborting", 'warning')
+            return
+        try:
+            if obj:
+                obj.send_reply(reply)
+            else:
+                post_comment(reply, self.page_id)
+        except Exception:
+            env.app.alert("Comment failed", 'error')
+        else:
+            env.app.alert("Comment sent", 'info')
+
         # TODO self.update()
 
     @key_action
