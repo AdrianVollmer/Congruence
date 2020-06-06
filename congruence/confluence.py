@@ -266,19 +266,28 @@ class DiffView(CongruenceTextBox):
     def __init__(self, page_id, first=None, second=None):
         self.page_id = page_id
         self.title = "Diff"
-        url = f'rest/api/content/{page_id}'
+        self.first = first
+        self.second = second
+        self.diff = self.get_diff()
+
+        if not self.diff:
+            self.diff = cs.DIFF_EMPTY
+        help_string = cs.DIFF_VIEW_HELP
+        super().__init__(self.diff, color=True, help_string=help_string)
+
+    def get_diff(self):
+        url = f'rest/api/content/{self.page_id}'
         params = {
             'expand': 'version,body.view'
         }
         # get first body
-        if first:
-            self.first = first
+        if self.first:
             params['status'] = 'historical'
-            params['version'] = first
+            params['version'] = self.first
         r = make_request(url, params=params)
         data = r.json()
         self.first = data['version']['number']
-        self.version1 = data['body']['view']['value']
+        version1 = data['body']['view']['value']
         tofile = "Version number %d by %s, %s" % (
             self.first,
             data['version']['by']['displayName'],
@@ -286,32 +295,26 @@ class DiffView(CongruenceTextBox):
         )
 
         # get second body
-        if not second:
+        if not self.second:
             self.second = self.first - 1
-        else:
-            self.second = second
         params['version'] = self.second
         params['status'] = 'historical'
 
         r = make_request(url, params=params)
         data = r.json()
-        self.version2 = data['body']['view']['value']
+        version2 = data['body']['view']['value']
         fromfile = "Version number %d by %s, %s" % (
             self.second,
             data['version']['by']['displayName'],
             convert_date(data['version']['when']),
         )
 
-        self.diff = create_diff(self.version2,
-                                self.version1,
-                                fromfile=fromfile,
-                                tofile=tofile,
-                                html=True)
-
-        if not self.diff:
-            self.diff = cs.DIFF_EMPTY
-        help_string = cs.DIFF_VIEW_HELP
-        super().__init__(self.diff, color=True, help_string=help_string)
+        result = create_diff(version2,
+                             version1,
+                             fromfile=fromfile,
+                             tofile=tofile,
+                             html=True)
+        return result
 
     @key_action
     def cycle_next(self, size=None):
