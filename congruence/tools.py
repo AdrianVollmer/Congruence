@@ -16,7 +16,7 @@
 
 from congruence.interface import html_to_text
 #  from congruence.logging import log
-from congruence.environment import config
+import congruence.environment as env
 
 from difflib import unified_diff
 from subprocess import Popen, PIPE
@@ -49,10 +49,10 @@ def create_diff(v1, v2, fromfile="", tofile="", html=False):
 
     diff = '\n'.join(generator)
 
-    if isinstance(config['DiffFilter'], list):
-        for f in config["DiffFilter"]:
+    if isinstance(env.config['DiffFilter'], list):
+        for f in env.config["DiffFilter"]:
             diff = pipe_through(diff, f)
     else:
-        diff = pipe_through(diff, config['DiffFilter'])
+        diff = pipe_through(diff, env.config['DiffFilter'])
 
     return diff

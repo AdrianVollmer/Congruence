@@ -15,14 +15,13 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from congruence.environment import config
+import congruence.environment as env
 from congruence.palette import PALETTE
 from congruence.keys import KEYS, KEY_ACTIONS
 from congruence.logging import log, log_stream
 from congruence.views.mainmenu import CongruenceMainMenu
 from congruence.views.common import CongruenceTextBox
 from congruence.external import get_editor_input
-import congruence.environment as env
 
 import urwid
 
@@ -109,7 +108,7 @@ class CongruenceApp(object):
         self._view_stack = []
         self._title_stack = []
 
-        self.body = CongruenceMainMenu(config["Plugins"])
+        self.body = CongruenceMainMenu(env.config["Plugins"])
         self.title = "Congruence"
         self.header = urwid.Text(self.title)
         self.footer = CongruenceFooter()

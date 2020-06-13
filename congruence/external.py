@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.environment import config
+import congruence.environment as env
 from congruence.logging import log
 
 from shlex import split
@@ -30,7 +30,7 @@ def open_doc_in_cli_browser(doc, app):
     :doc: the document as a string
     """
 
-    process = Popen(split(config["CliBrowser"]), stdin=PIPE, stderr=PIPE)
+    process = Popen(split(env.config["CliBrowser"]), stdin=PIPE, stderr=PIPE)
     process.stdin.write(doc)
     process.communicate()
     app.loop.screen.clear()
@@ -39,13 +39,13 @@ def open_doc_in_cli_browser(doc, app):
 def open_cli_browser(url, app):
     """Opens an URL in a CLI browser"""
 
-    if not url.startswith(config['BaseURL']):
+    if not url.startswith(env.config['BaseURL']):
         if url.startswith('/'):
-            url = f"{config['BaseURL']}{url}"
+            url = f"{env.config['BaseURL']}{url}"
         else:
-            url = f"{config['BaseURL']}/{url}"
+            url = f"{env.config['BaseURL']}/{url}"
 
-    cmd = config["CliBrowser"]
+    cmd = env.config["CliBrowser"]
     if '%s' not in cmd:
         cmd = cmd + " '%s'"
     cmd = cmd % url
@@ -57,13 +57,13 @@ def open_cli_browser(url, app):
 
 
 def open_gui_browser(url):
-    if not url.startswith(config['BaseURL']):
+    if not url.startswith(env.config['BaseURL']):
         if url.startswith('/'):
-            url = f"{config['BaseURL']}{url}"
+            url = f"{env.config['BaseURL']}{url}"
         else:
-            url = f"{config['BaseURL']}/{url}"
+            url = f"{env.config['BaseURL']}/{url}"
 
-    cmd = config["GuiBrowser"]
+    cmd = env.config["GuiBrowser"]
     if '%s' not in cmd:
         cmd = cmd + " '%s'"
     cmd = cmd % url
@@ -79,7 +79,7 @@ class CliBrowserView(urwid.Terminal):
     """
 
     def __init__(self, url):
-        cmd = config["CliBrowser"]
+        cmd = env.config["CliBrowser"]
         if '%s' not in cmd:
             cmd += " '%s'"
         cmd = cmd % url
@@ -98,7 +98,7 @@ def get_editor_input(prompt):
     tfile = tempfile.NamedTemporaryFile('w', delete=False)
     tfile.write(prompt)
     tfile.flush()
-    cmd = config["Editor"]
+    cmd = env.config["Editor"]
     if '%s' not in cmd:
         cmd += " '%s'"
     cmd = cmd % tfile.name

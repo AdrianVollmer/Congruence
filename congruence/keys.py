@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.environment import config
+import congruence.environment as env
 from congruence.logging import log
 
 
@@ -55,8 +55,8 @@ KEYS = {
     'search confluence': ('s', "Perform a server-side Confluence search"),
 }
 
-if 'KeyMap' in config:
-    for k, v in config['KeyMap'].items():
+if 'KeyMap' in env.config:
+    for k, v in env.config['KeyMap'].items():
         KEYS[k] = (v, KEYS[k][1])
 
 

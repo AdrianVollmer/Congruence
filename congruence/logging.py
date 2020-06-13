@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.environment import config
+import congruence.environment as env
 
 import logging
 from io import StringIO
@@ -39,8 +39,8 @@ log = logging.getLogger(__name__)
 
 log.addHandler(stream_handler)
 
-if 'LogFile' in config:
-    file_handler = logging.FileHandler(config['LogFile'])
+if 'LogFile' in env.config:
+    file_handler = logging.FileHandler(env.config['LogFile'])
     file_handler.setFormatter(logFormatter)
     file_handler.setLevel(logging.DEBUG)
     log.addHandler(file_handler)

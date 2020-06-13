@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.environment import config
+import congruence.environment as env
 from congruence.logging import log
 import congruence.environment as env
 
@@ -35,10 +35,10 @@ import markdown
 
 
 session = Session()
-if "CA" in config:
-    session.verify = config["CA"]
-if "Proxy" in config:
-    session.proxies = {config["Protocol"]: config["Proxy"]}
+if "CA" in env.config:
+    session.verify = env.config["CA"]
+if "Proxy" in env.config:
+    session.proxies = {env.config["Protocol"]: env.config["Proxy"]}
 
 
 XSRF = ""
@@ -62,11 +62,11 @@ def make_request(url, params={}, data=None, method="GET", headers={},
         infinite loop
     """
 
-    if not url.startswith(config['BaseURL']):
+    if not url.startswith(env.config['BaseURL']):
         if url.startswith('/'):
-            url = f"{config['BaseURL']}{url}"
+            url = f"{env.config['BaseURL']}{url}"
         else:
-            url = f"{config['BaseURL']}/{url}"
+            url = f"{env.config['BaseURL']}/{url}"
     attempts = 0
     while attempts < 2:
         log.info(f"Requesting {url}")
@@ -129,14 +129,14 @@ def save_session():
     """Save session cookies to cookie jar"""
     cookies = utils.dict_from_cookiejar(session.cookies)
     cookies["XSRF"] = XSRF
-    with open(config['CookieJar'], 'w') as f:
+    with open(env.config['CookieJar'], 'w') as f:
         json.dump(cookies, f)
 
 
 def load_session():
     """Load session cookies from cookie jar"""
     try:
-        with open(config['CookieJar'], 'r') as f:
+        with open(env.config['CookieJar'], 'r') as f:
             cookies = utils.cookiejar_from_dict(json.load(f))
     except FileNotFoundError:
         return None
@@ -149,8 +149,8 @@ def load_session():
 def authenticate_session():
     """Retrieve a valid session cookie and XSRF token"""
 
-    user = config["Username"]
-    password = check_output(split(config["Password_Command"]))[:-1].decode()
+    user = env.config["Username"]
+    password = check_output(split(env.config["Password_Command"]))[:-1].decode()
 
     log.info(f"Authenticating user: {user}")
     response = make_request(
@@ -284,7 +284,7 @@ def convert_date(date, frmt='default'):
             now = dt.utcnow().replace(tzinfo=pytz.UTC)
     diff = now - date
     if frmt == 'default':
-        return date.strftime(config["DateFormat"])
+        return date.strftime(env.config["DateFormat"])
     if frmt == 'friendly':
         if diff < timedelta(hours=24):
             return date.strftime("%H:%M")

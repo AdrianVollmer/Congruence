@@ -22,7 +22,7 @@ This file contains classes which represent content objects in Confluence.
 from congruence.interface import convert_date, html_to_text, md_to_html
 from congruence.logging import log
 from congruence.interface import make_request
-from congruence.environment import config
+import congruence.environment as env
 
 import json
 import re
@@ -32,8 +32,8 @@ from abc import ABC, abstractmethod
 
 def is_blacklisted_user(username):
     return (
-        "UserBlacklist" in config
-        and username in config["UserBlacklist"]
+        "UserBlacklist" in env.config
+        and username in env.config["UserBlacklist"]
     )
 
 
