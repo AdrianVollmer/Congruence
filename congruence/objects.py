@@ -22,7 +22,7 @@ This file contains classes which represent content objects in Confluence.
 from congruence.interface import convert_date, html_to_text, md_to_html
 from congruence.logging import log
 from congruence.interface import make_request
-from congruence.args import config
+from congruence.environment import config
 
 import json
 import re

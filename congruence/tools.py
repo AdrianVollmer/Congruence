@@ -16,7 +16,7 @@
 
 from congruence.interface import html_to_text
 #  from congruence.logging import log
-from congruence.args import config
+from congruence.environment import config
 
 from difflib import unified_diff
 from subprocess import Popen, PIPE

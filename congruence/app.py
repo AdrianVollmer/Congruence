@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from congruence.args import config
+from congruence.environment import config
 from congruence.palette import PALETTE
 from congruence.keys import KEYS, KEY_ACTIONS
 from congruence.logging import log, log_stream

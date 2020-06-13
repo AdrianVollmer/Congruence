@@ -15,10 +15,14 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from congruence.__init__ import __version__
-import argparse
+
+import congruence.environment as env
+
 import xdg.BaseDirectory
-import os
 import yaml
+
+import argparse
+import os
 
 parser = argparse.ArgumentParser(
     description="A command line interface for Confluence"
@@ -38,13 +42,13 @@ parser.add_argument(
     help="enable logging to a file in $XDG_DATA_HOME/congruence"
 )
 
-parser.add_argument(
-    '-d', '--dump-http',
-    type=str,
-    default=None,
-    help="name of a file in which all HTTP requests and response will"
-         " be dumped (useful for debugging)"
-)
+#  parser.add_argument(
+#      '-d', '--dump-http',
+#      type=str,
+#      default=None,
+#      help="name of a file in which all HTTP requests and response will"
+#           " be dumped (useful for debugging)"
+#  )
 
 parser.add_argument(
     '-c', '--config',
@@ -53,35 +57,12 @@ parser.add_argument(
     help="specify a configuration file"
 )
 
-args = parser.parse_args()
-
-data_home = xdg.BaseDirectory.save_data_path("congruence")
-config_home = xdg.BaseDirectory.save_config_path("congruence")
-config_file = os.path.join(config_home, "config.yaml")
-if args.config:
-    config_file = args.config
-cache_home = xdg.BaseDirectory.save_cache_path("congruence")
-cookie_jar = os.path.join(cache_home, "cookiejar.dat")
-
-for d in [cache_home, config_home, data_home]:
-    if not os.path.exists(d):
-        os.makedirs(d)
-
-with open(config_file, 'r') as stream:
-    try:
-        config = yaml.safe_load(stream)
-    except yaml.YAMLError as exc:
-        print(exc)
-
-MANDATORY_ARGUMENTS = [
+MANDATORY_OPTIONS = [
     "Host",
     "Protocol",
 ]
-for m in MANDATORY_ARGUMENTS:
-    if m not in config:
-        raise IndexError("Mandatory argument not set in config: %s" % m)
 
-DEFAULTS = {
+DEFAULT_OPTIONS = {
     "CA": True,  # will use the system's cert store
     "DateFormat": "%Y-%m-%d %H:%M",
     "Editor": "vim",
@@ -91,12 +72,43 @@ DEFAULTS = {
 }
 
 
-for key, value in DEFAULTS.items():
-    if key not in config:
-        config[key] = value
+def load_config(args=None):
+    data_home = xdg.BaseDirectory.save_data_path("congruence")
+    config_home = xdg.BaseDirectory.save_config_path("congruence")
+    cache_home = xdg.BaseDirectory.save_cache_path("congruence")
+    config_file = os.path.join(config_home, "config.yaml")
 
+    if args is None:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(args)
+    if args.config:
+        config_file = args.config
 
-HOST = config["Host"]
-PROTO = config["Protocol"]
-BASE_URL = f"{PROTO}://{HOST}"
-LOG_FILE = os.path.join(data_home, "congruence.log")
+    for d in [cache_home, config_home, data_home]:
+        if not os.path.exists(d):
+            os.makedirs(d)
+
+    with open(config_file, 'r') as stream:
+        try:
+            config = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    for m in MANDATORY_OPTIONS:
+        if m not in config:
+            raise IndexError("Mandatory options not set in config: %s" % m)
+
+    for key, value in DEFAULT_OPTIONS.items():
+        if key not in config:
+            config[key] = value
+
+    # Store everything in config
+    HOST = config["Host"]
+    PROTO = config["Protocol"]
+    config['BaseURL'] = f"{PROTO}://{HOST}"
+    if args.log:
+        config['LogFile'] = os.path.join(data_home, "congruence.log")
+    config['CookieJar'] = os.path.join(cache_home, "cookiejar.dat")
+
+    env.config = config

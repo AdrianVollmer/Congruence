@@ -21,3 +21,4 @@ This avoids the problem of circular dependencies.
 """
 
 app = None
+config = {}

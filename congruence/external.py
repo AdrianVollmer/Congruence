@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.args import config, BASE_URL
+from congruence.environment import config
 from congruence.logging import log
 
 from shlex import split
@@ -39,11 +39,11 @@ def open_doc_in_cli_browser(doc, app):
 def open_cli_browser(url, app):
     """Opens an URL in a CLI browser"""
 
-    if not url.startswith(BASE_URL):
+    if not url.startswith(config['BaseURL']):
         if url.startswith('/'):
-            url = f"{BASE_URL}{url}"
+            url = f"{config['BaseURL']}{url}"
         else:
-            url = f"{BASE_URL}/{url}"
+            url = f"{config['BaseURL']}/{url}"
 
     cmd = config["CliBrowser"]
     if '%s' not in cmd:
@@ -57,11 +57,11 @@ def open_cli_browser(url, app):
 
 
 def open_gui_browser(url):
-    if not url.startswith(BASE_URL):
+    if not url.startswith(config['BaseURL']):
         if url.startswith('/'):
-            url = f"{BASE_URL}{url}"
+            url = f"{config['BaseURL']}{url}"
         else:
-            url = f"{BASE_URL}/{url}"
+            url = f"{config['BaseURL']}/{url}"
 
     cmd = config["GuiBrowser"]
     if '%s' not in cmd:

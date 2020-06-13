@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.args import config, cookie_jar, BASE_URL, args
+from congruence.environment import config
 from congruence.logging import log
 import congruence.environment as env
 
@@ -62,11 +62,11 @@ def make_request(url, params={}, data=None, method="GET", headers={},
         infinite loop
     """
 
-    if not url.startswith(BASE_URL):
+    if not url.startswith(config['BaseURL']):
         if url.startswith('/'):
-            url = f"{BASE_URL}{url}"
+            url = f"{config['BaseURL']}{url}"
         else:
-            url = f"{BASE_URL}/{url}"
+            url = f"{config['BaseURL']}/{url}"
     attempts = 0
     while attempts < 2:
         log.info(f"Requesting {url}")
@@ -98,8 +98,6 @@ def make_request(url, params={}, data=None, method="GET", headers={},
     if not response.ok:
         env.app.alert("Received HTTP code %d" % response.status_code, 'error')
         return response
-    if args.dump_http:
-        dump_http(response, args.dump_http)
     env.app.reset_status()
     return response
 
@@ -128,14 +126,14 @@ def save_session():
     """Save session cookies to cookie jar"""
     cookies = utils.dict_from_cookiejar(session.cookies)
     cookies["XSRF"] = XSRF
-    with open(cookie_jar, 'w') as f:
+    with open(config['CookieJar'], 'w') as f:
         json.dump(cookies, f)
 
 
 def load_session():
     """Load session cookies from cookie jar"""
     try:
-        with open(cookie_jar, 'r') as f:
+        with open(config['CookieJar'], 'r') as f:
             cookies = utils.cookiejar_from_dict(json.load(f))
     except FileNotFoundError:
         return None

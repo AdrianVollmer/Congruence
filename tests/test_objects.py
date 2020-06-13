@@ -28,6 +28,8 @@ def load_comments():
 
 
 def test_contentwrapper(load_results, caplog):
+    from congruence.args import load_config
+    load_config(args=['--config', './config.yaml.sample'])
     from congruence.confluence import PageView, SingleCommentView
     from congruence.objects import ContentWrapper, Generic
     from congruence.views.listbox import ColumnListBoxEntry
@@ -58,6 +60,8 @@ def test_contentwrapper(load_results, caplog):
 
 
 def test_comments(load_comments, caplog, monkeypatch):
+    from congruence.args import load_config
+    load_config(args=['--config', './config.yaml.sample'])
     from congruence.confluence import CommentContextView
     import congruence.confluence
     import congruence.objects

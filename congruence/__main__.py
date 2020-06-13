@@ -17,6 +17,8 @@
 
 def main():
     try:
+        from congruence.args import load_config
+        load_config()
         from congruence.app import app
         app.main()
     except KeyboardInterrupt:

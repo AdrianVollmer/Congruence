@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.args import args, LOG_FILE
+from congruence.environment import config
 
 import logging
 from io import StringIO
@@ -34,14 +34,15 @@ stream_handler = logging.StreamHandler(log_stream)
 stream_handler.setFormatter(logFormatter)
 stream_handler.setLevel(logging.DEBUG)
 
-file_handler = logging.FileHandler(LOG_FILE)
-file_handler.setFormatter(logFormatter)
-file_handler.setLevel(logging.DEBUG)
 
 log = logging.getLogger(__name__)
 
 log.addHandler(stream_handler)
-if args.log:
+
+if 'LogFile' in config:
+    file_handler = logging.FileHandler(config['LogFile'])
+    file_handler.setFormatter(logFormatter)
+    file_handler.setLevel(logging.DEBUG)
     log.addHandler(file_handler)
 
 # Disable annoying debug messages about charsets (probably from requests)
