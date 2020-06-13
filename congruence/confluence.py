@@ -263,8 +263,7 @@ class PageView(CongruenceTextBox):
 
     @key_action
     def go_to_comments(self, size=None):
-        page_id = self.obj.content.id
-        view = CommentContextView(page_id, self.obj)
+        view = CommentContextView(self.obj.content.id, self.obj.content)
         env.app.push_view(view)
 
     @key_action

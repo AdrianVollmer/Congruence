@@ -43,8 +43,15 @@ def test_contentwrapper(load_results, caplog, monkeypatch):
     from congruence.confluence import PageView, SingleCommentView
     from congruence.objects import ContentWrapper, Generic
     from congruence.views.listbox import ColumnListBoxEntry
+    import congruence.confluence
     from congruence.app import app
     app.main(dummy=True)
+
+    def mock_get_comments(*args, **kwargs):
+        return {}
+    monkeypatch.setattr(congruence.confluence,
+                        "get_comments_of_page",
+                        mock_get_comments)
 
     results = load_results
     for r in results:
@@ -58,7 +65,8 @@ def test_contentwrapper(load_results, caplog, monkeypatch):
         entry.search_match('')
 
         if obj.type in ['blogpost', 'page']:
-            PageView(obj)
+            p = PageView(obj)
+            p.go_to_comments()
         elif obj.type == 'comment':
             SingleCommentView(obj)
 
