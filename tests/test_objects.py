@@ -27,9 +27,19 @@ def load_comments():
     yield results
 
 
-def test_contentwrapper(load_results, caplog):
+def test_contentwrapper(load_results, caplog, monkeypatch):
+    # make sure that no requests are made, ever
+    import requests
+
+    def mock_request(*args, **kwargs):
+        raise RuntimeError("Unable to make requests in test mode")
+    monkeypatch.setattr(requests.Session,
+                        "request",
+                        mock_request)
+
     from congruence.args import load_config
     load_config(args=['--config', './config.yaml.sample'])
+
     from congruence.confluence import PageView, SingleCommentView
     from congruence.objects import ContentWrapper, Generic
     from congruence.views.listbox import ColumnListBoxEntry
@@ -60,23 +70,26 @@ def test_contentwrapper(load_results, caplog):
 
 
 def test_comments(load_comments, caplog, monkeypatch):
+    # make sure that no requests are made, ever
+    import requests
+
+    def mock_request(*args, **kwargs):
+        raise RuntimeError("Unable to make requests in test mode")
+    monkeypatch.setattr(requests.Session,
+                        "request",
+                        mock_request)
+
     from congruence.args import load_config
     load_config(args=['--config', './config.yaml.sample'])
+
     from congruence.confluence import CommentContextView
     import congruence.confluence
     import congruence.objects
     import congruence.environment
-    import congruence.interface
 
     from congruence.app import app
     app.main(dummy=True)
 
-    # make sure that no requests are made, ever
-    def mock_request(*args, **kwargs):
-        raise RuntimeError("Unable to make requests in test mode")
-    monkeypatch.setattr(congruence.interface,
-                        "make_request",
-                        mock_request)
     # Load comments from file
     comments = load_comments
     for c in comments:

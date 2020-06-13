@@ -72,7 +72,10 @@ def make_request(url, params={}, data=None, method="GET", headers={},
         log.info(f"Requesting {url}")
         env.app.alert(f"Requesting {url}...", 'info')
         if not data and method == "GET":
-            response = session.get(url, params=params, headers=headers)
+            response = session.request('GET',
+                                       url,
+                                       params=params,
+                                       headers=headers)
         else:
             if not no_token:
                 # For whatever reason, some requests fail with a proper XSRF
