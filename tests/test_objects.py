@@ -44,7 +44,7 @@ def test_contentwrapper(load_results, caplog, monkeypatch):
     from congruence.objects import ContentWrapper, Generic
     from congruence.views.listbox import ColumnListBoxEntry
     import congruence.confluence
-    from congruence.app import app
+    from congruence.app import app, HelpView
     app.main(dummy=True)
 
     def mock_get_comments(*args, **kwargs):
@@ -67,8 +67,10 @@ def test_contentwrapper(load_results, caplog, monkeypatch):
         if obj.type in ['blogpost', 'page']:
             p = PageView(obj)
             p.go_to_comments()
+            HelpView(p)
         elif obj.type == 'comment':
-            SingleCommentView(obj)
+            scv = SingleCommentView(obj)
+            HelpView(scv)
 
     obj = Generic(results[0])
     assert obj.get_title() is not None
@@ -95,7 +97,7 @@ def test_comments(load_comments, caplog, monkeypatch):
     import congruence.objects
     import congruence.environment
 
-    from congruence.app import app
+    from congruence.app import app, HelpView
     app.main(dummy=True)
 
     # Load comments from file
@@ -134,6 +136,7 @@ def test_comments(load_comments, caplog, monkeypatch):
                             mock_send_reply)
 
         CV = CommentContextView('0', MockObject())
+        HelpView(CV)
         CV.reply()
 
     for record in caplog.records:
