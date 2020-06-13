@@ -28,14 +28,14 @@ from congruence.views.treelistbox import CongruenceTreeListBox, \
 from congruence.interface import make_request
 from congruence.external import open_gui_browser, open_doc_in_cli_browser
 from congruence.logging import log
-from congruence.confluence import PageView
+from congruence.confluence import PageView, SpaceView
 from congruence.objects import Space, Page
 import congruence.environment as env
 
 import urwid
 
 
-class SpaceView(CongruenceTreeListBox):
+class SpaceDirectory(CongruenceTreeListBox):
     def __init__(self, properties={}):
         self.title = "Explorer"
         self.properties = properties
@@ -146,8 +146,13 @@ class SpaceEntry(CongruenceTreeListBoxEntry):
 
     def get_next_view(self):
         obj = self.get_value()
-        if obj.type in ["page", "blogpost"]:
+        if isinstance(obj, dict):
+            # It's the root
+            return
+        if obj.type in ['page', 'blogpost']:
             return PageView(obj)
+        elif obj.type == 'space':
+            return SpaceView(obj)
 
     def search_match(self, search_string):
         return self.obj.match(search_string)
@@ -190,4 +195,4 @@ class ExpandablePage(Page):
         return result
 
 
-PluginView = SpaceView
+PluginView = SpaceDirectory

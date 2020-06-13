@@ -210,6 +210,28 @@ class CommentWidget(CongruenceCardTreeWidget):
         return view
 
 
+class SpaceView(CongruenceTextBox):
+    """A text box showing metadata of a space"""
+
+    def __init__(self, obj):
+        self.obj = obj
+        self.title = "Space"
+        try:
+            infos = {
+                'Title': obj._data['title'],
+                'Key': obj._data['key'],
+                'Description': obj._data['description'],
+                'Last updated at':
+                    convert_date(obj._data['lastModifiedDate']['date']),
+            }
+            text = '\n'.join([f'{k}: {v}' for k, v in infos.items()])
+        except KeyError as e:
+            env.app.alert("KeyError (%s), displaying raw data" % e, 'error')
+            text = obj.get_json()
+        help_string = cs.SPACE_VIEW_HELP
+        super().__init__(text, help_string=help_string)
+
+
 class PageView(CongruenceTextBox):
     """A text box showing metadata of a page"""
 

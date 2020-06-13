@@ -34,6 +34,10 @@ PAGE_VIEW_HELP = (
     "What you see here is meta info of a page object."
 )
 
+SPACE_VIEW_HELP = (
+    "What you see here is meta info of a space object."
+)
+
 COMMENT_DETAILS_VIEW_HELP = (
     "What you see here is all properties of a comment object."
 )
