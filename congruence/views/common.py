@@ -22,6 +22,7 @@ import urwid
 
 
 def key_action(f):
+    """Decorator that promotes a function to a key action"""
     f.is_key_action = True
     return f
 
@@ -29,7 +30,7 @@ def key_action(f):
 class CollectKeyActions(urwid.widget.WidgetMeta):
     """This metaclass creates a list of all key actions
 
-    Key actions must be 'marked with the @key_action decorator. It also
+    Key actions must be marked with the @key_action decorator. It also
     appends all key actions of all base classes.
     """
     def __new__(meta, name, bases, dct):

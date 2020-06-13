@@ -57,7 +57,7 @@ Next, copy `config.yaml.sample` to `$XDG_CONFIG_HOME/congruence/config.yaml` (or
 `$HOME/.config/congruence/` if `$XDG_CONFIG_HOME` is not defined) and edit it to
 your liking.
 
-When using the app, you can always press '?' to see what's going on and what
+When using the app, you can always press `?` to see what's going on and what
 your next options are.
 
 Ideas for the next release
@@ -66,10 +66,11 @@ Ideas for the next release
 * Cache metadata
 * Keep track of 'seen'/'unseen' objects
 * Extract links and images of content
-* Show scroll  percentage in title bar
+* Show scroll percentage in title bar
 * Improve search
 * Add a 'versions' view and allow diffs between arbitrary versions
 * Edit comments
+* Crop long carded list items
 
 License
 -------
