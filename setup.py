@@ -25,6 +25,9 @@ setup(
         'requests',
         'urwid',
     ],
+    tests_require=[
+        'pytest',
+    ],
     entry_points={
         'console_scripts': [
             'congruence = congruence.__main__:main',

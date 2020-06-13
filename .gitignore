@@ -2,8 +2,6 @@ build/
 data/
 TODO
 congruence/conftest.py
-pytest.ini
-test-data/
-tests/
+tests/test-data
 .coverage
 .tox
