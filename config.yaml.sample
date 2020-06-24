@@ -39,28 +39,23 @@ GuiBrowser: firefox
 
 ## The 'plugins' are what you actually see on the main screen.
 Plugins:
-    -
-        PluginName: API
+    - PluginName: API
 ## For details on how to use CQL, see:
 ## https://developer.atlassian.com/server/confluence/advanced-searching-using-cql/
-        DisplayName: Recent changes
-        Endpoint: search
-        Parameters:
-            cql: lastmodified < endOfYear() and not type = attachment order by lastModified desc
-            limit: 20
-            expand: content.space,content.history.lastUpdated,content.history.previousVersion,space.homepage.history
-            excerpt: none
-    -
-        PluginName: Search
-    -
-        PluginName: Notifications
-        Limit: 30
-    -
-        PluginName: Explorer
+      DisplayName: Recent changes
+      Endpoint: search
+      Parameters:
+          cql: lastmodified < endOfYear() and not type = attachment order by lastModified desc
+          limit: 20
+          expand: content.space,content.history.lastUpdated,content.history.previousVersion,space.homepage.history
+          excerpt: none
+    - PluginName: Search
+    - PluginName: Notifications
+      Limit: 30
+    - PluginName: Explorer
 ## If your Confluence uses the Microblog plugin:
-    #  -
-    #      PluginName: Microblog
-    #      Data: 'thread.topicId:(12 OR 13 OR 14 OR 15 OR 16)'
-    #      Parameters:
-    #          limit: 20
-    #          replyLimit: 9999
+    #  - PluginName: Microblog
+    #    Data: 'thread.topicId:(12 OR 13 OR 14 OR 15 OR 16)'
+    #    Parameters:
+    #        limit: 20
+    #        replyLimit: 9999
