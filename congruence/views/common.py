@@ -18,7 +18,11 @@ from congruence.keys import KEY_ACTIONS
 #  from congruence.logging import log
 from congruence.ansiescape import translate_text_for_urwid
 
+from abc import ABC, abstractmethod
 import urwid
+
+import json
+import re
 
 
 def key_action(f):
@@ -99,3 +103,54 @@ class CongruenceTextBox(CongruenceView, urwid.ListBox,
     @key_action
     def scroll_to_top(self, size=None):
         self.set_focus(0, coming_from='below')
+
+
+class DataObject(ABC):
+    """Base class for DataObjects
+
+    Each entry in a view has a member of this type.
+
+    """
+
+    def __init__(self, data):
+        self._data = data
+        #  log.debug(json.dumps(data, indent=2))
+
+    @abstractmethod
+    def get_title(self):
+        """Subclasses who implement this must return a string"""
+        pass
+
+    @abstractmethod
+    def get_columns(self):
+        """Subclasses who implement this must return a list of length five
+
+        This function is used for representing the object in a list entry.
+        """
+        pass
+
+    def get_html_content(self):
+        """Subclasses who implement this should return HTML in a string
+
+        The result is passed to a CLI browser
+        """
+        return ""
+
+    def get_json(self):
+        return json.dumps(self._data, indent=2, sort_keys=True)
+
+    def get_content(self):
+        """Represents the body of a carded list entry"""
+
+        return ""
+
+    def get_head(self):
+        """Represents the head of a carded list entry"""
+
+        return self.get_title()
+
+    def match(self, search_string):
+        return (
+            re.search(search_string, self.get_title())
+            or re.search(search_string, self.get_content())
+        )

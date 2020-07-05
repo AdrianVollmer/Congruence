@@ -22,12 +22,12 @@ This file contains classes which represent content objects in Confluence.
 from congruence.interface import convert_date, html_to_text, md_to_html
 from congruence.logging import log
 from congruence.interface import make_request
+from congruence.views.common import DataObject
 import congruence.environment as env
 
 import json
 import re
 from uuid import uuid4
-from abc import ABC, abstractmethod
 
 
 def is_blacklisted_user(username):
@@ -37,51 +37,7 @@ def is_blacklisted_user(username):
     )
 
 
-class ConfluenceObject(ABC):
-    """Base class for all Confluence content objects
-
-    Can be a page, a comment, a user, a space, anything.
-
-    """
-
-    def __init__(self, data):
-        self._data = data
-        #  log.debug(json.dumps(data, indent=2))
-
-    @abstractmethod
-    def get_title(self):
-        """Subclasses who implement this must return a string"""
-        pass
-
-    @abstractmethod
-    def get_columns(self):
-        """Subclasses who implement this must return a list of length five
-
-        This function is used for representing the object in a list entry.
-        """
-        pass
-
-    def get_json(self):
-        return json.dumps(self._data, indent=2, sort_keys=True)
-
-    def get_content(self):
-        """Represents the body of a carded list entry"""
-
-        return ""
-
-    def get_head(self):
-        """Represents the head of a carded list entry"""
-
-        return self.get_title()
-
-    def match(self, search_string):
-        return (
-            re.search(search_string, self.get_title())
-            or re.search(search_string, self.get_content())
-        )
-
-
-class Content(ConfluenceObject):
+class Content(DataObject):
     """Base class for Pages, Blogposts, Comments, Attachments"""
 
     def __init__(self, data):
@@ -319,7 +275,7 @@ class Attachment(Content):
     pass
 
 
-class User(ConfluenceObject):
+class User(DataObject):
     def __init__(self, data):
         super().__init__(data)
         self.type = "user"
@@ -343,7 +299,7 @@ class User(ConfluenceObject):
         ]
 
 
-class Space(ConfluenceObject):
+class Space(DataObject):
     def __init__(self, data):
         super().__init__(data)
         self.type = "space"
@@ -368,7 +324,7 @@ class Space(ConfluenceObject):
         ]
 
 
-class Generic(ConfluenceObject):
+class Generic(DataObject):
     def __init__(self, data):
         super().__init__(data)
         self.type = '?'
