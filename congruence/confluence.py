@@ -462,4 +462,4 @@ def open_content_in_cli_browser(app, id):
     content = content["body"]["view"]["value"]
 
     content = f"<html><head></head><body>{content}</body></html>"
-    open_doc_in_cli_browser(content.encode(), app)
+    open_doc_in_cli_browser(content.encode())

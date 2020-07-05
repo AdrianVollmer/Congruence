@@ -24,7 +24,7 @@ import tempfile
 import urwid
 
 
-def open_doc_in_cli_browser(doc, app):
+def open_doc_in_cli_browser(doc):
     """Opens a document in a CLI browser
 
     :doc: the document as a string
@@ -33,10 +33,10 @@ def open_doc_in_cli_browser(doc, app):
     process = Popen(split(env.config["CliBrowser"]), stdin=PIPE, stderr=PIPE)
     process.stdin.write(doc)
     process.communicate()
-    app.loop.screen.clear()
+    env.app.loop.screen.clear()
 
 
-def open_cli_browser(url, app):
+def open_cli_browser(url):
     """Opens an URL in a CLI browser"""
 
     if not url.startswith(env.config['BaseURL']):
@@ -50,10 +50,10 @@ def open_cli_browser(url, app):
         cmd = cmd + " '%s'"
     cmd = cmd % url
     log.info("Executing: `%s`" % cmd)
-    app.loop.screen.stop()
+    env.app.loop.screen.stop()
     process = Popen(split(cmd), stdin=PIPE, stderr=PIPE)
     process.communicate()
-    app.loop.screen.start()
+    env.app.loop.screen.start()
 
 
 def open_gui_browser(url):

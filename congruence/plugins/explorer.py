@@ -30,7 +30,6 @@ from congruence.external import open_gui_browser, open_doc_in_cli_browser
 from congruence.logging import log
 from congruence.confluence import PageView, SpaceView
 from congruence.objects import Space, Page
-import congruence.environment as env
 
 import urwid
 
@@ -93,7 +92,7 @@ class SpaceDirectory(CongruenceTreeListBox):
         content = content['body']['storage']['value']
 
         content = f'<html><head></head><body>{content}</body></html>'
-        open_doc_in_cli_browser(content.encode(), env.app)
+        open_doc_in_cli_browser(content.encode())
 
     @key_action
     def gui_browser(self, size=None):

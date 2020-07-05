@@ -392,6 +392,7 @@ class ContentWrapper(object):
         'comment': Comment,
         'attachment': Attachment,
         'space': Space,
+        'global': Space,
         'personal': Space,
         'user': User,
         'known': User,
