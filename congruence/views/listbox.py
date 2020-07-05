@@ -37,7 +37,7 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
         self.entries = entries
         self.help_string = help_string
         self.walker = urwid.SimpleFocusListWalker(self.entries)
-        self._search_eesults = []
+        self._search_results = []
         super().__init__(self.walker)
         if self.entries and isinstance(self.entries[0], ColumnListBoxEntry):
             self.align_columns()
