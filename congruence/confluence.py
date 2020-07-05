@@ -159,12 +159,10 @@ class CommentContextView(CongruenceTreeListBox):
     @key_action
     def cli_browser(self, size=None):
         obj = self.focus.get_value()
-        try:
-            id = obj.id
-        except AttributeError:
-            # The root object is just a dict, not an object
-            id = obj['id']
-        open_content_in_cli_browser(env.app, id)
+        if not hasattr(obj, "get_html_content"):
+            return
+        content = obj.get_html_content()
+        open_doc_in_cli_browser(content.encode())
 
     @key_action
     def gui_browser(self, size=None):
@@ -274,8 +272,10 @@ class PageView(CongruenceTextBox):
 
     @key_action
     def cli_browser(self, size=None):
-        id = self.obj.content.id
-        open_content_in_cli_browser(env.app, id)
+        if not hasattr(self.obj, "get_html_content"):
+            return
+        content = self.obj.get_html_content()
+        open_doc_in_cli_browser(content.encode())
 
     @key_action
     def gui_browser(self, size=None):
@@ -412,8 +412,11 @@ class ContentList(CongruenceListBox):
     @key_action
     def cli_browser(self, size=None):
         node = self.get_focus()[0]
-        id = node.obj.content.id
-        open_content_in_cli_browser(env.app, id)
+        obj = node.obj
+        if not hasattr(obj, "get_html_content"):
+            return
+        content = obj.get_html_content()
+        open_doc_in_cli_browser(content.encode())
 
     @key_action
     def gui_browser(self, size=None):
@@ -446,20 +449,3 @@ class ContentList(CongruenceListBox):
             self.params["start"] += \
                 self.params["limit"]
         return result
-
-
-def open_content_in_cli_browser(app, id):
-    log.debug("Build HTML view for page with id '%s'" % id)
-    if not id:
-        env.app.alert("Object has no ID", 'error')
-        return
-    rest_url = f"rest/api/content/{id}?expand=body.view"
-    r = make_request(rest_url)
-    if not r.ok:
-        env.app.alert("Request failed (%d)" % r.status_code, 'error')
-        return
-    content = r.json()
-    content = content["body"]["view"]["value"]
-
-    content = f"<html><head></head><body>{content}</body></html>"
-    open_doc_in_cli_browser(content.encode())

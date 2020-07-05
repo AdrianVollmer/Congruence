@@ -120,6 +120,18 @@ class Content(ConfluenceObject):
 
     #  def get_like_status(self):
 
+    def get_html_content(self):
+        if not hasattr(self, "id"):
+            return ""
+        log.debug("Build HTML view for page with id '%s'" % self.id)
+        rest_url = f"rest/api/content/{self.id}?expand=body.storage"
+        r = make_request(rest_url)
+        content = r.json()
+        content = content['body']['storage']['value']
+
+        content = f'<html><head></head><body>{content}</body></html>'
+        return content
+
     def like(self):
         id = self.id
         log.debug("Liking %s" % id)
@@ -415,6 +427,9 @@ class ContentWrapper(object):
             self.content = Generic(content_data)
 
         self.title = self.content.get_title()
+
+    def get_html_content(self):
+        return self.content.get_html_content()
 
     def get_title(self):
         return self.content.get_title()

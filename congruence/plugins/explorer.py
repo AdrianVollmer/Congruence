@@ -81,17 +81,9 @@ class SpaceDirectory(CongruenceTreeListBox):
     @key_action
     def cli_browser(self, size=None):
         obj = self.focus.get_value()
-        if not hasattr(obj, "id"):
-            # it's the root or a space
+        if not hasattr(obj, "get_html_content"):
             return
-        id = obj.id
-        log.debug("Build HTML view for page with id '%s'" % id)
-        rest_url = f"rest/api/content/{id}?expand=body.storage"
-        r = make_request(rest_url)
-        content = r.json()
-        content = content['body']['storage']['value']
-
-        content = f'<html><head></head><body>{content}</body></html>'
+        content = obj.get_html_content()
         open_doc_in_cli_browser(content.encode())
 
     @key_action
