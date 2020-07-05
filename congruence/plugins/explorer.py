@@ -82,8 +82,8 @@ class SpaceDirectory(CongruenceTreeListBox):
     @key_action
     def cli_browser(self, size=None):
         obj = self.focus.get_value()
-        if isinstance(obj, dict):
-            # it's the root
+        if not hasattr(obj, "id"):
+            # it's the root or a space
             return
         id = obj.id
         log.debug("Build HTML view for page with id '%s'" % id)
