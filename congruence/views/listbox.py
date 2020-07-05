@@ -22,6 +22,8 @@ import congruence.environment as env
 
 import urwid
 
+import re
+
 
 class CongruenceListBox(CongruenceView, urwid.ListBox,
                         metaclass=CollectKeyActions):
@@ -35,7 +37,7 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
         self.entries = entries
         self.help_string = help_string
         self.walker = urwid.SimpleFocusListWalker(self.entries)
-        self._search_results = []
+        self._search_eesults = []
         super().__init__(self.walker)
         if self.entries and isinstance(self.entries[0], ColumnListBoxEntry):
             self.align_columns()
@@ -198,6 +200,8 @@ class CongruenceListBoxEntry(urwid.WidgetWrap):
     def search_match(self, search_string):
         """Returns a Boolean whether the search string matches"""
 
+        if isinstance(self.obj, str):
+            return re.search(search_string, self.obj)
         return self.obj.match(search_string)
 
 
