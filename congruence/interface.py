@@ -150,7 +150,8 @@ def authenticate_session():
     """Retrieve a valid session cookie and XSRF token"""
 
     user = env.config["Username"]
-    password = check_output(split(env.config["Password_Command"]))[:-1].decode()
+    password = check_output(split(env.config["Password_Command"]))
+    password = password[:-1].decode()
 
     log.info(f"Authenticating user: {user}")
     response = make_request(
@@ -221,8 +222,8 @@ def html_to_text(
 def remove_creation_links(html):
     soup = BeautifulSoup(html, features="lxml")
     links = soup.findAll('a', 'createlink')
-    for l in links:
-        l['href'] = re.sub('[0-9]+$', '', l['href'])
+    for link in links:
+        link['href'] = re.sub('[0-9]+$', '', link['href'])
     return str(soup)
 
 
