@@ -203,7 +203,7 @@ def send_sketch(topic_id):
             'application/x-www-form-urlencoded; charset=UTF-8',
     }
     data = f"topicId={topic_id}"
-    url = f"rest/microblog/1.0/sketch"
+    url = "rest/microblog/1.0/sketch"
     r = make_request(url, method='POST', data=data,
                      headers=headers, no_token=True)
 
