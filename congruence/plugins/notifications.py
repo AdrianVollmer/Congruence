@@ -20,10 +20,9 @@ This view displays your latest notifications.
 
 """
 from congruence.interface import make_request, convert_date, html_to_text
-from congruence.views.common import CongruenceTextBox, key_action
+from congruence.views.common import CongruenceTextBox, key_action, DataObject
 from congruence.views.listbox import CongruenceListBox,\
         ColumnListBoxEntry
-from congruence.objects import ConfluenceObject
 #  from congruence.logging import log
 import congruence.environment as env
 
@@ -93,7 +92,7 @@ class NotificationEntry(ColumnListBoxEntry):
         return self.obj.match(search_string)
 
 
-class NotificationObject(ConfluenceObject):
+class NotificationObject(DataObject):
     def __init__(self, data):
         self._data = data
         self.metadata = self._data['metadata']
