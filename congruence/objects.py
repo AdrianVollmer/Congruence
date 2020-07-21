@@ -129,8 +129,12 @@ class Content(DataObject):
 
     def match(self, search_string):
         return (
-            re.search(search_string, self.get_title())
-            or re.search(search_string, self.get_content())
+            re.search(search_string,
+                      self.get_title(),
+                      flags=re.IGNORECASE)
+            or re.search(search_string,
+                         self.get_content(),
+                         flags=re.IGNORECASE)
         )
 
 
