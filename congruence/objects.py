@@ -183,7 +183,7 @@ class Comment(Content):
         super().__init__(data)
         self.type = 'comment'
         page_id = self._data['_expandable']['container']
-        page_id = re.search(r'/([^/]*$)', page_id).groups()[0]
+        self.page_id = re.search(r'/([^/]*$)', page_id).groups()[0]
 
         date = self._data['history']['createdDate']
         self.url = data['_links']['webui']

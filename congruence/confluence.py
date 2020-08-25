@@ -140,8 +140,9 @@ class CommentContextView(CongruenceTreeListBox):
                 obj.send_reply(reply)
             else:
                 post_comment(reply, self.page_id)
-        except Exception:
+        except Exception as e:
             env.app.alert("Comment failed", 'error')
+            log.exception(e)
         else:
             env.app.alert("Comment sent", 'info')
 
