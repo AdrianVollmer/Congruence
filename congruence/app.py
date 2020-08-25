@@ -14,6 +14,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from inspect import getframeinfo, stack
+import os
 
 import congruence.environment as env
 from congruence.palette import PALETTE
@@ -133,7 +135,13 @@ class CongruenceApp(object):
         :msgtype: one of 'info', 'warning', 'error'
         """
 
-        log.info("Alert (%s): %s" % (msgtype, message))
+        caller = getframeinfo(stack()[1][0])
+        log.info("Alert (%s, %s:%d): %s" % (
+            msgtype,
+            os.path.basename(caller.filename),
+            caller.lineno,
+            message,
+        ))
         self.footer.status_line.set_text((msgtype, message))
         try:
             self.loop.draw_screen()
