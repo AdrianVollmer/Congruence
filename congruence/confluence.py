@@ -168,6 +168,8 @@ class CommentContextView(CongruenceTreeListBox):
     @key_action
     def gui_browser(self, size=None):
         obj = self.focus.get_value()
+        if not hasattr(obj, "url"):
+            return
         url = obj.url
         open_gui_browser(url)
 
