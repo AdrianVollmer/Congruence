@@ -171,6 +171,8 @@ class CommentContextView(CongruenceTreeListBox):
         if not hasattr(obj, "url"):
             return
         url = obj.url
+        log.info(url)
+        log.info(obj._data)
         open_gui_browser(url)
 
 
@@ -284,6 +286,7 @@ class PageView(CongruenceTextBox):
     def gui_browser(self, size=None):
         id = self.obj.content.id
         url = f"pages/viewpage.action?pageId={id}"
+        log.info(url)
         open_gui_browser(url)
 
     @key_action
@@ -424,11 +427,7 @@ class ContentList(CongruenceListBox):
     @key_action
     def gui_browser(self, size=None):
         node = self.get_focus()[0]
-        id = node.obj.content.id
-        if not id:
-            env.app.alert("Object has no ID", 'error')
-            return
-        url = f"pages/viewpage.action?pageId={id}"
+        url = node.obj.content.url
         open_gui_browser(url)
 
     def get_entries(self):

@@ -186,7 +186,7 @@ class Comment(Content):
         self.page_id = re.search(r'/([^/]*$)', page_id).groups()[0]
 
         date = self._data['history']['createdDate']
-        self.url = data['_links']['webui']
+        self.url = self._data['_links']['webui']
         date = convert_date(date)
         username = self.versionby.display_name
         if self.blacklisted:
