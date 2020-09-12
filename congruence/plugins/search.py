@@ -25,6 +25,7 @@ Confluence:
 
 from congruence.views.listbox import ColumnListBoxEntry
 from congruence.views.common import key_action
+from congruence.logging import log
 from congruence.confluence import CommentContextView, PageView, ContentList
 import congruence.environment as env
 
@@ -72,11 +73,10 @@ class SearchResultEntry(ColumnListBoxEntry):
             parent = self.obj._data['resultParentContainer']
             page_id = parent['displayUrl']
             page_id = page_id.split('=')[-1]
-            title = parent['title']
             return CommentContextView(
                 page_id,
-                title,
-                self.obj.id,
+                self.obj.content,
+                self.obj._data['content']['id'],
             )
 
     def search_match(self, search_string):
