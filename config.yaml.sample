@@ -18,6 +18,7 @@ Editor: vim
 CliBrowser: elinks
 ## Other options for CliBrowser: 'w3m -T text/html', 'lynx -stdin', ...
 GuiBrowser: firefox
+PdfViewer: zathura
 
 ## Diffs can be piped through external commands which are installed on your
 ## system. For example, if you want some color highlighting, use this:

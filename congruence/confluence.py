@@ -22,12 +22,13 @@ from congruence.views.listbox import CongruenceListBox, \
         ColumnListBoxEntry
 from congruence.views.treelistbox import CongruenceTreeListBox,\
         CongruenceCardTreeWidget
-from congruence.interface import make_request, convert_date
+from congruence.interface import make_request, convert_date, download_file
 from congruence.tools import create_diff
 from congruence.logging import log
 from congruence.objects import Comment, ContentWrapper, post_comment
 import congruence.strings as cs
-from congruence.external import open_gui_browser, open_doc_in_cli_browser
+from congruence.external import open_gui_browser, open_doc_in_cli_browser, \
+    open_pdf_viewer
 import congruence.environment as env
 
 
@@ -276,6 +277,13 @@ class PageView(CongruenceTextBox):
             env.app.alert('No diff available', 'warning')
 
     @key_action
+    def pdf_viewer(self, size=None):
+        id = self.obj.content.id
+        url = f"spaces/flyingpdf/pdfpageexport.action?pageId={id}"
+        f = download_file(url)
+        open_pdf_viewer(f)
+
+    @key_action
     def cli_browser(self, size=None):
         if not hasattr(self.obj, "get_html_content"):
             return
@@ -286,7 +294,6 @@ class PageView(CongruenceTextBox):
     def gui_browser(self, size=None):
         id = self.obj.content.id
         url = f"pages/viewpage.action?pageId={id}"
-        log.info(url)
         open_gui_browser(url)
 
     @key_action

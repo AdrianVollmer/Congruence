@@ -72,6 +72,16 @@ def open_gui_browser(url):
     process.communicate()
 
 
+def open_pdf_viewer(filename):
+    cmd = env.config["PdfViewer"]
+    if '%s' not in cmd:
+        cmd = cmd + " '%s'"
+    cmd = cmd % filename
+    log.debug(filename)
+    process = Popen(split(cmd), stdin=PIPE, stderr=PIPE)
+    process.communicate()
+
+
 class CliBrowserView(urwid.Terminal):
     """A urwid widget for displaying a CLI browser
 

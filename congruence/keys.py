@@ -49,6 +49,7 @@ KEYS = {
                        " (five times the regular amount)"),
     'cli browser': ('b', "Open with CLI browser"),
     'gui browser': ('B', "Open with GUI browser"),
+    'pdf viewer': ('p', "Open with PDF viewer"),
     'show log': ('!', "Show application log"),
     'post comment': ('P', "Post a new comment to a page"),
     'go to comments': ('C', "Go to the comment section of a page"),

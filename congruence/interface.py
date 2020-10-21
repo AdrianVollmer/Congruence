@@ -16,7 +16,6 @@
 
 import congruence.environment as env
 from congruence.logging import log
-import congruence.environment as env
 
 from urllib.parse import urlencode
 from datetime import datetime as dt, timedelta
@@ -26,6 +25,7 @@ import re
 from shlex import split
 from subprocess import check_output
 import time
+import tempfile
 
 from bs4 import BeautifulSoup
 import html2text
@@ -174,6 +174,14 @@ def authenticate_session():
     XSRF = soup.find("meta", {"id": "atlassian-token"})["content"]
     save_session()
     return True
+
+
+def download_file(url):
+    response = make_request(url)
+    f = tempfile.NamedTemporaryFile(delete=False)
+    f.write(response.content)
+    f.close()
+    return f.name
 
 
 def dump_http(response, filename):
