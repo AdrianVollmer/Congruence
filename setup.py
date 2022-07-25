@@ -24,6 +24,7 @@ setup(
         'python-dateutil',
         'requests',
         'urwid',
+        'lxml',
     ],
     tests_require=[
         'pytest',
