@@ -18,12 +18,13 @@ setup(
         'html2text',
         'markdown',
         'beautifulsoup4',
+        'lxml',
         'pyyaml',
         'pyxdg',
         'pytz',
         'python-dateutil',
         'requests',
-        'urwid',
+        'urwid',        
     ],
     entry_points={
         'console_scripts': [
