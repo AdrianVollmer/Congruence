@@ -417,5 +417,8 @@ def open_content_in_cli_browser(app, id):
     content = r.json()
     content = content["body"]["view"]["value"]
 
-    content = f"<html><head></head><body>{content}</body></html>"
+    content = (
+        f"<!DOCTYPE html><html><head><meta charset='utf-8'>"
+        f"</head><body>{content}</body></html>"
+        )
     open_doc_in_cli_browser(content.encode(), app)
