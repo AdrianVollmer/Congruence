@@ -24,7 +24,7 @@ setup(
         'pytz',
         'python-dateutil',
         'requests',
-        'urwid',        
+        'urwid < 2.2',
     ],
     entry_points={
         'console_scripts': [
