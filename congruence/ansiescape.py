@@ -16,9 +16,13 @@ Urwid Helper
         https://github.com/Nanoseb/ncTelegram/blob/master/ncTelegram/ui_msgwidget.py#L218
 """
 
+from __future__ import annotations
+
 import re
+from collections.abc import Iterator
+from typing import Union
+
 import urwid
-from typing import Tuple, List, Union, Iterator
 
 r"""
 Explained using: https://regex101.com/
@@ -75,7 +79,7 @@ bg_lookup = {
 }
 
 
-def translate_color(attr: Union[str, Tuple, List[int]]) -> Tuple[str, str]:
+def translate_color(attr: Union[str, tuple, list[int]]) -> tuple[str, str]:
     """
     Translates a 3/4 bit ANSII escape code into the equivalent urwid color:
     Source: https://en.wikipedia.org/wiki/ANSI_escape_code#3/4_bit
@@ -112,33 +116,30 @@ def translate_color(attr: Union[str, Tuple, List[int]]) -> Tuple[str, str]:
     else:
         list_attr = [0]
 
-    fg = ''
-    bg = ''
+    fg = ""
+    bg = ""
 
     is_256 = False
     for elem in list_attr:
         if elem == 0:
-            # reset, special case
-            fg, bg = '', ''
+            fg, bg = "", ""
             continue
-
         if elem == 5:
             is_256 = True
-
         if elem in fg_lookup:
             fg = fg_lookup[elem]
         if elem in bg_lookup:
             bg = bg_lookup[elem]
         elif is_256:
-            bg = 'h%d' % elem
+            bg = f"h{elem}"
 
     for elem in list_attr:
         if elem == 1:
-            fg += ', bold'
+            fg += ", bold"
     return fg, bg
 
 
-def get_ansii_group_matches_for_text(text: str) -> Iterator[Tuple[List[int], str]]:  # noqa
+def get_ansii_group_matches_for_text(text: str) -> Iterator[tuple[list[int], str]]:
     """
     Get a iterator of (ansicodes: int[], text: str) found from the text.
 
@@ -157,11 +158,10 @@ def get_ansii_group_matches_for_text(text: str) -> Iterator[Tuple[List[int], str
         attr = match.group(1)
         parsed_attr = [int(i) for i in attr.split(";")]
         text = match.group(2)
-
         yield parsed_attr, text
 
 
-def translate_text_for_urwid(raw_text):
+def translate_text_for_urwid(raw_text: str) -> list:
     """
     Converts an ANSII escaped string into an urwid equivalent.
     First by finding all the matches for "\033[" or "\x1b[",
@@ -180,16 +180,14 @@ def translate_text_for_urwid(raw_text):
     :param raw_text:
     :return:
     """
-
     formated_text = []
     if hasattr(raw_text, "decode"):
         raw_text = raw_text.decode("utf-8")
 
-    # Reset the start of text (+ allow for text that isn't formatted)
     if not (raw_text.startswith("\033[") or raw_text.startswith("\x1b[")):
         raw_text = "\x1b[0m" + raw_text
 
-    for (attr, text) in get_ansii_group_matches_for_text(raw_text):
+    for attr, text in get_ansii_group_matches_for_text(raw_text):
         fgcolor, bgcolor = translate_color(attr)
         formated_text.append((urwid.AttrSpec(fgcolor, bgcolor, 256), text))
 
@@ -198,4 +196,5 @@ def translate_text_for_urwid(raw_text):
 
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()

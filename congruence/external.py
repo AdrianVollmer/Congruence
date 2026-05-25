@@ -14,97 +14,91 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.args import config, BASE_URL
-from congruence.logging import log
+from __future__ import annotations
 
-from shlex import split
-from subprocess import Popen, PIPE
 import tempfile
+from shlex import split
+from subprocess import PIPE, Popen
+from typing import TYPE_CHECKING
 
 import urwid
 
+from congruence.args import BASE_URL, config
+from congruence.logging import log
 
-def open_doc_in_cli_browser(doc, app):
-    """Opens a document in a CLI browser
+if TYPE_CHECKING:
+    from congruence.app import CongruenceApp
 
-    :doc: the document as a string
-    """
 
+def _normalise_url(url: str) -> str:
+    if not url.startswith(BASE_URL):
+        if url.startswith("/"):
+            return f"{BASE_URL}{url}"
+        return f"{BASE_URL}/{url}"
+    return url
+
+
+def open_doc_in_cli_browser(doc: bytes, app: CongruenceApp) -> None:
+    """Open an in-memory document in the configured CLI browser."""
     process = Popen(split(config["CliBrowser"]), stdin=PIPE, stderr=PIPE)
     process.stdin.write(doc)
     process.communicate()
     app.loop.screen.clear()
 
 
-def open_cli_browser(url, app):
-    """Opens an URL in a CLI browser"""
-
-    if not url.startswith(BASE_URL):
-        if url.startswith('/'):
-            url = f"{BASE_URL}{url}"
-        else:
-            url = f"{BASE_URL}/{url}"
-
+def open_cli_browser(url: str, app: CongruenceApp) -> None:
+    """Open a URL in the configured CLI browser."""
+    url = _normalise_url(url)
     cmd = config["CliBrowser"]
-    if '%s' not in cmd:
+    if "%s" not in cmd:
         cmd = cmd + " '%s'"
     cmd = cmd % url
-    log.info("Executing: `%s`" % cmd)
+    log.info(f"Executing: `{cmd}`")
     app.loop.screen.stop()
     process = Popen(split(cmd), stdin=PIPE, stderr=PIPE)
     process.communicate()
     app.loop.screen.start()
 
 
-def open_gui_browser(url):
-    if not url.startswith(BASE_URL):
-        if url.startswith('/'):
-            url = f"{BASE_URL}{url}"
-        else:
-            url = f"{BASE_URL}/{url}"
-
+def open_gui_browser(url: str) -> None:
+    """Open a URL in the configured GUI browser."""
+    url = _normalise_url(url)
     cmd = config["GuiBrowser"]
-    if '%s' not in cmd:
+    if "%s" not in cmd:
         cmd = cmd + " '%s'"
     cmd = cmd % url
-    log.info("Executing: `%s`" % cmd)
+    log.info(f"Executing: `{cmd}`")
     process = Popen(split(cmd), stdin=PIPE, stderr=PIPE)
     process.communicate()
 
 
 class CliBrowserView(urwid.Terminal):
-    """A urwid widget for displaying a CLI browser
+    """A urwid widget embedding a CLI browser.
 
-    :url: the url to display. If it is -, read from stdin.
+    Pass '-' as *url* to read from stdin.
     """
 
-    def __init__(self, url):
+    def __init__(self, url: str) -> None:
         cmd = config["CliBrowser"]
-        if '%s' not in cmd:
+        if "%s" not in cmd:
             cmd += " '%s'"
         cmd = cmd % url
-        if url == '-':
-            cmd = cmd.split(' ')[0]
-
+        if url == "-":
+            cmd = cmd.split(" ")[0]
         super().__init__(cmd)
 
 
-def get_editor_input(prompt):
-    """Open a tempfile with an external editor
-
-    :prompt: Text to be written to the file beforehand
-    """
-
-    tfile = tempfile.NamedTemporaryFile('w', delete=False)
+def get_editor_input(prompt: str = "") -> str:
+    """Open a temp-file in the configured editor and return its contents."""
+    tfile = tempfile.NamedTemporaryFile("w", delete=False)
     tfile.write(prompt)
     tfile.flush()
     cmd = config["Editor"]
-    if '%s' not in cmd:
+    if "%s" not in cmd:
         cmd += " '%s'"
     cmd = cmd % tfile.name
-    log.info("Executing: `%s`" % cmd)
+    log.info(f"Executing: `{cmd}`")
     process = Popen(split(cmd))
     process.communicate()
-    with open(tfile.name, 'r') as f:
-        content = f.read()
-    return content
+    with open(tfile.name) as f:
+        return f.read()

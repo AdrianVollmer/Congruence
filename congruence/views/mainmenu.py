@@ -14,11 +14,14 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Main menu view: one entry per configured plugin."""
 
-"""
-This file contains general 'views' (i.e. urwid widgets) which are
-particular to this app and not to Confluence
-"""
+from __future__ import annotations
+
+from importlib import import_module
+from typing import Any
+
+from congruence.views.listbox import CongruenceListBox, CongruenceListBoxEntry
 
 __help__ = """Congruence - a TUI for Confluence
     Adrian Vollmer, 2020
@@ -28,42 +31,26 @@ configured in $XDG_CONFIG_HOME/congruence/config.yaml. Each plugin can be
 used multiple times.
 """
 
-from congruence.views.listbox import CongruenceListBox, \
-        CongruenceListBoxEntry
-#  from congruence.logging import log
-
-from importlib import import_module
-
 
 class CongruenceMainMenu(CongruenceListBox):
-
-    def __init__(self, plugins):
-        # Create a view of all plugins defined in the config
-        self.entries = []
-        for p in plugins:
-            self.entries.append(MainMenuEntry(p))
-        super().__init__(self.entries, help_string=__help__)
+    def __init__(self, plugins: list[dict]) -> None:
+        entries = [MainMenuEntry(p) for p in plugins]
+        super().__init__(entries, help_string=__help__)
 
 
 class MainMenuEntry(CongruenceListBoxEntry):
-    def __init__(self, data):
+    def __init__(self, data: dict) -> None:
         self.plugin_data = data
-        title = data["PluginName"]
-        if "DisplayName" in data:
-            title = data['DisplayName']
-        # this now overwrite self.data
-        return super().__init__(title)
+        title: str = data.get("DisplayName", data["PluginName"])
+        super().__init__(title)
 
-    def get_plugin_class(self, name):
-        """This function retrieves the class the plugin"""
+    def _get_plugin_class(self, name: str) -> type:
+        module = import_module(f"congruence.plugins.{name.lower()}")
+        return module.PluginView
 
-        view = getattr(
-            import_module('congruence.plugins.' + name.lower()),
-            "PluginView"
-        )
-        # TODO check for must-haves
-        return view
+    def get_next_view(self) -> Any:
+        view_class = self._get_plugin_class(self.plugin_data["PluginName"])
+        return view_class(self.plugin_data)
 
-    def get_next_view(self):
-        viewClass = self.get_plugin_class(self.plugin_data['PluginName'])
-        return viewClass(self.plugin_data)
+    def search_match(self, search_string: str) -> bool:
+        return bool(search_string in str(self.plugin_data.get("DisplayName", self.plugin_data["PluginName"])))

@@ -17,7 +17,6 @@
 from congruence.args import config
 from congruence.logging import log
 
-
 # action: (key, description)
 KEYS = {
     'move up': ('k', "Move up"),

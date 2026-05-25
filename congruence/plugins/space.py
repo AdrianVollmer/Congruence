@@ -20,10 +20,9 @@ This is a tree view of all pages in a space.
 
 """
 
-from congruence.views import ConfluenceMainView, ConfluenceTreeListBox,\
-        ConfluenceTreeWidget
-from congruence.logging import log
 from congruence.confluence import get_nested_content
+from congruence.logging import log
+from congruence.views import ConfluenceMainView, ConfluenceTreeListBox, ConfluenceTreeWidget
 
 
 # Can't get the full tree due to the way the Confluence API works. Must be
@@ -33,7 +32,7 @@ def get_page_tree(name):
         return {
             "title": c["title"],
         }
-    log.info("Load page tree of space '%s'" % name)
+    log.info(f"Load page tree of space '{name}'")
     url = f"rest/api/space/{name}/content?depth=root"
     page_tree = get_nested_content(url, attr_picker)
     return page_tree

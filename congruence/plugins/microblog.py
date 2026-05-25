@@ -14,301 +14,263 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Microblog plugin for Confluence."""
+
+from __future__ import annotations
+
+import urwid
+
+import congruence.strings as cs
+from congruence.external import open_gui_browser
+from congruence.interface import convert_date, html_to_text, make_request, md_to_html
+from congruence.logging import log
+from congruence.objects import Content, is_blacklisted_user
+from congruence.views.common import CongruenceTextBox, key_action
+from congruence.views.listbox import CardedListBoxEntry, CongruenceListBox
+
 __help__ = """Congruence Microblog
 
 Here you can see the latest entries of the microblog plugin.
 
 """
-from congruence.views.listbox import CongruenceListBox, \
-        CardedListBoxEntry
-from congruence.views.common import CongruenceTextBox, key_action
-from congruence.interface import make_request, html_to_text, convert_date,\
-        md_to_html
-from congruence.logging import log
-from congruence.objects import Content, is_blacklisted_user
-from congruence.external import open_gui_browser
-import congruence.strings as cs
-
-import urwid
 
 
 class MicroblogView(CongruenceListBox):
-    def __init__(self, properties={}):
+    def __init__(self, properties: dict | None = None) -> None:
         self.title = "Microblog"
-        self.properties = properties
+        self.properties = properties or {}
+        self.limit: int = 20
+        self.replyLimit: int = 999
+        self.post_data: str = ""
+        self.offset: int = 0
         self.update()
         super().__init__(self.entries, help_string=__help__)
 
     @key_action
-    def update(self, size=None):
-        if 'limit' in self.properties['Parameters']:
-            self.limit = self.properties['Parameters']['limit']
-        else:
-            self.limit = 20
-        if 'replyLimit' in self.properties['Parameters']:
-            self.replyLimit = self.properties['Parameters']['replyLimit']
-        else:
-            self.replyLimit = 999
-        self.post_data = self.properties['Data']
+    def update(self, size: tuple | None = None) -> None:
+        params = self.properties.get("Parameters", {})
+        self.limit = params.get("limit", 20)
+        self.replyLimit = params.get("replyLimit", 999)
+        self.post_data = self.properties.get("Data", "")
         self.offset = 0
-
-        self.entries = self.get_microblog()
-        self.app.alert('Received %d items' % len(self.entries), 'info')
-        if hasattr(self, 'walker'):
-            # this check is done because if update is called before
-            # super.__init__ the object is not ready for redrawing yet
+        self.entries = self._get_microblog()
+        self.app.alert(f"Received {len(self.entries)} items", "info")
+        if hasattr(self, "walker"):
             self.redraw()
 
     @key_action
-    def load_more(self, size=None):
-        self.entries += self.get_microblog()
+    def load_more(self, size: tuple | None = None) -> None:
+        self.entries += self._get_microblog()
         self.redraw()
 
-    def get_microblog(self):
-        """Load Microblog entries via HTTP"""
-
+    def _get_microblog(self) -> list:
         log.info("Fetch microblog...")
         response = make_request(
             "rest/microblog/1.0/microposts/search",
-            params={
-                "offset": self.offset,
-                "limit": self.limit,
-                "replyLimit": self.replyLimit,
-            },
-            method='POST',
+            params={"offset": self.offset, "limit": self.limit, "replyLimit": self.replyLimit},
+            method="POST",
             data=self.post_data,
-            headers={
-                "Content-Type": "application/json",
-            },
+            headers={"Content-Type": "application/json"},
         )
-        entries = response.json()
-        result = []
-        for e in entries['microposts']:
-            result.append(MicroblogEntry(MicroblogObject(e), is_reply=False))
+        result = [MicroblogEntry(MicroblogObject(e), is_reply=False) for e in response.json()["microposts"]]
         self.offset += len(result)
         return result
 
     @key_action
-    def gui_browser(self, size=None):
+    def gui_browser(self, size: tuple | None = None) -> None:
         node = self.get_focus()[0]
-        post_id = node.obj._data['id']
-        url = f"plugins/micropost/view.action?postId={post_id}"
-        open_gui_browser(url)
+        post_id = node.obj._data["id"]
+        open_gui_browser(f"plugins/micropost/view.action?postId={post_id}")
 
     @key_action
-    def post_comment(self, size=None):
-        # TODO refactor to reduce duplicate code
-        # TODO let the user pick
+    def post_comment(self, size: tuple | None = None) -> None:
         topic_id = 16
-
-        post_id = send_sketch(topic_id)
+        post_id = _send_sketch(topic_id)
         if not post_id:
-            self.app.alert("Failed to send sketch", 'error')
+            self.app.alert("Failed to send sketch", "error")
             return
-
-        help_text = cs.REPLY_MSG
-        reply = self.app.get_long_input(help_text)
+        reply = self.app.get_long_input(cs.REPLY_MSG)
         if not reply:
-            self.app.alert("Reply empty, aborting", 'warning')
+            self.app.alert("Reply empty, aborting", "warning")
             return
-        reply = md_to_html(reply, url_encode='html')
-
+        reply = md_to_html(reply, url_encode="html")
         headers = {
-            'X-Atlassian-Token': 'no-check',
-            'Content-Type':
-                'application/x-www-form-urlencoded; charset=UTF-8',
+            "X-Atlassian-Token": "no-check",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
         }
         data = f"{reply}&topicId={topic_id}&spaceKey=~admin"
-        url = f"rest/microblog/1.0/microposts/{post_id}"
-        r = make_request(url, method='PUT', data=data,
-                         headers=headers, no_token=True)
-
+        r = make_request(
+            f"rest/microblog/1.0/microposts/{post_id}", method="PUT", data=data, headers=headers, no_token=True
+        )
         if r.status_code == 200:
-            self.app.alert("Microblog post sent", 'info')
+            self.app.alert("Microblog post sent", "info")
         else:
-            self.app.alert("Failed to send microblog post", 'error')
+            self.app.alert("Failed to send microblog post", "error")
 
 
 class MicroblogEntry(CardedListBoxEntry):
-    """Represents microblog entries or replies to one entry as a list of
-    widgets"""
+    """Represents a microblog post or reply."""
 
-    def __init__(self, obj, is_reply=False):
+    def __init__(self, obj: MicroblogObject, is_reply: bool = False) -> None:
         self.obj = obj
         self.is_reply = is_reply
         super().__init__(self.obj)
 
-    def get_next_view(self):
+    def get_next_view(self) -> CongruenceTextBox | MicroblogReplyView:
         if not self.is_reply:
             return MicroblogReplyView(self.obj._data)
         d = self.obj._data
         text = f"Author: {d['authorFullName']}\n"
-        date = convert_date(d["lastModificationDate"])
-        text += f"Date: {date}\n"
-        likes = [u['userFullname'] for u in d['likingUsers']]
-        text += "Likes: " + ', '.join(likes)
+        text += f"Date: {convert_date(d['lastModificationDate'])}\n"
+        likes = ", ".join(u["userFullname"] for u in d["likingUsers"])
+        text += f"Likes: {likes}"
         view = CongruenceTextBox(text)
         view.title = "Post"
         return view
 
-    def search_match(self, search_string):
+    def search_match(self, search_string: str) -> bool:
         return self.obj.match(search_string)
 
 
 class MicroblogObject(Content):
-    def __init__(self, data):
+    def __init__(self, data: dict) -> None:
         self._data = data
-        self.blacklisted = is_blacklisted_user(self._data['authorName'])
+        self.blacklisted: bool = is_blacklisted_user(self._data["authorName"])
 
-    def get_title(self):
-        like_number = len(self._data['likingUsers'])
+    def get_title(self) -> str:
+        like_number = len(self._data["likingUsers"])
         likes = ""
         if like_number > 0:
-            if like_number == 1 and self._data['hasLiked']:
-                likes = ' - You liked this'
+            if like_number == 1 and self._data["hasLiked"]:
+                likes = " - You liked this"
             else:
-                likes = " - %d likes" % like_number
-                if self._data['hasLiked']:
+                likes = f" - {like_number} likes"
+                if self._data["hasLiked"]:
                     likes += ", including you"
-        replies = ""
-        if self._data['replies']:
-            replies = " - %d replies" % len(self._data['replies'])
-        title = "%s (%s)%s%s" % (
-            self._data["authorFullName"] if not self.blacklisted
-                else "<blocked user>",
-            convert_date(self._data["lastModificationDate"]),
-            replies,
-            likes,
-        )
-        return title
+        replies = f" - {len(self._data['replies'])} replies" if self._data["replies"] else ""
+        author = self._data["authorFullName"] if not self.blacklisted else "<blocked user>"
+        return f"{author} ({convert_date(self._data['lastModificationDate'])}){replies}{likes}"
 
-    def get_head(self):
+    def get_head(self) -> str:
         return self.get_title()
 
-    def get_content(self):
+    def get_content(self) -> str:
         if self.blacklisted:
             return ""
-        text = self._data["renderedContent"]
-        text = html_to_text(text).strip()
-        return text
+        return html_to_text(self._data["renderedContent"]).strip()
+
+    def get_columns(self) -> list[str]:
+        return ["", "", self.get_title(), "", ""]
+
+    def match(self, search_string: str) -> bool:
+        import re
+        return bool(re.search(search_string, self.get_title()) or re.search(search_string, self.get_content()))
 
 
-def send_sketch(topic_id):
-    """Gets a post ID for a new microblog entry"""
-
+def _send_sketch(topic_id: int) -> str | None:
+    """Obtain a post ID for a new microblog entry."""
     headers = {
-        'X-Atlassian-Token': 'no-check',
-        'Content-Type':
-            'application/x-www-form-urlencoded; charset=UTF-8',
+        "X-Atlassian-Token": "no-check",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
-    data = f"topicId={topic_id}"
-    url = f"rest/microblog/1.0/sketch"
-    r = make_request(url, method='POST', data=data,
-                     headers=headers, no_token=True)
-
-    if not r.status_code == 200:
-        return
-
-    post_id = r.text
-    return post_id
+    r = make_request(
+        "rest/microblog/1.0/sketch",
+        method="POST",
+        data=f"topicId={topic_id}",
+        headers=headers,
+        no_token=True,
+    )
+    if r.status_code != 200:
+        return None
+    return r.text
 
 
 class MicroblogReplyView(CongruenceListBox):
-    def __init__(self, entries):
+    def __init__(self, entries: dict) -> None:
         self.title = "Replies"
-        self.entries = [MicroblogEntry(MicroblogObject(entries),
-                                       is_reply=True)]
-        self.entries += [MicroblogEntry(MicroblogObject(e), is_reply=True)
-                         for e in entries["replies"]]
-        super().__init__(self.entries, help_string=__help__)
+        items = [MicroblogEntry(MicroblogObject(entries), is_reply=True)]
+        items += [MicroblogEntry(MicroblogObject(e), is_reply=True) for e in entries["replies"]]
+        super().__init__(items, help_string=__help__)
 
     @key_action
-    def like(self, size=None):
+    def like(self, size: tuple | None = None) -> None:
         obj = self.focus.obj
-        post_id = obj._data['id']
-        headers = {
-            'X-Atlassian-Token': 'no-check',
-        }
-        url = f"rest/microblog/1.0/microposts/{post_id}/like"
-        r = make_request(url, method='POST', headers=headers, no_token=True)
+        post_id = obj._data["id"]
+        r = make_request(
+            f"rest/microblog/1.0/microposts/{post_id}/like",
+            method="POST",
+            headers={"X-Atlassian-Token": "no-check"},
+            no_token=True,
+        )
         if r.status_code == 200:
-            if r.text == 'true':
-                self.app.alert("You liked this", 'info')
-            elif r.text == 'false':
-                self.app.alert("You unliked this", 'info')
+            msg = "You liked this" if r.text == "true" else "You unliked this"
+            self.app.alert(msg, "info")
         else:
-            self.app.alert("Like failed", 'error')
+            self.app.alert("Like failed", "error")
 
     @key_action
-    def reply(self, size=None):
+    def reply(self, size: tuple | None = None) -> None:
         obj = self.entries[0].obj
-        author = obj._data['authorFullName']
-        topic_id = obj._data['topic']['id']
-        parent_id = obj._data['id']
+        author = obj._data["authorFullName"]
+        topic_id = obj._data["topic"]["id"]
+        parent_id = obj._data["id"]
 
-        post_id = send_sketch(topic_id)
+        post_id = _send_sketch(topic_id)
         if not post_id:
-            self.app.alert("Failed to send sketch", 'error')
+            self.app.alert("Failed to send sketch", "error")
             return
 
-        prev_msg = obj._data['renderedContent']
-        prev_msg = prev_msg.splitlines()
-        prev_msg = '\n'.join([f"## > {line}" for line in prev_msg])
-        prev_msg = "## %s wrote:\n%s" % (author, prev_msg)
-
-        help_text = cs.REPLY_MSG + prev_msg
+        prev_msg = "\n".join(f"## > {line}" for line in obj._data["renderedContent"].splitlines())
+        help_text = cs.REPLY_MSG + f"## {author} wrote:\n{prev_msg}"
         reply = self.app.get_long_input(help_text)
         if not reply:
-            self.app.alert("Reply empty, aborting", 'warning')
+            self.app.alert("Reply empty, aborting", "warning")
             return
-        reply = md_to_html(reply, url_encode='html')
-
+        reply = md_to_html(reply, url_encode="html")
         headers = {
-            'X-Atlassian-Token': 'no-check',
-            'Content-Type':
-                'application/x-www-form-urlencoded; charset=UTF-8',
+            "X-Atlassian-Token": "no-check",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
         }
-        data = f"{reply}&parentId={parent_id}&spaceKey=~admin"
-        url = f"rest/microblog/1.0/microposts/{post_id}"
-        r = make_request(url, method='PUT', data=data,
-                         headers=headers, no_token=True)
-
+        r = make_request(
+            f"rest/microblog/1.0/microposts/{post_id}",
+            method="PUT",
+            data=f"{reply}&parentId={parent_id}&spaceKey=~admin",
+            headers=headers,
+            no_token=True,
+        )
         if r.status_code == 200:
-            self.app.alert("Reply sent", 'info')
+            self.app.alert("Reply sent", "info")
         else:
-            self.app.alert("Failed to send reply", 'error')
+            self.app.alert("Failed to send reply", "error")
 
     @key_action
-    def gui_browser(self, size=None):
+    def gui_browser(self, size: tuple | None = None) -> None:
         obj = self.entries[0].obj
-        post_id = obj._data['id']
-        url = f"plugins/micropost/view.action?postId={post_id}"
-        open_gui_browser(url)
+        open_gui_browser(f"plugins/micropost/view.action?postId={obj._data['id']}")
 
 
 class MicroblogPost(CongruenceTextBox):
-    def __init__(self, data):
+    def __init__(self, data: dict) -> None:
         self.title = "Post"
-        max_len = max([len(k) for k, _ in data.items()])
-        line = [[urwid.Text(k), urwid.Text(str(v))]
-                for k, v in data.items()
-                if not k == "renderedContent"]
-        line = [urwid.Columns([(max_len + 1, k), v])
-                for k, v in line]
-        super().__init__(line)
+        max_len = max(len(k) for k in data)
+        lines = [
+            urwid.Columns([(max_len + 1, urwid.Text(k)), urwid.Text(str(v))])
+            for k, v in data.items()
+            if k != "renderedContent"
+        ]
+        super().__init__(lines)
 
 
 class MicroblogReplyDetails(CongruenceListBox):
-    def __init__(self, data):
+    def __init__(self, data: dict) -> None:
         self.title = "Details"
-        # Build details view
-        max_len = max([len(k) for k, _ in data.items()])
-        line = [[urwid.Text(k), urwid.Text(str(v))]
-                for k, v in data.items()
-                if not k == "renderedContent"]
-        line = [urwid.Columns([(max_len + 1, k), v])
-                for k, v in line]
-        super().__init__(line)
+        max_len = max(len(k) for k in data)
+        lines = [
+            urwid.Columns([(max_len + 1, urwid.Text(k)), urwid.Text(str(v))])
+            for k, v in data.items()
+            if k != "renderedContent"
+        ]
+        super().__init__(lines)
 
 
 PluginView = MicroblogView

@@ -14,88 +14,87 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
 
-#  from congruence.logging import log
-from congruence.views.common import CongruenceView, \
-    CollectKeyActions, CongruenceTextBox, key_action
+from typing import Any
 
 import urwid
 
+from congruence.views.common import CollectKeyActions, CongruenceTextBox, CongruenceView, key_action
 
-class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
-                            metaclass=CollectKeyActions):
-    """Displays a tree view of 'wrapper' objects
 
-    :data: a tree-like dict-structure. Each dictionary needs to have the keys
-        'name' and 'children'. The latter is a list of dictionaries and the
-        former is an arbitrary dictionary which is passed to the constructor
-        of wrapper.
-    :wrapper: some subclass of CongruenceTreeWidget.
+class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox, metaclass=CollectKeyActions):
+    """Tree view for hierarchical Confluence content.
+
+    :data: nested dict structure; each node needs 'children' key.
+    :wrapper: subclass of CongruenceTreeListBoxEntry used to render each node.
     """
 
-    def __init__(self, data, wrapper, help_string=None):
+    def __init__(self, data: dict, wrapper: type, help_string: str | None = None) -> None:
         self.wrapper = wrapper
         self.help_string = help_string
+        self._search_results: list = []
+        self._current_search_result: int = 0
         self.topnode = CongruenceParentNode(self.wrapper, data)
         self.walker = urwid.TreeWalker(self.topnode)
         super().__init__(self.walker)
 
     @key_action
-    def move_down(self, size=None):
-        urwid.ListBox.keypress(self, size, 'down')
+    def move_down(self, size: tuple | None = None) -> None:
+        urwid.ListBox.keypress(self, size, "down")
 
     @key_action
-    def move_up(self, size=None):
-        urwid.ListBox.keypress(self, size, 'up')
+    def move_up(self, size: tuple | None = None) -> None:
+        urwid.ListBox.keypress(self, size, "up")
 
     @key_action
-    def page_down(self, size=None):
-        urwid.ListBox.keypress(self, size, 'page down')
+    def page_down(self, size: tuple | None = None) -> None:
+        urwid.ListBox.keypress(self, size, "page down")
 
     @key_action
-    def page_up(self, size=None):
-        urwid.ListBox.keypress(self, size, 'page up')
+    def page_up(self, size: tuple | None = None) -> None:
+        urwid.ListBox.keypress(self, size, "page up")
 
     @key_action
-    def scroll_to_bottom(self, size=None):
-        self.set_focus(0, coming_from='above')
+    def scroll_to_bottom(self, size: tuple | None = None) -> None:
+        self.set_focus(0, coming_from="above")
 
     @key_action
-    def scroll_to_top(self, size=None):
-        self.set_focus(0, coming_from='below')
+    def scroll_to_top(self, size: tuple | None = None) -> None:
+        self.set_focus(0, coming_from="below")
 
     @key_action
-    def toggle_collapse(self, size=None):
+    def toggle_collapse(self, size: tuple | None = None) -> None:
         node = self.get_focus()[0]
         node.expanded = not node.expanded
         node.update_expanded_icon()
 
     @key_action
-    def next_view(self, size=None):
+    def next_view(self, size: tuple | None = None) -> None:
         view = self.get_focus()[0].get_next_view()
         if view:
             self.app.push_view(view)
 
     @key_action
-    def show_details(self, size=None):
+    def show_details(self, size: tuple | None = None) -> None:
         view = self.get_focus()[0].get_details_view()
         if view:
             self.app.push_view(view)
 
     @key_action
-    def search(self, size=None):
+    def search(self, size: tuple | None = None) -> None:
         self._search()
 
     @key_action
-    def search_next(self, size=None):
+    def search_next(self, size: tuple | None = None) -> None:
         self._search_next(1)
 
     @key_action
-    def search_prev(self, size=None):
+    def search_prev(self, size: tuple | None = None) -> None:
         self._search_next(-1)
 
-    def _search(self):
-        def search_inner(expr):
+    def _search(self) -> None:
+        def search_inner(expr: str) -> None:
             self._search_results = []
             node = self.topnode
             while True:
@@ -104,71 +103,54 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox,
                     break
                 if node.search_match(expr):
                     self._search_results.append(node)
-
-            self.app.alert("Found %d results" %
-                           len(self._search_results),
-                           'info')
+            self.app.alert(f"Found {len(self._search_results)} results", "info")
             if self._search_results:
                 self._current_search_result = 0
-                pos = self._search_results[self._current_search_result]
-                self.set_focus(pos)
-        self.app.get_input(
-            'Search for:',
-            search_inner,
-        )
+                self.set_focus(self._search_results[0])
 
-    def _search_next(self, count=1):
+        self.app.get_input("Search for:", search_inner)
+
+    def _search_next(self, count: int = 1) -> None:
         if self._search_results:
-            self._current_search_result += count
-            self._current_search_result %= len(self._search_results)
-            pos = self._search_results[self._current_search_result]
-            self.set_focus(pos)
+            self._current_search_result = (self._current_search_result + count) % len(self._search_results)
+            self.set_focus(self._search_results[self._current_search_result])
 
 
 class CongruenceTreeListBoxEntry(urwid.TreeWidget):
-    """Display widget for nodes"""
+    """Display widget for tree nodes."""
 
-    indent_cols = 2
+    indent_cols: int = 2
 
-    def __init__(self, node):
+    def __init__(self, node: Any) -> None:
         self.node = node
         super().__init__(node)
 
-    def get_display_text(self):
-        return list(self.node.get_value().keys())[0]
+    def get_display_text(self) -> str:
+        return next(iter(self.node.get_value().keys()))
 
-    def get_value(self):
-        node = list(self.get_node().get_value().values())[0]
-        return node
+    def get_value(self) -> Any:
+        return next(iter(self.get_node().get_value().values()))
 
-    def get_indented_widget(self):
+    def get_indented_widget(self) -> urwid.Padding:
         widget = self.get_inner_widget()
         indent_cols = self.get_indent_cols()
-        return urwid.Padding(widget, width=('relative', 100), left=indent_cols)
+        return urwid.Padding(widget, width=("relative", 100), left=indent_cols)
 
-    def update_expanded_icon(self):
-        """Update display widget text for parent widgets"""
-        self._w.base_widget.widget_list[0] = [
-            self.unexpanded_icon, self.expanded_icon][self.expanded]
+    def update_expanded_icon(self) -> None:
+        self._w.base_widget.widget_list[0] = [self.unexpanded_icon, self.expanded_icon][self.expanded]
 
-    def load_inner_widget(self):
-        """Build a row widget with a text content"""
-
+    def load_inner_widget(self) -> urwid.Widget:
         self.icon = [self.unexpanded_icon, self.expanded_icon][self.expanded]
         header = urwid.Text(self.get_display_text())
-        header = urwid.Columns([('fixed', 1, self.icon), header],
-                               dividechars=1)
-        header = urwid.AttrWrap(header, 'body', 'focus')
-        widget = header
-        return widget
+        header = urwid.Columns([("fixed", 1, self.icon), header], dividechars=1)
+        return urwid.AttrWrap(header, "body", "focus")
 
-    def selectable(self):
+    def selectable(self) -> bool:
         return True
 
-    def get_details_view(self):
+    def get_details_view(self) -> CongruenceTextBox | None:
         if isinstance(self.get_value(), dict):
-            # it's the root
-            return
+            return None
         text = self.get_value().get_json()
         view = CongruenceTextBox(text)
         view.title = "Details"
@@ -176,85 +158,72 @@ class CongruenceTreeListBoxEntry(urwid.TreeWidget):
 
 
 class CongruenceCardTreeWidget(CongruenceTreeListBoxEntry):
-    """This class can be used to display a carded TreeWidget"""
+    """Tree widget with a card-style (header + body) layout."""
 
-    def get_display_header(self):
+    def get_display_header(self) -> str:
         node = self.get_value()
         try:
             return node.get_head()
         except AttributeError:
-            return node['title']
+            return node["title"]
 
-    def get_display_body(self):
+    def get_display_body(self) -> str:
         node = self.get_value()
         try:
             return node.get_content()
         except AttributeError:
             return ""
 
-    def load_inner_widget(self):
-        """Build a multi-line widget with a header and a body"""
-
+    def load_inner_widget(self) -> urwid.Widget:
         self.icon = [self.unexpanded_icon, self.expanded_icon][self.expanded]
         header = urwid.Text(self.get_display_header())
-        header = urwid.Columns([('fixed', 1, self.icon), header],
-                               dividechars=1)
-        header = urwid.AttrWrap(header, 'card-head', 'card-focus')
+        header = urwid.Columns([("fixed", 1, self.icon), header], dividechars=1)
+        header = urwid.AttrWrap(header, "card-head", "card-focus")
         if self.get_display_body():
-            body = urwid.AttrWrap(urwid.Text(self.get_display_body()), 'body')
-            widget = urwid.Pile([header, body])
-        else:
-            widget = header
-        return widget
+            body = urwid.AttrWrap(urwid.Text(self.get_display_body()), "body")
+            return urwid.Pile([header, body])
+        return header
 
-    def update_expanded_icon(self):
-        """Update display widget text for parent widgets"""
-        # icon is first element in header widget
+    def update_expanded_icon(self) -> None:
         try:
             self._w.base_widget.widget_list[0].base_widget.widget_list[0] = [
-                self.unexpanded_icon, self.expanded_icon][self.expanded]
+                self.unexpanded_icon,
+                self.expanded_icon,
+            ][self.expanded]
         except AttributeError:
-            # it's the root
-            self._w.base_widget.widget_list[0] = [
-                self.unexpanded_icon, self.expanded_icon][self.expanded]
+            self._w.base_widget.widget_list[0] = [self.unexpanded_icon, self.expanded_icon][self.expanded]
 
 
 class CongruenceNode(urwid.TreeNode):
-    """ Data storage object for leaf nodes """
+    """Leaf node data storage."""
 
-    def __init__(self, wrapper, data, **kwargs):
+    def __init__(self, wrapper: type, data: Any, **kwargs: Any) -> None:
         self.wrapper = wrapper
         super().__init__(data, **kwargs)
 
-    def load_widget(self):
+    def load_widget(self) -> CongruenceTreeListBoxEntry:
         return self.wrapper(self)
 
 
 class CongruenceParentNode(urwid.ParentNode):
-    """ Data storage object for interior/parent nodes """
+    """Interior/parent node data storage."""
 
-    def __init__(self, wrapper, data, **kwargs):
+    def __init__(self, wrapper: type, data: Any, **kwargs: Any) -> None:
         self.wrapper = wrapper
         super().__init__(data, **kwargs)
 
-    def load_widget(self):
+    def load_widget(self) -> CongruenceTreeListBoxEntry:
         return self.wrapper(self)
 
-    def load_child_keys(self):
-        data = self.get_value()
-        return range(len(data['children']))
+    def load_child_keys(self) -> range:
+        return range(len(self.get_value()["children"]))
 
-    def load_child_node(self, key):
-        """Return either an CongruenceNode or CongruenceParentNode"""
-        childdata = self.get_value()['children'][key]
+    def load_child_node(self, key: int) -> CongruenceNode | CongruenceParentNode:
+        childdata = self.get_value()["children"][key]
         childdepth = self.get_depth() + 1
-        if 'children' in childdata:
-            childclass = CongruenceParentNode
-        else:
-            childclass = CongruenceNode
-        return childclass(self.wrapper,
-                          childdata, parent=self, key=key, depth=childdepth)
+        childclass = CongruenceParentNode if "children" in childdata else CongruenceNode
+        return childclass(self.wrapper, childdata, parent=self, key=key, depth=childdepth)
 
-    def search_match(self, expr):
+    def search_match(self, expr: str) -> bool:
         obj = self.get_widget().get_value()
         return obj.match(expr)

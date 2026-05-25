@@ -14,104 +14,90 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Notifications plugin for Confluence."""
+
+from __future__ import annotations
+
+import json
+import re
+
+from congruence.interface import convert_date, html_to_text, make_request
+from congruence.objects import ConfluenceObject
+from congruence.views.common import CongruenceTextBox, key_action
+from congruence.views.listbox import ColumnListBoxEntry, CongruenceListBox
+
 __help__ = """Confluence Notifications
 
 This view displays your latest notifications.
 
 """
-from congruence.interface import make_request, convert_date, html_to_text
-from congruence.views.common import CongruenceTextBox, key_action
-from congruence.views.listbox import CongruenceListBox,\
-        ColumnListBoxEntry
-from congruence.objects import ConfluenceObject
-#  from congruence.logging import log
-
-import json
 
 
 class NotificationView(CongruenceListBox):
-    def __init__(self, properties={}):
+    def __init__(self, properties: dict | None = None) -> None:
         self.title = "Notifications"
-        self.limit = 20
-
-        if 'Limit' in properties:
-            self.limit = properties["Limit"]
+        props = properties or {}
+        self.limit: int = props.get("Limit", 20)
         self.entries = self.get_notifications()
-
         super().__init__(self.entries, help_string=__help__)
 
-    def get_notifications(self, before=None):
-        params = {
-            'limit': self.limit,
-        }
+    def get_notifications(self, before: str | None = None) -> list:
+        params: dict = {"limit": self.limit}
         if before:
-            params['before'] = before
-
-        r = make_request("rest/mywork/latest/notification",
-                         params=params,
-                         )
-        entries = r.json()
-        notifications = []
-        for e in entries:
-            n = NotificationEntry(NotificationObject(e))
-            notifications.append(n)
-        self.app.alert('Received %d items' % len(notifications), 'info')
+            params["before"] = before
+        r = make_request("rest/mywork/latest/notification", params=params)
+        notifications = [NotificationEntry(NotificationObject(e)) for e in r.json()]
+        self.app.alert(f"Received {len(notifications)} items", "info")
         return notifications
 
     @key_action
-    def load_more(self, size=None):
-        last = self.entries[-1].obj._data['id']
+    def load_more(self, size: tuple | None = None) -> None:
+        last = self.entries[-1].obj._data["id"]
         self.entries += self.get_notifications(before=last)
         self.redraw()
 
 
 class NotificationEntry(ColumnListBoxEntry):
-    def get_next_view(self):
-        text = self.obj._data['title'] + '\n'
-
-        if 'title' in self.obj._data:
-            text += "Title: %s\n" % self.obj._data['item']['title']
-        text += "Created: %s\n" % convert_date(self.obj._data['created'])
-        if not self.obj._data['created'] == self.obj._data['updated']:
-            text += "Updated: %s\n" % convert_date(self.obj._data['updated'])
-
-        if 'highlightText' in self.obj.metadata:
-            text += ("\n> %s\n" %
-                     self.obj.metadata['highlightText'])
-
-        if 'description' in self.obj._data:
-            text += "\n%s\n" % html_to_text(
-                self.obj._data['description'],
-                replace_emoticons=True,
-            )
+    def get_next_view(self) -> CongruenceTextBox:
+        d = self.obj._data
+        text = d["title"] + "\n"
+        if "title" in d:
+            text += f"Title: {d['item']['title']}\n"
+        text += f"Created: {convert_date(d['created'])}\n"
+        if d["created"] != d["updated"]:
+            text += f"Updated: {convert_date(d['updated'])}\n"
+        if "highlightText" in self.obj.metadata:
+            text += f"\n> {self.obj.metadata['highlightText']}\n"
+        if "description" in d:
+            text += "\n" + html_to_text(d["description"], replace_emoticons=True) + "\n"
         view = CongruenceTextBox(text)
-        view.title = 'Notification'
+        view.title = "Notification"
         return view
 
-    def search_match(self, search_string):
+    def search_match(self, search_string: str) -> bool:
         return self.obj.match(search_string)
 
 
 class NotificationObject(ConfluenceObject):
-    def __init__(self, data):
+    def __init__(self, data: dict) -> None:
         self._data = data
-        self.metadata = self._data['metadata']
+        self.metadata: dict = self._data.get("metadata", {})
         try:
-            self.title = self._data['item']['title']
+            self.title: str = self._data["item"]["title"]
         except KeyError:
-            self.title = self._data["title"]
+            self.title = self._data.get("title", "")
 
-    def get_title(self, cols=False):
+    def get_title(self) -> str:
         return self.title
 
-    def get_columns(self):
+    def get_columns(self) -> list[str]:
         try:
-            entity = self._data['entity'][0].upper()
+            entity = self._data["entity"][0].upper()
         except KeyError:
             entity = "?"
         if self.metadata:
-            user = self.metadata['user']
-            action = self._data['action']
+            user = self.metadata.get("user", "?")
+            action = self._data.get("action", "?")
         else:
             user = "?"
             action = "?"
@@ -119,12 +105,15 @@ class NotificationObject(ConfluenceObject):
             entity,
             user,
             action,
-            convert_date(self._data['updated'], 'friendly'),
+            convert_date(self._data["updated"], "friendly"),
             self.title,
         ]
 
-    def get_json(self):
+    def get_json(self) -> str:
         return json.dumps(self._data, indent=2, sort_keys=True)
+
+    def match(self, search_string: str) -> bool:
+        return bool(re.search(search_string, self.title))
 
 
 PluginView = NotificationView
