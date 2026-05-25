@@ -24,7 +24,7 @@ import congruence.strings as cs
 from congruence.external import open_gui_browser
 from congruence.interface import convert_date, html_to_text, make_request, md_to_html
 from congruence.logging import log
-from congruence.objects import Content, is_blacklisted_user
+from congruence.objects import ConfluenceObject, is_blacklisted_user
 from congruence.views.common import CongruenceTextBox, key_action
 from congruence.views.listbox import CardedListBoxEntry, CongruenceListBox
 
@@ -81,8 +81,8 @@ class MicroblogView(CongruenceListBox):
         node = self.get_focus()[0]
         if node is None:
             return
-        post_id = node.obj._data["id"]
-        open_gui_browser(f"plugins/micropost/view.action?postId={post_id}")
+        obj: MicroblogObject = node.obj  # type: ignore[assignment]
+        open_gui_browser(f"plugins/micropost/view.action?postId={obj.post_id}")
 
     @key_action
     def post_comment(self, size: tuple | None = None) -> None:
@@ -119,12 +119,12 @@ class MicroblogEntry(CardedListBoxEntry):
         super().__init__(self.obj)
 
     def get_next_view(self) -> CongruenceTextBox | MicroblogReplyView:
+        obj: MicroblogObject = self.obj  # type: ignore[assignment]
         if not self.is_reply:
-            return MicroblogReplyView(self.obj._data)
-        d = self.obj._data
-        text = f"Author: {d['authorFullName']}\n"
-        text += f"Date: {convert_date(d['lastModificationDate'])}\n"
-        likes = ", ".join(u["userFullname"] for u in d["likingUsers"])
+            return MicroblogReplyView(obj)
+        text = f"Author: {obj.author_full_name}\n"
+        text += f"Date: {convert_date(obj.last_modified)}\n"
+        likes = ", ".join(u["userFullname"] for u in obj.liking_users)
         text += f"Likes: {likes}"
         view = CongruenceTextBox(text)
         view.title = "Post"
@@ -134,24 +134,36 @@ class MicroblogEntry(CardedListBoxEntry):
         return self.obj.match(search_string)
 
 
-class MicroblogObject(Content):
+class MicroblogObject(ConfluenceObject):
     def __init__(self, data: dict) -> None:
-        self._data = data
-        self.blacklisted: bool = is_blacklisted_user(self._data["authorName"])
+        super().__init__(data)
+        self.post_id: str = str(data.get("id", ""))
+        self.author_name: str = data.get("authorName", "")
+        self.author_full_name: str = data.get("authorFullName", "")
+        self.last_modified: str = data.get("lastModificationDate", "")
+        self.rendered_content: str = data.get("renderedContent", "")
+        self.liking_users: list = data.get("likingUsers", [])
+        self.has_liked: bool = bool(data.get("hasLiked", False))
+        self.replies: list = data.get("replies", [])
+        self.blacklisted: bool = is_blacklisted_user(self.author_name)
+        try:
+            self.topic_id: int | None = data["topic"]["id"]
+        except KeyError:
+            self.topic_id = None
 
     def get_title(self) -> str:
-        like_number = len(self._data["likingUsers"])
+        like_number = len(self.liking_users)
         likes = ""
         if like_number > 0:
-            if like_number == 1 and self._data["hasLiked"]:
+            if like_number == 1 and self.has_liked:
                 likes = " - You liked this"
             else:
                 likes = f" - {like_number} likes"
-                if self._data["hasLiked"]:
+                if self.has_liked:
                     likes += ", including you"
-        replies = f" - {len(self._data['replies'])} replies" if self._data["replies"] else ""
-        author = self._data["authorFullName"] if not self.blacklisted else "<blocked user>"
-        return f"{author} ({convert_date(self._data['lastModificationDate'])}){replies}{likes}"
+        replies = f" - {len(self.replies)} replies" if self.replies else ""
+        author = self.author_full_name if not self.blacklisted else "<blocked user>"
+        return f"{author} ({convert_date(self.last_modified)}){replies}{likes}"
 
     def get_head(self) -> str:
         return self.get_title()
@@ -159,14 +171,10 @@ class MicroblogObject(Content):
     def get_content(self) -> str:
         if self.blacklisted:
             return ""
-        return html_to_text(self._data["renderedContent"]).strip()
+        return html_to_text(self.rendered_content).strip()
 
     def get_columns(self) -> list[str]:
         return ["", "", self.get_title(), "", ""]
-
-    def match(self, search_string: str) -> bool:
-        import re
-        return bool(re.search(search_string, self.get_title()) or re.search(search_string, self.get_content()))
 
 
 def _send_sketch(topic_id: int) -> str | None:
@@ -188,18 +196,17 @@ def _send_sketch(topic_id: int) -> str | None:
 
 
 class MicroblogReplyView(CongruenceListBox):
-    def __init__(self, entries: dict) -> None:
+    def __init__(self, obj: MicroblogObject) -> None:
         self.title = "Replies"
-        items = [MicroblogEntry(MicroblogObject(entries), is_reply=True)]
-        items += [MicroblogEntry(MicroblogObject(e), is_reply=True) for e in entries["replies"]]
+        items = [MicroblogEntry(obj, is_reply=True)]
+        items += [MicroblogEntry(MicroblogObject(e), is_reply=True) for e in obj.replies]
         super().__init__(items, help_string=__help__)
 
     @key_action
     def like(self, size: tuple | None = None) -> None:
-        obj = self.focus.obj  # type: ignore[union-attr]
-        post_id = obj._data["id"]
+        entry_obj: MicroblogObject = self.focus.obj  # type: ignore[union-attr]
         r = make_request(
-            f"rest/microblog/1.0/microposts/{post_id}/like",
+            f"rest/microblog/1.0/microposts/{entry_obj.post_id}/like",
             method="POST",
             headers={"X-Atlassian-Token": "no-check"},
             no_token=True,
@@ -212,18 +219,19 @@ class MicroblogReplyView(CongruenceListBox):
 
     @key_action
     def reply(self, size: tuple | None = None) -> None:
-        obj = self.entries[0].obj
-        author = obj._data["authorFullName"]
-        topic_id = obj._data["topic"]["id"]
-        parent_id = obj._data["id"]
+        obj: MicroblogObject = self.entries[0].obj  # type: ignore[assignment]
+        if obj.topic_id is None:
+            self.app.alert("No topic ID available", "error")
+            return
+        parent_id = obj.post_id
 
-        post_id = _send_sketch(topic_id)
+        post_id = _send_sketch(obj.topic_id)
         if not post_id:
             self.app.alert("Failed to send sketch", "error")
             return
 
-        prev_msg = "\n".join(f"## > {line}" for line in obj._data["renderedContent"].splitlines())
-        help_text = cs.REPLY_MSG + f"## {author} wrote:\n{prev_msg}"
+        prev_msg = "\n".join(f"## > {line}" for line in obj.rendered_content.splitlines())
+        help_text = cs.REPLY_MSG + f"## {obj.author_full_name} wrote:\n{prev_msg}"
         reply = self.app.get_long_input(help_text)
         if not reply:
             self.app.alert("Reply empty, aborting", "warning")
@@ -247,8 +255,8 @@ class MicroblogReplyView(CongruenceListBox):
 
     @key_action
     def gui_browser(self, size: tuple | None = None) -> None:
-        obj = self.entries[0].obj
-        open_gui_browser(f"plugins/micropost/view.action?postId={obj._data['id']}")
+        obj: MicroblogObject = self.entries[0].obj  # type: ignore[assignment]
+        open_gui_browser(f"plugins/micropost/view.action?postId={obj.post_id}")
 
 
 class MicroblogPost(CongruenceListBox):

@@ -60,17 +60,16 @@ class NotificationView(CongruenceListBox):
 class NotificationEntry(ColumnListBoxEntry):
     def get_next_view(self) -> CongruenceTextBox:
         obj: NotificationObject = self.obj  # type: ignore[assignment]
-        d = obj._data
-        text = d["title"] + "\n"
-        if "item" in d:
-            text += f"Title: {d['item']['title']}\n"
-        text += f"Created: {convert_date(d['created'])}\n"
-        if d["created"] != d["updated"]:
-            text += f"Updated: {convert_date(d['updated'])}\n"
-        if "highlightText" in obj.metadata:
-            text += f"\n> {obj.metadata['highlightText']}\n"
-        if "description" in d:
-            text += "\n" + html_to_text(d["description"], replace_emoticons=True) + "\n"
+        text = obj.notification_title + "\n"
+        if obj.item_title is not None:
+            text += f"Title: {obj.item_title}\n"
+        text += f"Created: {convert_date(obj.created)}\n"
+        if obj.created != obj.updated:
+            text += f"Updated: {convert_date(obj.updated)}\n"
+        if obj.highlight_text is not None:
+            text += f"\n> {obj.highlight_text}\n"
+        if obj.description is not None:
+            text += "\n" + html_to_text(obj.description, replace_emoticons=True) + "\n"
         view = CongruenceTextBox(text)
         view.title = "Notification"
         return view
@@ -82,32 +81,37 @@ class NotificationEntry(ColumnListBoxEntry):
 
 class NotificationObject(ConfluenceObject):
     def __init__(self, data: dict) -> None:
-        self._data = data
-        self.metadata: dict = self._data.get("metadata", {})
+        super().__init__(data)
+        self.metadata: dict = data.get("metadata", {})
+        item = data.get("item", {})
+        item_title: str | None = item.get("title") if item else None
+        self.title: str = item_title or data.get("title", "")
+        self.item_title: str | None = item_title
+        self.notification_title: str = data.get("title", "")
+        self.created: str = data.get("created", "")
+        self.updated: str = data.get("updated", "")
+        self.description: str | None = data.get("description")
+        self.highlight_text: str | None = self.metadata.get("highlightText")
         try:
-            self.title: str = self._data["item"]["title"]
-        except KeyError:
-            self.title = self._data.get("title", "")
+            self.entity: str = data["entity"][0].upper()
+        except (KeyError, IndexError):
+            self.entity = "?"
+        if self.metadata:
+            self.user: str = self.metadata.get("user", "?")
+            self.action: str = data.get("action", "?")
+        else:
+            self.user = "?"
+            self.action = "?"
 
     def get_title(self) -> str:
         return self.title
 
     def get_columns(self) -> list[str]:
-        try:
-            entity = self._data["entity"][0].upper()
-        except KeyError:
-            entity = "?"
-        if self.metadata:
-            user = self.metadata.get("user", "?")
-            action = self._data.get("action", "?")
-        else:
-            user = "?"
-            action = "?"
         return [
-            entity,
-            user,
-            action,
-            convert_date(self._data["updated"], "friendly"),
+            self.entity,
+            self.user,
+            self.action,
+            convert_date(self.updated, "friendly"),
             self.title,
         ]
 

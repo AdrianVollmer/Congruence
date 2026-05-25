@@ -75,7 +75,12 @@ class Content(ConfluenceObject):
         self.title: str = self._data["title"]
         self.type: str = self._data.get("type", "?")
         self.object_id: str = self._data["id"]  # explicit str for subclass use
-        self.versionby: User = User(self._data["history"]["lastUpdated"]["by"])
+        last_updated = self._data["history"]["lastUpdated"]
+        self.versionby: User = User(last_updated["by"])
+        self.last_updated_when: str = last_updated["when"]
+        self.version_number: int = self._data.get("version", {}).get("number", 0)
+        self.version_message: str = self._data.get("version", {}).get("message", "")
+        self.webui_url: str = self._data.get("_links", {}).get("webui", "")
         try:
             self.space: Space | None = Space(self._data["space"])
         except KeyError:
@@ -88,15 +93,14 @@ class Content(ConfluenceObject):
         return self.object_id
 
     def get_title(self) -> str:
-        return self._data["title"]
+        return self.title
 
     def get_columns(self) -> list[str]:
-        last_updated = self._data["history"]["lastUpdated"]
         return [
             self.type[0].upper(),
             self.space.key if self.space else "?",
             self.versionby.display_name,
-            convert_date(last_updated["when"], "friendly"),
+            convert_date(self.last_updated_when, "friendly"),
             self.get_title(),
         ]
 
@@ -159,6 +163,12 @@ class Comment(Content):
 
         date = convert_date(self._data["history"]["createdDate"])
         self.url: str = data["_links"]["webui"]
+        self._body_html: str = data["body"]["view"]["value"]
+        self.container_path: str = data.get("_expandable", {}).get("container", "")
+        try:
+            self.ancestor_root_link: str | None = data["ancestors"][0]["_links"]["self"]
+        except (IndexError, KeyError):
+            self.ancestor_root_link = None
         username = self.versionby.display_name
         if self.blacklisted:
             username = "<blocked user>"
@@ -178,12 +188,11 @@ class Comment(Content):
         return self.title
 
     def get_columns(self) -> list[str]:
-        last_updated = self._data["history"]["lastUpdated"]
         return [
             self.type[0].upper(),
             self.space.key if self.space else "?",
             self.versionby.display_name,
-            convert_date(last_updated["when"], "friendly"),
+            convert_date(self.last_updated_when, "friendly"),
             self.get_title(),
         ]
 
@@ -193,7 +202,7 @@ class Comment(Content):
     def get_content(self) -> str:
         if self.blacklisted:
             return ""
-        comment = html_to_text(self._data["body"]["view"]["value"], replace_emoticons=True)
+        comment = html_to_text(self._body_html, replace_emoticons=True)
         if self.ref:
             comment = f"> {self.ref}\n\n{comment}"
         return comment
@@ -204,8 +213,7 @@ class Comment(Content):
         return self.send_comment_reply(text)
 
     def send_comment_reply(self, text: str) -> bool:
-        page_id_path = self._data["_expandable"]["container"]
-        m = re.search(r"/([^/]*$)", page_id_path)
+        m = re.search(r"/([^/]*$)", self.container_path)
         if m is None:
             log.error("Could not extract page ID from container path")
             return False
@@ -220,18 +228,16 @@ class Comment(Content):
         return r.status_code == 200
 
     def send_inline_reply(self, text: str) -> bool:
-        page_id_path = self._data["_expandable"]["container"]
-        m = re.search(r"/([^/]*$)", page_id_path)
+        m = re.search(r"/([^/]*$)", self.container_path)
         if m is None:
             log.error("Could not extract page ID from container path")
             return False
         page_id = m.group(1)
 
-        try:
-            root_link = self._data["ancestors"][0]["_links"]["self"]
-            m2 = re.search(r"/([^/]*$)", root_link)
+        if self.ancestor_root_link is not None:
+            m2 = re.search(r"/([^/]*$)", self.ancestor_root_link)
             root_id = m2.group(1) if m2 else self.object_id
-        except IndexError:
+        else:
             root_id = self.object_id
 
         url = f"rest/inlinecomments/1.0/comments/{root_id}/replies"
@@ -338,6 +344,7 @@ class ContentWrapper:
             log.error(f"Unknown entity type: {self.type}")
             self.content = Generic(content_data)
         self.title: str = self.content.get_title()
+        self.parent_url: str = data.get("resultParentContainer", {}).get("displayUrl", "")
 
     def get_title(self) -> str:
         return self.content.get_title()
