@@ -14,6 +14,14 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Generic Confluence API query plugin."""
+
+from __future__ import annotations
+
+from congruence.confluence import CommentContextView, ContentList, PageView
+from congruence.logging import log
+from congruence.views.listbox import ColumnListBoxEntry
+
 __help__ = """Confluence API
 
 What you see here are objects returned by the API. The type of each object
@@ -27,39 +35,30 @@ is indicated by a single letter:
 
 """
 
-from congruence.views.listbox import ColumnListBoxEntry
-from congruence.logging import log
-from congruence.confluence import CommentContextView, PageView, ContentList
-
 
 class APIView(ContentList):
-
-    def __init__(self, properties={}):
+    def __init__(self, properties: dict | None = None) -> None:
         self.title = "API"
         super().__init__(EntryClass=CongruenceAPIEntry, help_string=__help__)
-        self.params = properties['Parameters']
+        if properties:
+            self.params = properties["Parameters"]
         self.update()
         if self.entries:
             self.set_focus(0)
 
 
 class CongruenceAPIEntry(ColumnListBoxEntry):
-    def get_next_view(self):
+    def get_next_view(self) -> PageView | CommentContextView | None:
         log.debug(self.obj.type)
-        if self.obj.type in ["page", "blogpost"]:
+        if self.obj.type in ("page", "blogpost"):
             return PageView(self.obj)
-        elif self.obj.type == "comment":
-            parent = self.obj._data['resultParentContainer']
-            page_id = parent['displayUrl']
-            page_id = page_id.split('=')[-1]
-            #  title = parent['title']
-            return CommentContextView(
-                page_id,
-                self.obj.content,
-                self.obj.content.id,
-            )
+        if self.obj.type == "comment":
+            parent = self.obj._data["resultParentContainer"]
+            page_id = parent["displayUrl"].split("=")[-1]
+            return CommentContextView(page_id, self.obj.content, self.obj.content.id)
+        return None
 
-    def search_match(self, search_string):
+    def search_match(self, search_string: str) -> bool:
         return self.obj.match(search_string)
 
 

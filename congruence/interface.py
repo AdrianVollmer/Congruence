@@ -14,25 +14,27 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.args import config, cookie_jar, BASE_URL, args
-from congruence.logging import log
-from congruence.app import app
+from __future__ import annotations
 
-from urllib.parse import urlencode
-from datetime import datetime as dt, timedelta
 import json
-from requests import Session, utils
 import re
+import time
+from datetime import datetime as dt
+from datetime import timedelta
 from shlex import split
 from subprocess import check_output
-import time
+from urllib.parse import urlencode
 
-from bs4 import BeautifulSoup
 import html2text
-from dateutil.parser import parse as dtparse
-import pytz
 import markdown
+import pytz
+from bs4 import BeautifulSoup
+from dateutil.parser import parse as dtparse
+from requests import Response, Session, utils
 
+from congruence.app import app
+from congruence.args import BASE_URL, args, config, cookie_jar
+from congruence.logging import log
 
 session = Session()
 if "CA" in config:
@@ -40,53 +42,55 @@ if "CA" in config:
 if "Proxy" in config:
     session.proxies = {config["Protocol"]: config["Proxy"]}
 
-
-XSRF = ""
-
-
-def get_timestamp():
-    timestamp = str(int(time.time()*1000))
-    return timestamp
+XSRF: str = ""
 
 
-def make_request(url, params={}, data=None, method="GET", headers={},
-                 no_token=False, auth=False):
-    """This function performs the actual HTTP request
+def get_timestamp() -> str:
+    return str(int(time.time() * 1000))
 
-    :params: dict of URL parameters passed to requests
-    :data: string which contains the HTTP body
-    :method: HTTP method to use
-    :headers: dict of headers passed to requests
-    :no_token: set this to True if you need no XSRF token
-    :auth: set this to True if this is to authenticate; this will prevent an
-        infinite loop
+
+def make_request(
+    url: str,
+    params: dict | None = None,
+    data: str | dict | None = None,
+    method: str = "GET",
+    headers: dict | None = None,
+    no_token: bool = False,
+    auth: bool = False,
+) -> Response:
+    """Perform an HTTP request against the Confluence instance.
+
+    :params: dict of URL parameters
+    :data: HTTP request body
+    :method: HTTP method
+    :headers: additional request headers
+    :no_token: skip attaching the XSRF token (some endpoints reject it)
+    :auth: True when this request is the authentication call itself
     """
+    if params is None:
+        params = {}
+    if headers is None:
+        headers = {}
 
     if not url.startswith(BASE_URL):
-        if url.startswith('/'):
+        if url.startswith("/"):
             url = f"{BASE_URL}{url}"
         else:
             url = f"{BASE_URL}/{url}"
+
     attempts = 0
+    response: Response | None = None
     while attempts < 2:
         log.info(f"Requesting {url}")
-        app.alert(f"Requesting {url}...", 'info')
+        app.alert(f"Requesting {url}...", "info")
         if not data and method == "GET":
             response = session.get(url, params=params, headers=headers)
         else:
             if not no_token:
-                # For whatever reason, some requests fail with a proper XSRF
-                # Token... for example posting a comment
                 headers["X-Atlassian-Token"] = XSRF
-            response = session.request(
-                method,
-                url,
-                params=params,
-                data=data,
-                headers=headers,
-            )
+            response = session.request(method, url, params=params, data=data, headers=headers)
         attempts += 1
-        response.encoding = 'utf-8'
+        response.encoding = "utf-8"
         if not_authenticated(response):
             log.error("Not logged in? Authenticating...")
             if auth:
@@ -95,8 +99,12 @@ def make_request(url, params={}, data=None, method="GET", headers={},
                 return response
         else:
             break
+
+    if response is None:
+        raise RuntimeError("No response received from server")
+
     if not response.ok:
-        app.alert("Received HTTP code %d" % response.status_code, 'error')
+        app.alert(f"Received HTTP code {response.status_code}", "error")
         return response
     if args.dump_http:
         dump_http(response, args.dump_http)
@@ -104,8 +112,8 @@ def make_request(url, params={}, data=None, method="GET", headers={},
     return response
 
 
-def not_authenticated(response):
-    if response.status_code in [401, 403]:
+def not_authenticated(response: Response) -> bool:
+    if response.status_code in (401, 403):
         return True
     if (
         response.status_code == 404
@@ -113,41 +121,41 @@ def not_authenticated(response):
         and response.headers["content-type"] == "application/json"
     ):
         j = response.json()
-        if not j['data']['authorized']:
+        if not j.get("data", {}).get("authorized", True):
             return True
     if (
         response.history
         and response.history[0].status_code == 302
-        and "/login.action" in response.history[0].headers["location"]
+        and "/login.action" in response.history[0].headers.get("location", "")
     ):
         return True
     return False
 
 
-def save_session():
-    """Save session cookies to cookie jar"""
+def save_session() -> None:
+    """Save session cookies to cookie jar."""
     cookies = utils.dict_from_cookiejar(session.cookies)
     cookies["XSRF"] = XSRF
-    with open(cookie_jar, 'w') as f:
+    with open(cookie_jar, "w") as f:
         json.dump(cookies, f)
 
 
-def load_session():
-    """Load session cookies from cookie jar"""
+def load_session() -> None:
+    """Load session cookies from cookie jar."""
     try:
-        with open(cookie_jar, 'r') as f:
+        with open(cookie_jar) as f:
             cookies = utils.cookiejar_from_dict(json.load(f))
     except FileNotFoundError:
-        return None
+        return
     global XSRF
-    XSRF = cookies["XSRF"]
+    xsrf = cookies["XSRF"]
     del cookies["XSRF"]
+    XSRF = xsrf
     session.cookies.update(cookies)
 
 
-def authenticate_session():
-    """Retrieve a valid session cookie and XSRF token"""
-
+def authenticate_session() -> bool:
+    """Retrieve a valid session cookie and XSRF token."""
     user = config["Username"]
     password = check_output(split(config["Password_Command"]))[:-1].decode()
 
@@ -161,51 +169,51 @@ def authenticate_session():
             "index.action": "",
         },
         method="POST",
-        auth=True
+        auth=True,
     )
-    reason = response.headers['X-Seraph-LoginReason']
-    if not reason == "OK":
-        app.alert("Error while autenticating: %s" % reason, "error")
+    reason = response.headers.get("X-Seraph-LoginReason", "")
+    if reason != "OK":
+        app.alert(f"Error while authenticating: {reason}", "error")
         return False
     soup = BeautifulSoup(response.text, features="lxml")
+    token_meta = soup.find("meta", {"id": "atlassian-token"})
+    if token_meta is None:
+        app.alert("Could not find XSRF token in login response", "error")
+        return False
     global XSRF
-    XSRF = soup.find("meta", {"id": "atlassian-token"})["content"]
+    XSRF = token_meta["content"]
     save_session()
     return True
 
 
-def dump_http(response, filename):
-    with open(filename, 'a') as f:
+def dump_http(response: Response, filename: str) -> None:
+    with open(filename, "a") as f:
         now = dt.now()
-        f.write("<<<<<< Request (%s)\n" % now)
+        f.write(f"<<<<<< Request ({now})\n")
         f.write(response.request.method)
-        f.write(' ')
+        f.write(" ")
         f.write(response.request.url)
-        f.write('\n')
+        f.write("\n")
         for k, v in response.request.headers.items():
             f.write(f"{k}: {v}\n")
         if response.request.body:
-            f.write('\n')
-            f.write('\n')
+            f.write("\n\n")
             f.write(response.request.body)
-        f.write('\n')
-        f.write('\n')
+        f.write("\n\n")
         f.write(">>>>>> Response\n")
         for k, v in response.headers.items():
             f.write(f"{k}: {v}\n")
-        f.write('\n')
-        f.write('\n')
+        f.write("\n\n")
         if response.text:
             f.write(response.text)
-        f.write('\n')
-        f.write('\n')
+        f.write("\n\n")
 
 
 def html_to_text(
-    html,
-    replace_emoticons=False,
-    fix_creation_links=False,
-):
+    html: str,
+    replace_emoticons: bool = False,
+    fix_creation_links: bool = False,
+) -> str:
     if replace_emoticons:
         html = convert_emoticons(html)
     if fix_creation_links:
@@ -217,95 +225,87 @@ def html_to_text(
         return html
 
 
-def remove_creation_links(html):
+def remove_creation_links(html: str) -> str:
     soup = BeautifulSoup(html, features="lxml")
-    links = soup.findAll('a', 'createlink')
-    for l in links:
-        l['href'] = re.sub('[0-9]+$', '', l['href'])
+    links = soup.findAll("a", "createlink")
+    for link in links:
+        link["href"] = re.sub("[0-9]+$", "", link["href"])
     return str(soup)
 
 
-def convert_emoticons(html):
-    """Replace Confluence emoticon images with regular smileys"""
-
-    emoticon_dict = {
-        'smile': ':)',
-        'sad': ':(',
-        'cheeky': ':P',
-        'laugh': ':D',
-        'wink': ';)',
-        'thumbs-up': '👍',
-        'thumbs-down': '👎',
-        'light-on': '💡',
-        #  'light-off': '',
-        'warning': '❗',
-        'yellow-star': '⭐',
-        #  'red-star': '',
-        #  'green-star': '',
-        #  'blue-star': '',
-        #  'yellow-star': '',
-        'tick': '✔️',
-        'cross': '❌',
-        'information': 'ℹ️',
-        'plus': '➕',
-        'minus': '➖',
-        'question': '❓',
-        'heart': '❤️️',
-        'broken-heart': '💔',
+def convert_emoticons(html: str) -> str:
+    """Replace Confluence emoticon images with regular smileys."""
+    emoticon_dict: dict[str, str] = {
+        "smile": ":)",
+        "sad": ":(",
+        "cheeky": ":P",
+        "laugh": ":D",
+        "wink": ";)",
+        "thumbs-up": "👍",
+        "thumbs-down": "👎",
+        "light-on": "💡",
+        "warning": "❗",
+        "yellow-star": "⭐",
+        "tick": "✔️",
+        "cross": "❌",
+        "information": "ℹ️",  # noqa: RUF001
+        "plus": "➕",  # noqa: RUF001
+        "minus": "➖",  # noqa: RUF001
+        "question": "❓",
+        "heart": "❤️️",
+        "broken-heart": "💔",
     }
     soup = BeautifulSoup(html, features="lxml")
-    emoticons = soup.findAll('img', 'emoticon')
-    for e in emoticons:
+    emoticons = soup.findAll("img", "emoticon")
+    for emoticon in emoticons:
         for k, v in emoticon_dict.items():
-            if f'emoticon-{k}' in e['class']:
-                e.replace_with(v)
+            if f"emoticon-{k}" in emoticon["class"]:
+                emoticon.replace_with(v)
     return str(soup)
 
 
-def md_to_html(text, url_encode=None):
+def md_to_html(text: str, url_encode: str | None = None) -> str:
     result = markdown.markdown(text)
     if url_encode:
         result = urlencode({url_encode: result})
     return result
 
 
-def convert_date(date, frmt='default'):
-    """Convert the multitude of date formats to a common one"""
+def convert_date(date: str | int, frmt: str = "default") -> str:
+    """Convert the multitude of date formats to a common one."""
     try:
-        date = dtparse(date)
+        parsed = dtparse(str(date))
         now = dt.utcnow().replace(tzinfo=pytz.UTC)
     except (ValueError, TypeError):
         if isinstance(date, int):
-            date = dt.fromtimestamp(date/1000.)
+            parsed = dt.fromtimestamp(date / 1000.0)
             now = dt.now()
         else:
-            date = dt.strptime(date, "%Y-%m-%dT%H:%M:%S%z")
+            parsed = dt.strptime(date, "%Y-%m-%dT%H:%M:%S%z")
             now = dt.utcnow().replace(tzinfo=pytz.UTC)
-    diff = now - date
-    if frmt == 'default':
-        return date.strftime(config["DateFormat"])
-    if frmt == 'friendly':
+    diff = now - parsed
+    if frmt == "default":
+        return parsed.strftime(config["DateFormat"])
+    if frmt == "friendly":
         if diff < timedelta(hours=24):
-            return date.strftime("%H:%M")
+            return parsed.strftime("%H:%M")
         elif diff < timedelta(days=8):
-            return date.strftime("%a")
+            return parsed.strftime("%a")
         elif diff < timedelta(days=31):
-            return date.strftime("%b %d")
+            return parsed.strftime("%b %d")
         else:
-            return date.strftime("%x")
-    if frmt == 'timespan':
+            return parsed.strftime("%x")
+    if frmt == "timespan":
+        total_seconds = int(diff.total_seconds())
         if diff < timedelta(minutes=60):
-            result = diff.minutes
-            return "%d min ago" % result
+            return f"{total_seconds // 60} min ago"
         elif diff < timedelta(hours=24):
-            result = diff.hours
-            return "%d hours ago" % result
+            return f"{total_seconds // 3600} hours ago"
         elif diff < timedelta(days=31):
-            result = diff.days
-            return "%d days ago" % result
+            return f"{diff.days} days ago"
         else:
-            result = diff.years
-            return "%d years ago" % result
+            return f"{diff.days // 365} years ago"
+    return parsed.strftime(config["DateFormat"])
 
 
 load_session()

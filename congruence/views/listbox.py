@@ -14,37 +14,31 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-#  from congruence.logging import log
-from congruence.views.common import CongruenceView, \
-    CongruenceTextBox, CollectKeyActions, key_action
+from __future__ import annotations
 
 import urwid
 
+from congruence.views.common import CollectKeyActions, CongruenceTextBox, CongruenceView, key_action
 
-class CongruenceListBox(CongruenceView, urwid.ListBox,
-                        metaclass=CollectKeyActions):
-    """Displays a list of CongruenceListBoxEntry objects
 
-    :entries: a list of CongruenceListBoxEntry objects
+class CongruenceListBox(CongruenceView, urwid.ListBox, metaclass=CollectKeyActions):
+    """ListBox displaying a sequence of CongruenceListBoxEntry objects."""
 
-    """
-
-    def __init__(self, entries, help_string=None):
+    def __init__(self, entries: list, help_string: str | None = None) -> None:
         self.entries = entries
         self.help_string = help_string
         self.walker = urwid.SimpleFocusListWalker(self.entries)
-        self._search_results = []
+        self._search_results: list[int] = []
+        self._current_search_result: int = 0
         super().__init__(self.walker)
         if self.entries and isinstance(self.entries[0], ColumnListBoxEntry):
             self.align_columns()
 
-    def align_columns(self):
-        """Set all column widths to its common maximum"""
-
-        widths = None
+    def align_columns(self) -> None:
+        """Set every column to its maximum width across all entries."""
+        widths: list[int] | None = None
         for e in self.entries:
-            if hasattr(e, '_columns') and e._columns:
+            if hasattr(e, "_columns") and e._columns:
                 this_widths = list(map(len, e._columns))
                 if widths:
                     for i, w in enumerate(this_widths):
@@ -54,187 +48,143 @@ class CongruenceListBox(CongruenceView, urwid.ListBox,
         if widths:
             for e in self.entries:
                 for i, w in enumerate(widths[:-1]):
-                    # [:-1] because the last column can be any width
                     item = e._inner_widget.contents[i]
-                    _, _, box_widget = item[1]
                     e._inner_widget.contents[i] = (
                         item[0],
-                        e._inner_widget.options('given', w, False),
+                        e._inner_widget.options("given", w, False),
                     )
 
-    def redraw(self):
+    def redraw(self) -> None:
         self.walker[:] = self.entries
         self.align_columns()
 
     @key_action
-    def move_down(self, size=None):
-        urwid.ListBox.keypress(self, size, 'down')
+    def move_down(self, size: tuple | None = None) -> None:
+        urwid.ListBox.keypress(self, size, "down")
 
     @key_action
-    def move_up(self, size=None):
-        urwid.ListBox.keypress(self, size, 'up')
+    def move_up(self, size: tuple | None = None) -> None:
+        urwid.ListBox.keypress(self, size, "up")
 
     @key_action
-    def page_down(self, size=None):
-        urwid.ListBox.keypress(self, size, 'page down')
+    def page_down(self, size: tuple | None = None) -> None:
+        urwid.ListBox.keypress(self, size, "page down")
 
     @key_action
-    def page_up(self, size=None):
-        urwid.ListBox.keypress(self, size, 'page up')
+    def page_up(self, size: tuple | None = None) -> None:
+        urwid.ListBox.keypress(self, size, "page up")
 
     @key_action
-    def scroll_to_bottom(self, size=None):
-        self.set_focus(0, coming_from='above')
+    def scroll_to_bottom(self, size: tuple | None = None) -> None:
+        self.set_focus(0, coming_from="above")
 
     @key_action
-    def scroll_to_top(self, size=None):
-        self.set_focus(0, coming_from='below')
+    def scroll_to_top(self, size: tuple | None = None) -> None:
+        self.set_focus(0, coming_from="below")
 
     @key_action
-    def next_view(self, size=None):
+    def next_view(self, size: tuple | None = None) -> None:
         view = self.get_focus()[0].get_next_view()
         if view:
             self.app.push_view(view)
 
     @key_action
-    def show_details(self, size=None):
+    def show_details(self, size: tuple | None = None) -> None:
         view = self.get_focus()[0].get_details_view()
         if view:
             self.app.push_view(view)
 
     @key_action
-    def search(self, size=None):
+    def search(self, size: tuple | None = None) -> None:
         self._search()
 
     @key_action
-    def search_next(self, size=None):
+    def search_next(self, size: tuple | None = None) -> None:
         self._search_next(1)
 
     @key_action
-    def search_prev(self, size=None):
+    def search_prev(self, size: tuple | None = None) -> None:
         self._search_next(-1)
 
     @key_action
-    def limit(self, size=None):
-        def limit_inner(expr):
-            _search_results = [
-                e for e in self.entries if e.search_match(expr)
-            ]
-            self.walker[:] = _search_results
-            if expr == '.':
+    def limit(self, size: tuple | None = None) -> None:
+        def limit_inner(expr: str) -> None:
+            filtered = [e for e in self.entries if e.search_match(expr)]
+            self.walker[:] = filtered
+            if expr == ".":
                 self.app.reset_status()
             else:
-                self.app.alert("To view all items, limit to '.'.", 'info')
+                self.app.alert("To view all items, limit to '.'.", "info")
 
-        self.app.get_input(
-            'Search for:',
-            limit_inner,
-        )
+        self.app.get_input("Search for:", limit_inner)
 
-    def _search(self):
-        def search_inner(expr):
-            self._search_results = [
-                e[0] for e in enumerate(self.entries)
-                if e[1].search_match(expr)
-            ]
-            self.app.alert("Found %d results" %
-                           len(self._search_results),
-                           'info')
+    def _search(self) -> None:
+        def search_inner(expr: str) -> None:
+            self._search_results = [i for i, e in enumerate(self.entries) if e.search_match(expr)]
+            self.app.alert(f"Found {len(self._search_results)} results", "info")
             if self._search_results:
                 self._current_search_result = 0
-                pos = self._search_results[self._current_search_result]
-                self.set_focus(pos)
-        self.app.get_input(
-            'Search for:',
-            search_inner,
-        )
+                self.set_focus(self._search_results[0])
 
-    def _search_next(self, count=1):
+        self.app.get_input("Search for:", search_inner)
+
+    def _search_next(self, count: int = 1) -> None:
         if self._search_results:
-            self._current_search_result += count
-            self._current_search_result %= len(self._search_results)
-            pos = self._search_results[self._current_search_result]
-            self.set_focus(pos)
+            self._current_search_result = (self._current_search_result + count) % len(self._search_results)
+            self.set_focus(self._search_results[self._current_search_result])
 
 
 class CongruenceListBoxEntry(urwid.WidgetWrap):
-    """Represents one item in a ListBox
+    """Represents one row in a CongruenceListBox."""
 
-    :obj: a confluence content object or a string
-    """
-
-    def __init__(self, obj):
+    def __init__(self, obj: object) -> None:
         self.obj = obj
         self._inner_widget = self.wrap_in_widget()
-
-        self._widget = urwid.AttrMap(
-            self._inner_widget,
-            attr_map="body",
-            focus_map="focus",
-        )
+        self._widget = urwid.AttrMap(self._inner_widget, attr_map="body", focus_map="focus")
         super().__init__(self._widget)
 
-    def wrap_in_widget(self):
+    def wrap_in_widget(self) -> urwid.Widget:
         try:
             return urwid.Text(self.obj.get_title())
         except AttributeError:
             return urwid.Text(self.obj)
 
-    def selectable(self):
+    def selectable(self) -> bool:
         return True
 
-    def keypress(self, size, key):
+    def keypress(self, size: tuple, key: str) -> str:
         return key
 
-    def get_next_view(self):
+    def get_next_view(self) -> object | None:
         return None
 
-    def get_details_view(self):
+    def get_details_view(self) -> CongruenceTextBox:
         text = self.obj.get_json()
         view = CongruenceTextBox(text)
         view.title = "Details"
         return view
 
-    def search_match(self, search_string):
-        """Returns a Boolean whether the search string matches"""
-
-        raise NotImplementedError("search_match in %s" % type(self).__name__)
+    def search_match(self, search_string: str) -> bool:
+        raise NotImplementedError(f"search_match in {type(self).__name__}")
 
 
 class CardedListBoxEntry(CongruenceListBoxEntry):
-    """Represents one item in a ListBox with columns
+    """List entry rendered with a header row and a content row."""
 
-    :obj: a confluence content object which implements get_head() and
-        get_content()
-    """
-    def render_head(self):
-        head = self.obj.get_head()
-        return urwid.AttrMap(
-            urwid.Text(head),
-            'card-head',
-            focus_map='card-focus'
-        )
+    def render_head(self) -> urwid.AttrMap:
+        return urwid.AttrMap(urwid.Text(self.obj.get_head()), "card-head", focus_map="card-focus")
 
-    def render_content(self):
-        text = self.obj.get_content()
-        return urwid.AttrMap(urwid.Text(text), 'body')
+    def render_content(self) -> urwid.AttrMap:
+        return urwid.AttrMap(urwid.Text(self.obj.get_content()), "body")
 
-    def wrap_in_widget(self):
-        return urwid.Pile([
-            self.render_head(),
-            self.render_content(),
-        ])
+    def wrap_in_widget(self) -> urwid.Pile:
+        return urwid.Pile([self.render_head(), self.render_content()])
 
 
 class ColumnListBoxEntry(CongruenceListBoxEntry):
-    """Represents one item in a ListBox with columns
+    """List entry rendered as five fixed-width columns."""
 
-    :obj: a confluence content object which implements get_columns()
-    """
-    def wrap_in_widget(self):
-        self._columns = self.obj.get_columns()
+    def wrap_in_widget(self) -> urwid.Columns:
+        self._columns: list[str] = self.obj.get_columns()
         assert len(self._columns) == 5
-        return urwid.Columns(
-            [(urwid.Text(t, wrap='clip')) for t in self._columns],
-            dividechars=1,
-        )
+        return urwid.Columns([(urwid.Text(t, wrap="clip")) for t in self._columns], dividechars=1)

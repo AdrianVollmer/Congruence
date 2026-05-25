@@ -16,7 +16,6 @@
 
 from congruence.args import config
 
-
 PALETTE = [
     ('body', 'default', 'default'),
     ('focus', 'black', 'brown'),

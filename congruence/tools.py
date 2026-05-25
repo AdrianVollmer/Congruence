@@ -14,45 +14,35 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.interface import html_to_text
-#  from congruence.logging import log
-from congruence.args import config
+from __future__ import annotations
 
 from difflib import unified_diff
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
+
+from congruence.args import config
+from congruence.interface import html_to_text
 
 
-def pipe_through(text, command):
-    process = Popen(command,
-                    stdin=PIPE,
-                    stdout=PIPE,
-                    stderr=PIPE,
-                    shell=True,
-                    )
+def pipe_through(text: str, command: str) -> str:
+    process = Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
     process.stdin.write(text.encode())
-    (output, err) = process.communicate()
+    (output, _) = process.communicate()
     return output.decode()
 
 
-def create_diff(v1, v2, fromfile="", tofile="", html=False):
+def create_diff(v1: str, v2: str, fromfile: str = "", tofile: str = "", html: bool = False) -> str:
     if html:
         v1 = html_to_text(v1, fix_creation_links=True)
         v2 = html_to_text(v2, fix_creation_links=True)
-    #  log.debug(v1)
-    generator = unified_diff(
-        v1.splitlines(),
-        v2.splitlines(),
-        fromfile=fromfile,
-        tofile=tofile,
-        lineterm="",
-    )
+    generator = unified_diff(v1.splitlines(), v2.splitlines(), fromfile=fromfile, tofile=tofile, lineterm="")
+    diff = "\n".join(generator)
 
-    diff = '\n'.join(generator)
-
-    if isinstance(config['DiffFilter'], list):
-        for f in config["DiffFilter"]:
+    diff_filter = config.get("DiffFilter")
+    if diff_filter is None:
+        return diff
+    if isinstance(diff_filter, list):
+        for f in diff_filter:
             diff = pipe_through(diff, f)
     else:
-        diff = pipe_through(diff, config['DiffFilter'])
-
+        diff = pipe_through(diff, diff_filter)
     return diff

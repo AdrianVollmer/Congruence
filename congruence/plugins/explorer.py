@@ -14,6 +14,21 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Explorer plugin: browse Confluence spaces and pages as a tree."""
+
+from __future__ import annotations
+
+from typing import Any
+
+import urwid
+
+from congruence.confluence import PageView
+from congruence.external import open_doc_in_cli_browser, open_gui_browser
+from congruence.interface import make_request
+from congruence.logging import log
+from congruence.objects import Page, Space
+from congruence.views.common import key_action
+from congruence.views.treelistbox import CongruenceTreeListBox, CongruenceTreeListBoxEntry
 
 __help__ = """Confluence Explorer
 
@@ -22,174 +37,139 @@ more content.
 """
 
 
-from congruence.views.common import key_action
-from congruence.views.treelistbox import CongruenceTreeListBox, \
-    CongruenceTreeListBoxEntry
-from congruence.interface import make_request
-from congruence.external import open_gui_browser, open_doc_in_cli_browser
-from congruence.logging import log
-from congruence.confluence import PageView
-from congruence.objects import Space, Page
-
-import urwid
-
-
 class SpaceView(CongruenceTreeListBox):
-    def __init__(self, properties={}):
+    def __init__(self, properties: dict | None = None) -> None:
         self.title = "Explorer"
-        self.properties = properties
-        url = 'rest/spacedirectory/1/search'
-        params = {
-            'query': '',
-            'type': 'global',
-            'status': 'current',
-            'startIndex': '0',
-        }
-        headers = {
-             'Accept': 'application/json',
-        }
-        self.spaces = []
+        url = "rest/spacedirectory/1/search"
+        params: dict = {"query": "", "type": "global", "status": "current", "startIndex": "0"}
+        headers = {"Accept": "application/json"}
+        spaces: list[dict] = []
         while True:
             r = make_request(url, params=params, headers=headers)
             j = r.json()
-            self.spaces += j['spaces']
-            size = j['totalSize']
-            if len(self.spaces) >= size:
+            spaces += j["spaces"]
+            if len(spaces) >= j["totalSize"]:
                 break
-            params['startIndex'] = len(self.spaces)
-        self.entries = [{s['key']: ExpandableSpace(s),
-                         'children': []}
-                        for s in self.spaces]
-        self.entries = {
-            'Space Directory': {'title': 'Space Directory'},
-            'children': self.entries,
-        }
-        super().__init__(self.entries, SpaceEntry, help_string=__help__)
+            params["startIndex"] = len(spaces)
+
+        entries: list[dict] = [{s["key"]: ExpandableSpace(s), "children": []} for s in spaces]
+        data = {"Space Directory": {"title": "Space Directory"}, "children": entries}
+        super().__init__(data, SpaceEntry, help_string=__help__)
 
     @key_action
-    def toggle_collapse(self, size=None):
+    def toggle_collapse(self, size: tuple | None = None) -> None:
         if self.focus.expanded:
-            urwid.TreeListBox.keypress(self, size, '-')
+            urwid.TreeListBox.keypress(self, size, "-")
         else:
             obj = self.focus.get_value()
-            if not getattr(obj, 'expanded', True):
-                new_children = obj.get_children()
-                self.focus.add_children(new_children)
+            if not getattr(obj, "expanded", True):
+                self.focus.add_children(obj.get_children())
                 obj.expanded = True
-            urwid.TreeListBox.keypress(self, size, '+')
+            urwid.TreeListBox.keypress(self, size, "+")
 
     @key_action
-    def cli_browser(self, size=None):
+    def cli_browser(self, size: tuple | None = None) -> None:
         obj = self.focus.get_value()
         if isinstance(obj, dict):
-            # it's the root
             return
-        id = obj.id
-        log.debug("Build HTML view for page with id '%s'" % id)
-        rest_url = f"rest/api/content/{id}?expand=body.storage"
-        r = make_request(rest_url)
-        content = r.json()
-        content = content['body']['storage']['value']
-
-        content = f'<html><head></head><body>{content}</body></html>'
-        open_doc_in_cli_browser(content.encode(), self.app)
+        obj_id = obj.id
+        log.debug(f"Build HTML view for page with id '{obj_id}'")
+        r = make_request(f"rest/api/content/{obj_id}?expand=body.storage")
+        content = r.json()["body"]["storage"]["value"]
+        html = f"<html><head></head><body>{content}</body></html>"
+        open_doc_in_cli_browser(html.encode(), self.app)
 
     @key_action
-    def gui_browser(self, size=None):
+    def gui_browser(self, size: tuple | None = None) -> None:
         obj = self.focus.get_value()
         if isinstance(obj, dict):
-            # it's the root
             return
         try:
-            url = obj._data['space']['link'][1]['href']
-        except KeyError:
-            url = obj._data['_links']['webui']
+            url = obj._data["space"]["link"][1]["href"]
+        except (KeyError, IndexError):
+            url = obj._data["_links"]["webui"]
         open_gui_browser(url)
 
 
 class ExpandableSpace(Space):
-    """This class can 'expand', i.e. load a list of pages in its space"""
+    """Space that lazily loads its pages on first expansion."""
 
-    def __init__(self, data):
+    def __init__(self, data: dict) -> None:
         super().__init__(data)
-        self.expanded = False
+        self.expanded: bool = False
 
-    def get_children(self):
+    def get_children(self) -> list[ExpandablePage]:
         self.expanded = True
-        log.debug("Load descendants of %s..." % self.key)
-        url = f'rest/api/space/{self.key}/content'
-        params = {
-            'depth': 'root',
-            'expand': 'body,version,history.lastUpdated,space',
-        }
-        result = []
+        log.debug(f"Load descendants of {self.key}...")
+        url = f"rest/api/space/{self.key}/content"
+        params: dict = {"depth": "root", "expand": "body,version,history.lastUpdated,space"}
+        result: list[dict] = []
         while True:
             r = make_request(url, params=params)
             j = r.json()
-            result += j['page']['results']
-            size = j['page']['size']
-            if len(result) >= size:
+            result += j["page"]["results"]
+            if len(result) >= j["page"]["size"]:
                 break
-            params['startIndex'] = len(result)
-        result = [ExpandablePage(p) for p in result]
-        log.debug("Retrieved %d items" % len(result))
-        return result
+            params["startIndex"] = len(result)
+        pages = [ExpandablePage(p) for p in result]
+        log.debug(f"Retrieved {len(pages)} items")
+        return pages
 
 
 class SpaceEntry(CongruenceTreeListBoxEntry):
-    def __init__(self, node):
+    def __init__(self, node: Any) -> None:
         self.node = node
         super().__init__(self.node)
-        self.expanded = (not self.node.get_value()['children'] == [])
+        self.expanded = bool(self.node.get_value()["children"])
         self.update_expanded_icon()
 
-    def get_next_view(self):
+    def get_next_view(self) -> PageView | None:
         obj = self.get_value()
         try:
-            if obj.type in ["page", "blogpost"]:
+            if obj.type in ("page", "blogpost"):
                 return PageView(obj)
         except AttributeError:
-            return None
+            pass
+        return None
 
-    def search_match(self, search_string):
-        return self.obj.match(search_string)
-
-    def add_children(self, children):
-        for c in children:
-            # object can be space or page, so use key or id
-            id = getattr(c, 'key', c.id)
-            self.node.get_value()['children'].append({
-                id: c,
-                'children': [],
-            })
-
-    def get_display_text(self):
+    def search_match(self, search_string: str) -> bool:
         obj = self.get_value()
         if isinstance(obj, dict):
-            # it's the root
-            return obj['title']
-        return self.get_value().get_title()
+            return bool(search_string in obj.get("title", ""))
+        return obj.match(search_string)
+
+    def add_children(self, children: list) -> None:
+        for child in children:
+            child_id = getattr(child, "key", child.id)
+            self.node.get_value()["children"].append({child_id: child, "children": []})
+        # Rebuild the child node cache so the tree walker sees the new nodes
+        if hasattr(self.node, "_child_keys"):
+            self.node._child_keys = None
+
+    def get_display_text(self) -> str:
+        obj = self.get_value()
+        if isinstance(obj, dict):
+            return obj["title"]
+        return obj.get_title()
 
 
 class ExpandablePage(Page):
-    """This class can 'expand', i.e. load a list of subpages"""
+    """Page that lazily loads its subpages on first expansion."""
 
-    def __init__(self, data):
+    def __init__(self, data: dict) -> None:
         super().__init__(data)
-        self.expanded = False
+        self.expanded: bool = False
 
-    def get_children(self):
+    def get_children(self) -> list[ExpandablePage]:
         self.expanded = True
-        log.debug("Load child pages of %s..." % self.id)
-        url = f"rest/api/content/{self.id}/child/page"
-        params = {
-            'expand': 'body,version,history.lastUpdated,space',
-        }
-        r = make_request(url, params=params)
-        result = r.json()['results']
-        result = [ExpandablePage(p) for p in result]
-        log.debug("Retrieved %d items" % len(result))
-        return result
+        log.debug(f"Load child pages of {self.id}...")
+        r = make_request(
+            f"rest/api/content/{self.id}/child/page",
+            params={"expand": "body,version,history.lastUpdated,space"},
+        )
+        pages = [ExpandablePage(p) for p in r.json()["results"]]
+        log.debug(f"Retrieved {len(pages)} items")
+        return pages
 
 
 PluginView = SpaceView

@@ -14,11 +14,10 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from congruence.args import args, LOG_FILE
-
 import logging
 from io import StringIO
 
+from congruence.args import LOG_FILE, args
 
 logging.getLogger().setLevel(logging.DEBUG)
 
