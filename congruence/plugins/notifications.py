@@ -62,7 +62,7 @@ class NotificationEntry(ColumnListBoxEntry):
         obj: NotificationObject = self.obj  # type: ignore[assignment]
         d = obj._data
         text = d["title"] + "\n"
-        if "title" in d:
+        if "item" in d:
             text += f"Title: {d['item']['title']}\n"
         text += f"Created: {convert_date(d['created'])}\n"
         if d["created"] != d["updated"]:

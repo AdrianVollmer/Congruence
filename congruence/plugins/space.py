@@ -22,10 +22,10 @@ This is a tree view of all pages in a space.
 
 from congruence.confluence import get_nested_content  # type: ignore[attr-defined]
 from congruence.logging import log
-from congruence.views import (  # type: ignore[attr-defined]
-    ConfluenceMainView,
-    ConfluenceTreeListBox,
-    ConfluenceTreeWidget,
+from congruence.views import (
+    ConfluenceMainView,  # type: ignore[attr-defined]
+    ConfluenceTreeListBox,  # type: ignore[attr-defined]
+    ConfluenceTreeWidget,  # type: ignore[attr-defined]
 )
 
 
