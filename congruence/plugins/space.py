@@ -20,9 +20,13 @@ This is a tree view of all pages in a space.
 
 """
 
-from congruence.confluence import get_nested_content
+from congruence.confluence import get_nested_content  # type: ignore[attr-defined]
 from congruence.logging import log
-from congruence.views import ConfluenceMainView, ConfluenceTreeListBox, ConfluenceTreeWidget
+from congruence.views import (  # type: ignore[attr-defined]
+    ConfluenceMainView,
+    ConfluenceTreeListBox,
+    ConfluenceTreeWidget,
+)
 
 
 # Can't get the full tree due to the way the Confluence API works. Must be

@@ -94,19 +94,19 @@ class CommentContextView(CongruenceTreeListBox):
         super().__init__(comments, CommentWidget, help_string=help_string)
         if not focus_id:
             return
-        node = self._body.focus
+        node = self._body.focus  # type: ignore[union-attr]
         while True:
-            node = self._body.get_next(node)[1]
+            node = self._body.get_next(node)[1]  # type: ignore[union-attr]
             if not node:
                 break
-            if next(iter(node.get_value().keys())) == focus_id:
+            if next(iter(node.get_value().keys())) == focus_id:  # type: ignore[union-attr]
                 break
         if node:
             self.set_focus(node)
 
     @key_action
     def reply(self, size: tuple | None = None) -> None:
-        obj = self.get_focus()[0].get_value()
+        obj = self.get_focus()[0].get_value()  # type: ignore[union-attr]
         prev_msg = obj.get_content()
         prev_msg = "\n".join(f"## > {line}" for line in prev_msg.splitlines())
         prev_msg = f"## {obj.versionby.display_name} wrote:\n{prev_msg}"
@@ -123,7 +123,7 @@ class CommentContextView(CongruenceTreeListBox):
 
     @key_action
     def like(self, size: tuple | None = None) -> None:
-        comment = self.get_focus()[0].get_value()
+        comment = self.get_focus()[0].get_value()  # type: ignore[union-attr]
         if comment.toggle_like():
             if comment.liked:
                 self.app.alert("You liked this", "info")
@@ -132,7 +132,7 @@ class CommentContextView(CongruenceTreeListBox):
 
     @key_action
     def cli_browser(self, size: tuple | None = None) -> None:
-        obj = self.focus.get_value()
+        obj = self.focus.get_value()  # type: ignore[union-attr]
         try:
             obj_id = obj.id
         except AttributeError:
@@ -141,7 +141,7 @@ class CommentContextView(CongruenceTreeListBox):
 
     @key_action
     def gui_browser(self, size: tuple | None = None) -> None:
-        obj = self.focus.get_value()
+        obj = self.focus.get_value()  # type: ignore[union-attr]
         open_gui_browser(obj.url)
 
 
@@ -338,12 +338,16 @@ class ContentList(CongruenceListBox):
     @key_action
     def cli_browser(self, size: tuple | None = None) -> None:
         node = self.get_focus()[0]
-        open_content_in_cli_browser(self.app, node.obj.content.id)
+        if node is None:
+            return
+        open_content_in_cli_browser(self.app, node.obj.content.id)  # type: ignore[union-attr]
 
     @key_action
     def gui_browser(self, size: tuple | None = None) -> None:
         node = self.get_focus()[0]
-        obj_id = node.obj.content.id
+        if node is None:
+            return
+        obj_id = node.obj.content.id  # type: ignore[union-attr]
         if not obj_id:
             self.app.alert("Object has no ID", "error")
             return

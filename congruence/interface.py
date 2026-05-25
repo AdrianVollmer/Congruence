@@ -181,7 +181,7 @@ def authenticate_session() -> bool:
         app.alert("Could not find XSRF token in login response", "error")
         return False
     global XSRF
-    XSRF = token_meta["content"]
+    XSRF = str(token_meta["content"])
     save_session()
     return True
 
@@ -190,15 +190,16 @@ def dump_http(response: Response, filename: str) -> None:
     with open(filename, "a") as f:
         now = dt.now()
         f.write(f"<<<<<< Request ({now})\n")
-        f.write(response.request.method)
+        f.write(response.request.method or "")
         f.write(" ")
-        f.write(response.request.url)
+        f.write(response.request.url or "")
         f.write("\n")
         for k, v in response.request.headers.items():
             f.write(f"{k}: {v}\n")
         if response.request.body:
+            body = response.request.body
             f.write("\n\n")
-            f.write(response.request.body)
+            f.write(body if isinstance(body, str) else body.decode("utf-8", errors="replace"))
         f.write("\n\n")
         f.write(">>>>>> Response\n")
         for k, v in response.headers.items():
@@ -227,7 +228,7 @@ def html_to_text(
 
 def remove_creation_links(html: str) -> str:
     soup = BeautifulSoup(html, features="lxml")
-    links = soup.findAll("a", "createlink")
+    links = soup.findAll("a", "createlink")  # type: ignore[arg-type]
     for link in links:
         link["href"] = re.sub("[0-9]+$", "", link["href"])
     return str(soup)
@@ -256,7 +257,7 @@ def convert_emoticons(html: str) -> str:
         "broken-heart": "💔",
     }
     soup = BeautifulSoup(html, features="lxml")
-    emoticons = soup.findAll("img", "emoticon")
+    emoticons = soup.findAll("img", "emoticon")  # type: ignore[arg-type]
     for emoticon in emoticons:
         for k, v in emoticon_dict.items():
             if f"emoticon-{k}" in emoticon["class"]:
@@ -275,14 +276,14 @@ def convert_date(date: str | int, frmt: str = "default") -> str:
     """Convert the multitude of date formats to a common one."""
     try:
         parsed = dtparse(str(date))
-        now = dt.utcnow().replace(tzinfo=pytz.UTC)
+        now = dt.utcnow().replace(tzinfo=pytz.utc)
     except (ValueError, TypeError):
         if isinstance(date, int):
             parsed = dt.fromtimestamp(date / 1000.0)
             now = dt.now()
         else:
             parsed = dt.strptime(date, "%Y-%m-%dT%H:%M:%S%z")
-            now = dt.utcnow().replace(tzinfo=pytz.UTC)
+            now = dt.utcnow().replace(tzinfo=pytz.utc)
     diff = now - parsed
     if frmt == "default":
         return parsed.strftime(config["DateFormat"])

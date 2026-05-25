@@ -16,6 +16,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import urwid
 
 from congruence.views.common import CollectKeyActions, CongruenceTextBox, CongruenceView, key_action
@@ -59,20 +61,20 @@ class CongruenceListBox(CongruenceView, urwid.ListBox, metaclass=CollectKeyActio
         self.align_columns()
 
     @key_action
-    def move_down(self, size: tuple | None = None) -> None:
-        urwid.ListBox.keypress(self, size, "down")
+    def move_down(self, size: tuple[int, ...] | None = None) -> None:
+        urwid.ListBox.keypress(self, cast("tuple[int, int]", size or (0, 0)), "down")
 
     @key_action
-    def move_up(self, size: tuple | None = None) -> None:
-        urwid.ListBox.keypress(self, size, "up")
+    def move_up(self, size: tuple[int, ...] | None = None) -> None:
+        urwid.ListBox.keypress(self, cast("tuple[int, int]", size or (0, 0)), "up")
 
     @key_action
-    def page_down(self, size: tuple | None = None) -> None:
-        urwid.ListBox.keypress(self, size, "page down")
+    def page_down(self, size: tuple[int, ...] | None = None) -> None:
+        urwid.ListBox.keypress(self, cast("tuple[int, int]", size or (0, 0)), "page down")
 
     @key_action
-    def page_up(self, size: tuple | None = None) -> None:
-        urwid.ListBox.keypress(self, size, "page up")
+    def page_up(self, size: tuple[int, ...] | None = None) -> None:
+        urwid.ListBox.keypress(self, cast("tuple[int, int]", size or (0, 0)), "page up")
 
     @key_action
     def scroll_to_bottom(self, size: tuple | None = None) -> None:
@@ -84,13 +86,19 @@ class CongruenceListBox(CongruenceView, urwid.ListBox, metaclass=CollectKeyActio
 
     @key_action
     def next_view(self, size: tuple | None = None) -> None:
-        view = self.get_focus()[0].get_next_view()
+        node = self.get_focus()[0]
+        if node is None:
+            return
+        view = node.get_next_view()
         if view:
             self.app.push_view(view)
 
     @key_action
     def show_details(self, size: tuple | None = None) -> None:
-        view = self.get_focus()[0].get_details_view()
+        node = self.get_focus()[0]
+        if node is None:
+            return
+        view = node.get_details_view()
         if view:
             self.app.push_view(view)
 
@@ -137,7 +145,7 @@ class CongruenceListBox(CongruenceView, urwid.ListBox, metaclass=CollectKeyActio
 class CongruenceListBoxEntry(urwid.WidgetWrap):
     """Represents one row in a CongruenceListBox."""
 
-    def __init__(self, obj: object) -> None:
+    def __init__(self, obj: Any) -> None:
         self.obj = obj
         self._inner_widget = self.wrap_in_widget()
         self._widget = urwid.AttrMap(self._inner_widget, attr_map="body", focus_map="focus")

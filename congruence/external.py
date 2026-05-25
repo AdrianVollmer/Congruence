@@ -41,6 +41,7 @@ def _normalise_url(url: str) -> str:
 def open_doc_in_cli_browser(doc: bytes, app: CongruenceApp) -> None:
     """Open an in-memory document in the configured CLI browser."""
     process = Popen(split(config["CliBrowser"]), stdin=PIPE, stderr=PIPE)
+    assert process.stdin is not None
     process.stdin.write(doc)
     process.communicate()
     app.loop.screen.clear()

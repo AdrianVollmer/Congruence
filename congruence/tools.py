@@ -25,6 +25,7 @@ from congruence.interface import html_to_text
 
 def pipe_through(text: str, command: str) -> str:
     process = Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
+    assert process.stdin is not None
     process.stdin.write(text.encode())
     (output, _) = process.communicate()
     return output.decode()

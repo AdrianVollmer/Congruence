@@ -37,12 +37,12 @@ class NotificationView(CongruenceListBox):
     def __init__(self, properties: dict | None = None) -> None:
         self.title = "Notifications"
         props = properties or {}
-        self.limit: int = props.get("Limit", 20)
+        self.fetch_limit: int = props.get("Limit", 20)
         self.entries = self.get_notifications()
         super().__init__(self.entries, help_string=__help__)
 
     def get_notifications(self, before: str | None = None) -> list:
-        params: dict = {"limit": self.limit}
+        params: dict = {"limit": self.fetch_limit}
         if before:
             params["before"] = before
         r = make_request("rest/mywork/latest/notification", params=params)
@@ -59,15 +59,16 @@ class NotificationView(CongruenceListBox):
 
 class NotificationEntry(ColumnListBoxEntry):
     def get_next_view(self) -> CongruenceTextBox:
-        d = self.obj._data
+        obj: NotificationObject = self.obj  # type: ignore[assignment]
+        d = obj._data
         text = d["title"] + "\n"
         if "title" in d:
             text += f"Title: {d['item']['title']}\n"
         text += f"Created: {convert_date(d['created'])}\n"
         if d["created"] != d["updated"]:
             text += f"Updated: {convert_date(d['updated'])}\n"
-        if "highlightText" in self.obj.metadata:
-            text += f"\n> {self.obj.metadata['highlightText']}\n"
+        if "highlightText" in obj.metadata:
+            text += f"\n> {obj.metadata['highlightText']}\n"
         if "description" in d:
             text += "\n" + html_to_text(d["description"], replace_emoticons=True) + "\n"
         view = CongruenceTextBox(text)
@@ -75,7 +76,8 @@ class NotificationEntry(ColumnListBoxEntry):
         return view
 
     def search_match(self, search_string: str) -> bool:
-        return self.obj.match(search_string)
+        obj: NotificationObject = self.obj  # type: ignore[assignment]
+        return obj.match(search_string)
 
 
 class NotificationObject(ConfluenceObject):

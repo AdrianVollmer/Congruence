@@ -18,7 +18,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import urwid
 
@@ -58,18 +58,21 @@ class SpaceView(CongruenceTreeListBox):
 
     @key_action
     def toggle_collapse(self, size: tuple | None = None) -> None:
-        if self.focus.expanded:
-            urwid.TreeListBox.keypress(self, size, "-")
+        focus = self.focus  # type: ignore[union-attr]
+        if focus is None:
+            return
+        if focus.expanded:  # type: ignore[union-attr]
+            urwid.TreeListBox.keypress(self, cast("tuple[int, int]", size or (0, 0)), "-")
         else:
-            obj = self.focus.get_value()
+            obj = focus.get_value()  # type: ignore[union-attr]
             if not getattr(obj, "expanded", True):
-                self.focus.add_children(obj.get_children())
+                focus.add_children(obj.get_children())  # type: ignore[union-attr]
                 obj.expanded = True
-            urwid.TreeListBox.keypress(self, size, "+")
+            urwid.TreeListBox.keypress(self, cast("tuple[int, int]", size or (0, 0)), "+")
 
     @key_action
     def cli_browser(self, size: tuple | None = None) -> None:
-        obj = self.focus.get_value()
+        obj = self.focus.get_value()  # type: ignore[union-attr]
         if isinstance(obj, dict):
             return
         obj_id = obj.id
@@ -81,7 +84,7 @@ class SpaceView(CongruenceTreeListBox):
 
     @key_action
     def gui_browser(self, size: tuple | None = None) -> None:
-        obj = self.focus.get_value()
+        obj = self.focus.get_value()  # type: ignore[union-attr]
         if isinstance(obj, dict):
             return
         try:
