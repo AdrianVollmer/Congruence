@@ -277,7 +277,7 @@ def convert_date(date: str | int, frmt: str = "default") -> str:
     try:
         parsed = dtparse(str(date))
         now = dt.utcnow().replace(tzinfo=pytz.utc)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, OverflowError):
         if isinstance(date, int):
             parsed = dt.fromtimestamp(date / 1000.0)
             now = dt.now()
