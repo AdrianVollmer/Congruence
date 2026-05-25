@@ -152,13 +152,12 @@ class SingleCommentView(CongruenceTextBox):
         self.obj = obj
         self.title = "Comment"
         try:
-            update = self.obj._data["version"]
             infos = {
                 "Title": obj.get_title(),
-                "Last updated by": update["by"]["displayName"],
-                "Last updated at": convert_date(update["when"]),
-                "Last change message": update["message"],
-                "Version number": update["number"],
+                "Last updated by": obj.versionby.display_name,
+                "Last updated at": convert_date(obj.last_updated_when),
+                "Last change message": obj.version_message,
+                "Version number": obj.version_number,
             }
             text = "\n".join(f"{k}: {v}" for k, v in infos.items())
             text += "\n\n" + self.obj.get_content()

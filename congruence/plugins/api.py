@@ -55,8 +55,7 @@ class CongruenceAPIEntry(ColumnListBoxEntry):
         if obj.type in ("page", "blogpost"):
             return PageView(obj)
         if obj.type == "comment":
-            parent = obj._data["resultParentContainer"]
-            page_id = parent["displayUrl"].split("=")[-1]
+            page_id = obj.parent_url.split("=")[-1]
             return CommentContextView(page_id, obj.content, obj.content.id)
         return None
 
