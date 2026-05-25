@@ -39,8 +39,8 @@ class MicroblogView(CongruenceListBox):
     def __init__(self, properties: dict | None = None) -> None:
         self.title = "Microblog"
         self.properties = properties or {}
-        self.limit: int = 20
-        self.replyLimit: int = 999
+        self.fetch_limit: int = 20
+        self.reply_limit: int = 999
         self.post_data: str = ""
         self.offset: int = 0
         self.update()
@@ -49,8 +49,8 @@ class MicroblogView(CongruenceListBox):
     @key_action
     def update(self, size: tuple | None = None) -> None:
         params = self.properties.get("Parameters", {})
-        self.limit = params.get("limit", 20)
-        self.replyLimit = params.get("replyLimit", 999)
+        self.fetch_limit = params.get("limit", 20)
+        self.reply_limit = params.get("replyLimit", 999)
         self.post_data = self.properties.get("Data", "")
         self.offset = 0
         self.entries = self._get_microblog()
@@ -67,7 +67,7 @@ class MicroblogView(CongruenceListBox):
         log.info("Fetch microblog...")
         response = make_request(
             "rest/microblog/1.0/microposts/search",
-            params={"offset": self.offset, "limit": self.limit, "replyLimit": self.replyLimit},
+            params={"offset": self.offset, "limit": self.fetch_limit, "replyLimit": self.reply_limit},
             method="POST",
             data=self.post_data,
             headers={"Content-Type": "application/json"},
@@ -79,6 +79,8 @@ class MicroblogView(CongruenceListBox):
     @key_action
     def gui_browser(self, size: tuple | None = None) -> None:
         node = self.get_focus()[0]
+        if node is None:
+            return
         post_id = node.obj._data["id"]
         open_gui_browser(f"plugins/micropost/view.action?postId={post_id}")
 
@@ -194,7 +196,7 @@ class MicroblogReplyView(CongruenceListBox):
 
     @key_action
     def like(self, size: tuple | None = None) -> None:
-        obj = self.focus.obj
+        obj = self.focus.obj  # type: ignore[union-attr]
         post_id = obj._data["id"]
         r = make_request(
             f"rest/microblog/1.0/microposts/{post_id}/like",
@@ -249,7 +251,7 @@ class MicroblogReplyView(CongruenceListBox):
         open_gui_browser(f"plugins/micropost/view.action?postId={obj._data['id']}")
 
 
-class MicroblogPost(CongruenceTextBox):
+class MicroblogPost(CongruenceListBox):
     def __init__(self, data: dict) -> None:
         self.title = "Post"
         max_len = max(len(k) for k in data)

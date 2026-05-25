@@ -161,7 +161,7 @@ def get_ansii_group_matches_for_text(text: str) -> Iterator[tuple[list[int], str
         yield parsed_attr, text
 
 
-def translate_text_for_urwid(raw_text: str) -> list:
+def translate_text_for_urwid(raw_text: str | bytes) -> list:
     """
     Converts an ANSII escaped string into an urwid equivalent.
     First by finding all the matches for "\033[" or "\x1b[",
@@ -181,7 +181,7 @@ def translate_text_for_urwid(raw_text: str) -> list:
     :return:
     """
     formated_text = []
-    if hasattr(raw_text, "decode"):
+    if isinstance(raw_text, bytes):
         raw_text = raw_text.decode("utf-8")
 
     if not (raw_text.startswith("\033[") or raw_text.startswith("\x1b[")):

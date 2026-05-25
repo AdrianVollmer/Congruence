@@ -16,7 +16,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import urwid
 
@@ -40,20 +40,20 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox, metaclass=Collect
         super().__init__(self.walker)
 
     @key_action
-    def move_down(self, size: tuple | None = None) -> None:
-        urwid.ListBox.keypress(self, size, "down")
+    def move_down(self, size: tuple[int, ...] | None = None) -> None:
+        urwid.ListBox.keypress(self, cast("tuple[int, int]", size or (0, 0)), "down")
 
     @key_action
-    def move_up(self, size: tuple | None = None) -> None:
-        urwid.ListBox.keypress(self, size, "up")
+    def move_up(self, size: tuple[int, ...] | None = None) -> None:
+        urwid.ListBox.keypress(self, cast("tuple[int, int]", size or (0, 0)), "up")
 
     @key_action
-    def page_down(self, size: tuple | None = None) -> None:
-        urwid.ListBox.keypress(self, size, "page down")
+    def page_down(self, size: tuple[int, ...] | None = None) -> None:
+        urwid.ListBox.keypress(self, cast("tuple[int, int]", size or (0, 0)), "page down")
 
     @key_action
-    def page_up(self, size: tuple | None = None) -> None:
-        urwid.ListBox.keypress(self, size, "page up")
+    def page_up(self, size: tuple[int, ...] | None = None) -> None:
+        urwid.ListBox.keypress(self, cast("tuple[int, int]", size or (0, 0)), "page up")
 
     @key_action
     def scroll_to_bottom(self, size: tuple | None = None) -> None:
@@ -66,18 +66,26 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox, metaclass=Collect
     @key_action
     def toggle_collapse(self, size: tuple | None = None) -> None:
         node = self.get_focus()[0]
-        node.expanded = not node.expanded
-        node.update_expanded_icon()
+        if node is None:
+            return
+        node.expanded = not node.expanded  # type: ignore[union-attr]
+        node.update_expanded_icon()  # type: ignore[union-attr]
 
     @key_action
     def next_view(self, size: tuple | None = None) -> None:
-        view = self.get_focus()[0].get_next_view()
+        node = self.get_focus()[0]
+        if node is None:
+            return
+        view = node.get_next_view()  # type: ignore[union-attr]
         if view:
             self.app.push_view(view)
 
     @key_action
     def show_details(self, size: tuple | None = None) -> None:
-        view = self.get_focus()[0].get_details_view()
+        node = self.get_focus()[0]
+        if node is None:
+            return
+        view = node.get_details_view()  # type: ignore[union-attr]
         if view:
             self.app.push_view(view)
 
@@ -101,7 +109,7 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox, metaclass=Collect
                 node = self.walker.get_next(node)[1]
                 if not node:
                     break
-                if node.search_match(expr):
+                if node.search_match(expr):  # type: ignore[union-attr]
                     self._search_results.append(node)
             self.app.alert(f"Found {len(self._search_results)} results", "info")
             if self._search_results:
@@ -137,12 +145,12 @@ class CongruenceTreeListBoxEntry(urwid.TreeWidget):
         return urwid.Padding(widget, width=("relative", 100), left=indent_cols)
 
     def update_expanded_icon(self) -> None:
-        self._w.base_widget.widget_list[0] = [self.unexpanded_icon, self.expanded_icon][self.expanded]
+        self._w.base_widget.widget_list[0] = [self.unexpanded_icon, self.expanded_icon][self.expanded]  # type: ignore[union-attr,index]
 
     def load_inner_widget(self) -> urwid.Widget:
         self.icon = [self.unexpanded_icon, self.expanded_icon][self.expanded]
         header = urwid.Text(self.get_display_text())
-        header = urwid.Columns([("fixed", 1, self.icon), header], dividechars=1)
+        header = urwid.Columns([("fixed", 1, self.icon), header], dividechars=1)  # type: ignore[arg-type]
         return urwid.AttrWrap(header, "body", "focus")
 
     def selectable(self) -> bool:
@@ -177,7 +185,7 @@ class CongruenceCardTreeWidget(CongruenceTreeListBoxEntry):
     def load_inner_widget(self) -> urwid.Widget:
         self.icon = [self.unexpanded_icon, self.expanded_icon][self.expanded]
         header = urwid.Text(self.get_display_header())
-        header = urwid.Columns([("fixed", 1, self.icon), header], dividechars=1)
+        header = urwid.Columns([("fixed", 1, self.icon), header], dividechars=1)  # type: ignore[arg-type]
         header = urwid.AttrWrap(header, "card-head", "card-focus")
         if self.get_display_body():
             body = urwid.AttrWrap(urwid.Text(self.get_display_body()), "body")
@@ -186,12 +194,12 @@ class CongruenceCardTreeWidget(CongruenceTreeListBoxEntry):
 
     def update_expanded_icon(self) -> None:
         try:
-            self._w.base_widget.widget_list[0].base_widget.widget_list[0] = [
+            self._w.base_widget.widget_list[0].base_widget.widget_list[0] = [  # type: ignore[union-attr,index]
                 self.unexpanded_icon,
                 self.expanded_icon,
             ][self.expanded]
         except AttributeError:
-            self._w.base_widget.widget_list[0] = [self.unexpanded_icon, self.expanded_icon][self.expanded]
+            self._w.base_widget.widget_list[0] = [self.unexpanded_icon, self.expanded_icon][self.expanded]  # type: ignore[union-attr,index]
 
 
 class CongruenceNode(urwid.TreeNode):
@@ -225,5 +233,5 @@ class CongruenceParentNode(urwid.ParentNode):
         return childclass(self.wrapper, childdata, parent=self, key=key, depth=childdepth)
 
     def search_match(self, expr: str) -> bool:
-        obj = self.get_widget().get_value()
-        return obj.match(expr)
+        obj = self.get_widget().get_value()  # type: ignore[union-attr]
+        return obj.match(expr)  # type: ignore[union-attr]

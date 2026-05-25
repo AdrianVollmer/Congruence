@@ -40,7 +40,7 @@ class CongruenceFooter(urwid.Pile):
 
     def update_keylegend(self, key_actions: list[str]) -> None:
         text = "|".join(f"{KEYS[k][0]}:{k}" for k in key_actions)
-        self.key_legend.base_widget.set_text(text)
+        self.key_legend.base_widget.set_text(text)  # type: ignore[union-attr]
 
 
 class CongruenceInput(urwid.Edit):
@@ -77,8 +77,8 @@ class CongruenceApp:
 
     key_actions: ClassVar[list[str]] = ["show help", "back", "exit", "show log"]
 
-    def unhandled_input(self, key: str) -> None:
-        if key not in KEY_ACTIONS:
+    def unhandled_input(self, key: str | tuple) -> None:
+        if not isinstance(key, str) or key not in KEY_ACTIONS:
             return
         action = KEY_ACTIONS[key]
         if action == "show help":
@@ -100,7 +100,7 @@ class CongruenceApp:
     def __init__(self) -> None:
         global app
         app = self
-        CongruenceView.app = self
+        CongruenceView.app = self  # type: ignore[misc]
 
         self._view_stack: list = []
         self._title_stack: list[str] = []
@@ -121,7 +121,7 @@ class CongruenceApp:
         return " / ".join([self.title, *self._title_stack])
 
     def get_current_widget(self) -> CongruenceView:
-        return self.loop.widget.body
+        return self.loop.widget.body  # type: ignore[return-value,union-attr]
 
     def alert(self, message: str, msgtype: str = "info") -> None:
         """Display *message* in the status line with style *msgtype*."""
@@ -165,8 +165,8 @@ class CongruenceApp:
         title = getattr(view, "title", "untitled")
         log.debug(f"Pushing view '{title}'")
         self._title_stack.append(title)
-        self._view_stack.append(self.loop.widget.body)
-        self.loop.widget.body = view
+        self._view_stack.append(self.loop.widget.body)  # type: ignore[union-attr]
+        self.loop.widget.body = view  # type: ignore[union-attr]
         self.header.set_text(("head", self.get_full_title()))
         self.footer.update_keylegend(view.key_actions)
 
@@ -175,7 +175,7 @@ class CongruenceApp:
         if self._view_stack:
             view = self._view_stack.pop()
             self._title_stack.pop()
-            self.loop.widget.body = view
+            self.loop.widget.body = view  # type: ignore[union-attr]
             self.header.set_text(("head", self.get_full_title()))
             self.footer.update_keylegend(view.key_actions)
         else:

@@ -48,6 +48,10 @@ class ConfluenceObject(ABC):
     def get_columns(self) -> list[str]:
         """Return a list of exactly five column strings for list display."""
 
+    @property
+    def id(self) -> str:
+        return self._data.get("id", "")
+
     def get_json(self) -> str:
         return json.dumps(self._data, indent=2, sort_keys=True)
 
@@ -59,6 +63,9 @@ class ConfluenceObject(ABC):
         """Return the header text for a carded list entry."""
         return self.get_title()
 
+    def match(self, search_string: str) -> bool:
+        return bool(re.search(search_string, self.get_title()) or re.search(search_string, self.get_content()))
+
 
 class Content(ConfluenceObject):
     """Base class for Pages, Blogposts, Comments, and Attachments."""
@@ -67,7 +74,7 @@ class Content(ConfluenceObject):
         super().__init__(data)
         self.title: str = self._data["title"]
         self.type: str = self._data.get("type", "?")
-        self.object_id: str = self._data["id"]
+        self.object_id: str = self._data["id"]  # explicit str for subclass use
         self.versionby: User = User(self._data["history"]["lastUpdated"]["by"])
         try:
             self.space: Space | None = Space(self._data["space"])
@@ -77,7 +84,7 @@ class Content(ConfluenceObject):
         self.liked: bool = False
 
     @property
-    def id(self) -> str:
+    def id(self) -> str:  # type: ignore[override]
         return self.object_id
 
     def get_title(self) -> str:

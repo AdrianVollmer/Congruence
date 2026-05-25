@@ -1,0 +1,8 @@
+{
+    "pythonVersion": "3.11",
+    "pythonPlatform": "Linux",
+    "venvPath": "/usr/local/lib/python3.11",
+    "extraPaths": ["/usr/local/lib/python3.11/dist-packages"],
+    "typeCheckingMode": "basic",
+    "reportMissingModuleSource": "none"
+}

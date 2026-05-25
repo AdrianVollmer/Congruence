@@ -49,17 +49,21 @@ class APIView(ContentList):
 
 class CongruenceAPIEntry(ColumnListBoxEntry):
     def get_next_view(self) -> PageView | CommentContextView | None:
-        log.debug(self.obj.type)
-        if self.obj.type in ("page", "blogpost"):
-            return PageView(self.obj)
-        if self.obj.type == "comment":
-            parent = self.obj._data["resultParentContainer"]
+        from congruence.objects import ContentWrapper
+        obj: ContentWrapper = self.obj  # type: ignore[assignment]
+        log.debug(obj.type)
+        if obj.type in ("page", "blogpost"):
+            return PageView(obj)
+        if obj.type == "comment":
+            parent = obj._data["resultParentContainer"]
             page_id = parent["displayUrl"].split("=")[-1]
-            return CommentContextView(page_id, self.obj.content, self.obj.content.id)
+            return CommentContextView(page_id, obj.content, obj.content.id)
         return None
 
     def search_match(self, search_string: str) -> bool:
-        return self.obj.match(search_string)
+        from congruence.objects import ContentWrapper
+        obj: ContentWrapper = self.obj  # type: ignore[assignment]
+        return obj.match(search_string)
 
 
 PluginView = APIView
