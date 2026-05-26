@@ -1,3 +1,55 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "congruence"
+version = "0.2"
+description = "A command line interface for Confluence"
+readme = "README.md"
+license = { text = "GPL3" }
+requires-python = ">=3.12"
+authors = [
+    { name = "Adrian Vollmer" },
+]
+dependencies = [
+    "html2text",
+    "markdown",
+    "beautifulsoup4",
+    "lxml",
+    "pyyaml",
+    "pyxdg",
+    "pytz",
+    "python-dateutil",
+    "requests",
+    "urwid",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console :: Curses",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Office/Business",
+]
+
+[project.scripts]
+congruence = "congruence.__main__:main"
+
+[tool.pyright]
+pythonVersion = "3.11"
+pythonPlatform = "Linux"
+venvPath = "/usr/local/lib/python3.11"
+extraPaths = ["/usr/local/lib/python3.11/dist-packages"]
+typeCheckingMode = "basic"
+reportMissingModuleSource = "none"
+
 [tool.ruff]
 line-length = 120
 
@@ -20,3 +72,9 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "congruence/args.py" = ["E402"]  # module-level imports not at top due to arg parsing
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.409",
+    "ruff>=0.15.14",
+]

@@ -1,9 +1,0 @@
-beautifulsoup4
-html2text
-Markdown
-python_dateutil
-pytz
-pyxdg
-PyYAML
-requests
-urwid
