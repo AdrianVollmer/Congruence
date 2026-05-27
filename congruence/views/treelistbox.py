@@ -77,7 +77,7 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox, metaclass=Collect
         if node is None:
             return
         view = node.get_next_view()  # type: ignore[union-attr]
-        if view:
+        if view is not None:
             self.app.push_view(view)
 
     @key_action
@@ -86,7 +86,7 @@ class CongruenceTreeListBox(CongruenceView, urwid.TreeListBox, metaclass=Collect
         if node is None:
             return
         view = node.get_details_view()  # type: ignore[union-attr]
-        if view:
+        if view is not None:
             self.app.push_view(view)
 
     @key_action

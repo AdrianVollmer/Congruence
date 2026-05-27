@@ -90,7 +90,7 @@ class CongruenceListBox(CongruenceView, urwid.ListBox, metaclass=CollectKeyActio
         if node is None:
             return
         view = node.get_next_view()
-        if view:
+        if view is not None:
             self.app.push_view(view)
 
     @key_action
@@ -99,7 +99,7 @@ class CongruenceListBox(CongruenceView, urwid.ListBox, metaclass=CollectKeyActio
         if node is None:
             return
         view = node.get_details_view()
-        if view:
+        if view is not None:
             self.app.push_view(view)
 
     @key_action

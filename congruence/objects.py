@@ -163,7 +163,6 @@ class Comment(Content):
 
         date = convert_date(self._data["history"]["createdDate"])
         self.url: str = data["_links"]["webui"]
-        self._body_html: str = data["body"]["view"]["value"]
         self.container_path: str = data.get("_expandable", {}).get("container", "")
         try:
             self.ancestor_root_link: str | None = data["ancestors"][0]["_links"]["self"]
@@ -202,7 +201,8 @@ class Comment(Content):
     def get_content(self) -> str:
         if self.blacklisted:
             return ""
-        comment = html_to_text(self._body_html, replace_emoticons=True)
+        body_html: str = self._data.get("body", {}).get("view", {}).get("value", "")
+        comment = html_to_text(body_html, replace_emoticons=True)
         if self.ref:
             comment = f"> {self.ref}\n\n{comment}"
         return comment
@@ -338,9 +338,10 @@ class ContentWrapper:
         self._data = data
         content_data: dict = data[data["entityType"]]
         self.type: str = content_data["type"]
-        try:
-            self.content: ConfluenceObject = self.type_map[self.type](content_data)
-        except KeyError:
+        cls = self.type_map.get(self.type)
+        if cls is not None:
+            self.content: ConfluenceObject = cls(content_data)
+        else:
             log.error(f"Unknown entity type: {self.type}")
             self.content = Generic(content_data)
         self.title: str = self.content.get_title()
