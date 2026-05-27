@@ -26,7 +26,7 @@ from congruence.confluence import PageView
 from congruence.external import open_doc_in_cli_browser, open_gui_browser
 from congruence.interface import make_request
 from congruence.logging import log
-from congruence.objects import Page, Space
+from congruence.objects import Content, Page, Space
 from congruence.views.common import key_action
 from congruence.views.treelistbox import CongruenceTreeListBox, CongruenceTreeListBoxEntry
 
@@ -87,10 +87,12 @@ class SpaceView(CongruenceTreeListBox):
         obj = self.focus.get_value()  # type: ignore[union-attr]
         if isinstance(obj, dict):
             return
-        try:
-            url = obj._data["space"]["link"][1]["href"]
-        except (KeyError, IndexError):
-            url = obj._data["_links"]["webui"]
+        if isinstance(obj, Space):
+            url = obj.gui_url
+        elif isinstance(obj, Content):
+            url = obj.webui_url
+        else:
+            return
         open_gui_browser(url)
 
 

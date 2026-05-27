@@ -24,7 +24,7 @@ import congruence.strings as cs
 from congruence.external import open_doc_in_cli_browser, open_gui_browser
 from congruence.interface import convert_date, make_request
 from congruence.logging import log
-from congruence.objects import Comment, ContentWrapper
+from congruence.objects import Comment, Content, ContentWrapper
 from congruence.tools import create_diff
 from congruence.views.common import CongruenceTextBox, key_action
 from congruence.views.listbox import ColumnListBoxEntry, CongruenceListBox
@@ -185,25 +185,19 @@ class PageView(CongruenceTextBox):
     def __init__(self, obj: Any) -> None:
         self.obj = obj
         self.title = "Page"
-        content = obj._data["content"]
-        try:
-            history = content["history"]
-            update = history["lastUpdated"]
-            infos = {
-                "Title": obj.get_title(),
-                "Space": content["space"]["name"],
-                "Space key": content["space"]["key"],
-                "Created by": history["createdBy"]["displayName"],
-                "Created at": convert_date(history["createdDate"]),
-                "Last updated by": update["by"]["displayName"],
-                "Last updated at": convert_date(update["when"]),
-                "Last change message": update["message"],
-                "Version number": update["number"],
-            }
-            text = "\n".join(f"{k}: {v}" for k, v in infos.items())
-        except KeyError as e:
-            self.app.alert(f"KeyError ({e}), displaying raw data", "error")
-            text = obj.get_json()
+        c: Content = obj.content  # type: ignore[assignment]
+        infos = {
+            "Title": obj.get_title(),
+            "Space": c.space.name if c.space else "?",
+            "Space key": c.space.key if c.space else "?",
+            "Created by": c.created_by.display_name if c.created_by else "?",
+            "Created at": convert_date(c.created_date),
+            "Last updated by": c.versionby.display_name,
+            "Last updated at": convert_date(c.last_updated_when),
+            "Last change message": c.version_message,
+            "Version number": str(c.version_number),
+        }
+        text = "\n".join(f"{k}: {v}" for k, v in infos.items())
         help_string = cs.PAGE_VIEW_HELP
         super().__init__(text, help_string=help_string)
 

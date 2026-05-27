@@ -34,10 +34,11 @@ def is_blacklisted_user(username: str) -> bool:
 
 
 class ConfluenceObject(ABC):
-    """Base class for all Confluence content objects (pages, comments, users, spaces, …)."""
+    """Base class for all Confluence content objects (pages, comments, users, spaces, ...)."""
 
     def __init__(self, data: dict) -> None:
         self._data = data
+        self.object_id: str = data.get("id", "")
         log.debug(json.dumps(data, indent=2))
 
     @abstractmethod
@@ -50,7 +51,7 @@ class ConfluenceObject(ABC):
 
     @property
     def id(self) -> str:
-        return self._data.get("id", "")
+        return self.object_id
 
     def get_json(self) -> str:
         return json.dumps(self._data, indent=2, sort_keys=True)
@@ -72,25 +73,29 @@ class Content(ConfluenceObject):
 
     def __init__(self, data: dict) -> None:
         super().__init__(data)
-        self.title: str = self._data["title"]
-        self.type: str = self._data.get("type", "?")
-        self.object_id: str = self._data["id"]  # explicit str for subclass use
-        last_updated = self._data["history"]["lastUpdated"]
+        self.title: str = data["title"]
+        self.type: str = data.get("type", "?")
+
+        history = data.get("history", {})
+        last_updated = history.get("lastUpdated", {})
         self.versionby: User = User(last_updated["by"])
-        self.last_updated_when: str = last_updated["when"]
-        self.version_number: int = self._data.get("version", {}).get("number", 0)
-        self.version_message: str = self._data.get("version", {}).get("message", "")
-        self.webui_url: str = self._data.get("_links", {}).get("webui", "")
-        try:
-            self.space: Space | None = Space(self._data["space"])
-        except KeyError:
-            self.space = None
+        self.last_updated_when: str = last_updated.get("when", "")
+        self.created_date: str = history.get("createdDate", "")
+        created_by = history.get("createdBy")
+        self.created_by: User | None = User(created_by) if created_by else None
+
+        version = data.get("version", {})
+        self.version_number: int = version.get("number", 0)
+        self.version_message: str = version.get("message", "")
+
+        links = data.get("_links", {})
+        self.webui_url: str = links.get("webui", "")
+
+        space_data = data.get("space")
+        self.space: Space | None = Space(space_data) if space_data else None
+
         self.blacklisted: bool = is_blacklisted_user(self.versionby.username)
         self.liked: bool = False
-
-    @property
-    def id(self) -> str:  # type: ignore[override]
-        return self.object_id
 
     def get_title(self) -> str:
         return self.title
@@ -161,27 +166,30 @@ class Comment(Content):
         super().__init__(data)
         self.type = "comment"
 
-        date = convert_date(self._data["history"]["createdDate"])
-        self.url: str = data["_links"]["webui"]
+        self.url: str = data.get("_links", {}).get("webui", "")
+        self.body_html: str = data.get("body", {}).get("view", {}).get("value", "")
         self.container_path: str = data.get("_expandable", {}).get("container", "")
+
+        ancestors = data.get("ancestors", [])
         try:
-            self.ancestor_root_link: str | None = data["ancestors"][0]["_links"]["self"]
+            self.ancestor_root_link: str | None = ancestors[0]["_links"]["self"]
         except (IndexError, KeyError):
             self.ancestor_root_link = None
+
         username = self.versionby.display_name
         if self.blacklisted:
             username = "<blocked user>"
-        self.head: str = f"{username}, {date}"
+        self.head: str = f"{username}, {convert_date(self.created_date)}"
+
         self.ref: str | None = None
         self.is_inline: bool = False
-        try:
-            extensions = self._data["extensions"]
-            inline_properties = extensions["inlineProperties"]
-            self.ref = inline_properties["originalSelection"]
-            self.head += " (inline comment)"
-            self.is_inline = True
-        except KeyError:
-            pass
+        extensions = data.get("extensions", {})
+        inline_properties = extensions.get("inlineProperties")
+        if inline_properties is not None:
+            self.ref = inline_properties.get("originalSelection")
+            if self.ref:
+                self.head += " (inline comment)"
+                self.is_inline = True
 
     def get_title(self) -> str:
         return self.title
@@ -201,8 +209,7 @@ class Comment(Content):
     def get_content(self) -> str:
         if self.blacklisted:
             return ""
-        body_html: str = self._data.get("body", {}).get("view", {}).get("value", "")
-        comment = html_to_text(body_html, replace_emoticons=True)
+        comment = html_to_text(self.body_html, replace_emoticons=True)
         if self.ref:
             comment = f"> {self.ref}\n\n{comment}"
         return comment
@@ -264,9 +271,8 @@ class User(ConfluenceObject):
     def __init__(self, data: dict) -> None:
         super().__init__(data)
         self.type: str = "user"
-        self.date: str = "?"
-        self.display_name: str = self._data["displayName"]
-        self.username: str = self._data["username"]
+        self.display_name: str = data["displayName"]
+        self.username: str = data["username"]
 
     def get_title(self) -> str:
         return self.display_name
@@ -276,7 +282,7 @@ class User(ConfluenceObject):
             self.type[0].upper(),
             "",
             self.display_name,
-            self.date,
+            "?",
             "",
         ]
 
@@ -285,12 +291,15 @@ class Space(ConfluenceObject):
     def __init__(self, data: dict) -> None:
         super().__init__(data)
         self.type: str = "space"
-        self.key: str = self._data["key"]
-        self.name: str = self._data["name"]
+        self.key: str = data["key"]
+        self.name: str = data["name"]
+        self.date: str = convert_date(data["timestamp"], "friendly") if "timestamp" in data else "?"
+        # Space directory API provides links as an array; content API nests under _links
+        self.gui_url: str = ""
         try:
-            self.date: str = convert_date(self._data["timestamp"], "friendly")
-        except KeyError:
-            self.date = "?"
+            self.gui_url = data["link"][1]["href"]
+        except (KeyError, IndexError):
+            self.gui_url = data.get("_links", {}).get("webui", "")
 
     def get_title(self) -> str:
         return self.name
@@ -310,8 +319,7 @@ class Generic(ConfluenceObject):
         super().__init__(data)
         self.type: str = "?"
         log.debug(json.dumps(data, indent=2))
-        self.object_id: str | None = None
-        self.title: str = self._data.get("title", "Generic object")
+        self.title: str = data.get("title", "Generic object")
 
     def get_title(self) -> str:
         return self.title
@@ -336,7 +344,8 @@ class ContentWrapper:
 
     def __init__(self, data: dict) -> None:
         self._data = data
-        content_data: dict = data[data["entityType"]]
+        self.entity_type: str = data["entityType"]
+        content_data: dict = data[self.entity_type]
         self.type: str = content_data["type"]
         cls = self.type_map.get(self.type)
         if cls is not None:
@@ -345,7 +354,8 @@ class ContentWrapper:
             log.error(f"Unknown entity type: {self.type}")
             self.content = Generic(content_data)
         self.title: str = self.content.get_title()
-        self.parent_url: str = data.get("resultParentContainer", {}).get("displayUrl", "")
+        parent = data.get("resultParentContainer", {})
+        self.parent_url: str = parent.get("displayUrl", "")
 
     def get_title(self) -> str:
         return self.content.get_title()

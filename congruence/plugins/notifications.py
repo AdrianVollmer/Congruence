@@ -52,7 +52,7 @@ class NotificationView(CongruenceListBox):
 
     @key_action
     def load_more(self, size: tuple | None = None) -> None:
-        last = self.entries[-1].obj._data["id"]
+        last = self.entries[-1].obj.id
         self.entries += self.get_notifications(before=last)
         self.redraw()
 
