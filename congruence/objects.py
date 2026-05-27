@@ -84,7 +84,7 @@ class Content(ConfluenceObject):
         created_by = history.get("createdBy")
         self.created_by: User | None = User(created_by) if created_by else None
 
-        version = data.get("version", {})
+        version = data.get("version") or last_updated
         self.version_number: int = version.get("number", 0)
         self.version_message: str = version.get("message", "")
 
