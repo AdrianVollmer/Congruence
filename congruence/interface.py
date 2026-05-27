@@ -30,7 +30,9 @@ import markdown
 import pytz
 from bs4 import BeautifulSoup
 from dateutil.parser import parse as dtparse
-from requests import Response, Session, utils
+from requests import Response, Session
+from requests.cookies import cookiejar_from_dict
+from requests.utils import dict_from_cookiejar
 
 from congruence.app import app
 from congruence.args import BASE_URL, args, config, cookie_jar
@@ -134,7 +136,7 @@ def not_authenticated(response: Response) -> bool:
 
 def save_session() -> None:
     """Save session cookies to cookie jar."""
-    cookies = utils.dict_from_cookiejar(session.cookies)
+    cookies = dict_from_cookiejar(session.cookies)
     cookies["XSRF"] = XSRF
     with open(cookie_jar, "w") as f:
         json.dump(cookies, f)
@@ -144,13 +146,13 @@ def load_session() -> None:
     """Load session cookies from cookie jar."""
     try:
         with open(cookie_jar) as f:
-            cookies = utils.cookiejar_from_dict(json.load(f))
+            cookies = cookiejar_from_dict(json.load(f))
     except FileNotFoundError:
         return
     global XSRF
     xsrf = cookies["XSRF"]
     del cookies["XSRF"]
-    XSRF = xsrf
+    XSRF = xsrf or ""
     session.cookies.update(cookies)
 
 
@@ -199,7 +201,12 @@ def dump_http(response: Response, filename: str) -> None:
         if response.request.body:
             body = response.request.body
             f.write("\n\n")
-            f.write(body if isinstance(body, str) else body.decode("utf-8", errors="replace"))
+            if isinstance(body, str):
+                f.write(body)
+            elif isinstance(body, bytes):
+                f.write(body.decode("utf-8", errors="replace"))
+            else:
+                f.write(str(body))
         f.write("\n\n")
         f.write(">>>>>> Response\n")
         for k, v in response.headers.items():
